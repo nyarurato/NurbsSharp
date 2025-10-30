@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net8.0;netstandard2.1</TargetFramework>
-		<ImplicitUsings>enable</ImplicitUsings>
+		<TargetFrameworks>net8.0;netstandard2.1</TargetFrameworks>
+		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<VersionPrefix>0.0.1</VersionPrefix>
 		<VersionSuffix>beta</VersionSuffix>
@@ -16,5 +16,17 @@
 	<PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
 		<DefineConstants>NETSTANDARD2_1</DefineConstants>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <Compile Remove="src\UnitTests\**" />
+	  <EmbeddedResource Remove="src\UnitTests\**" />
+	  <None Remove="src\UnitTests\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="src\Operation\" />
+	  <Folder Include="src\Tesselation\" />
+	  <Folder Include="src\IO\" />
+	</ItemGroup>
 
 </Project>
