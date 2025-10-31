@@ -234,5 +234,107 @@ namespace UnitTests.Evaluation
                 Assert.That(expected.Z, Is.EqualTo(pt.z).Within(0.000001));
             }
         }
+
+        [Test]
+        public void CubicNurbsCurve_GetLength_DatasetA()
+        {
+            // Circle R=1
+            int degree = 2;
+            double[] knots = { 0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75,0.75, 1, 1, 1 };
+            ControlPoint[] controlPoints = {
+                new ControlPoint(1 ,  0, 0, 1),
+                new ControlPoint(1 ,  1, 0, 0.70710678),
+                new ControlPoint(0 ,  1, 0, 1),
+                new ControlPoint(-1,  1, 0, 0.70710678),
+                new ControlPoint(-1,  0, 0, 1),
+                new ControlPoint(-1, -1, 0, 0.70710678),
+                new ControlPoint(0 , -1, 0, 1),
+                new ControlPoint(1 , -1, 0, 0.70710678),
+                new ControlPoint(1 ,  0, 0, 1),
+
+            };
+            var curve = new NurbsCurve(degree, new KnotVector(knots), controlPoints);
+
+            double expectedLength = Math.PI * 2;
+            double length = curve.GetLength();
+
+            Assert.That(length, Is.EqualTo(expectedLength).Within(0.001));
+        }
+
+        //degree 0 curve test
+        [Test]
+        public void NurbsCurveDegree0()
+        {
+            int degree = 0;
+            double[] knots = { 0, 0.1666, 0.3333, 0.5, 0.6666, 0.8333, 1 };
+            ControlPoint[] controlPoints = {
+            new ControlPoint(0.0, 0.0, 0.0, 1),
+            new ControlPoint(1.0, 0.0, 0.0, 1),
+            new ControlPoint(2.0, 0.0, 0.0, 1),
+            new ControlPoint(3.0, 3.0, 0.0, 1),
+            new ControlPoint(4.0, 3.0, 0.0, 1),
+            new ControlPoint(5.0, 3.0, 0.0, 1)
+        };
+            var curve = new NurbsCurve(degree, new KnotVector(knots), controlPoints);
+
+            var samples = new (double u, Vector3Double expected)[] {
+                (0.000, new Vector3Double(0.000000, 0.000000, 0.000000)),
+                (0.001, new Vector3Double(0.000000, 0.000000, 0.000000)),
+                (0.100, new Vector3Double(0.000000, 0.000000, 0.000000)),
+                (0.250, new Vector3Double(1.000000, 0.000000, 0.000000)),
+                (0.500, new Vector3Double(3.000000, 3.000000, 0.000000)),
+                (0.750, new Vector3Double(4.000000, 3.000000, 0.000000)),
+                (0.900, new Vector3Double(5.000000, 3.000000, 0.000000)),
+                (0.999, new Vector3Double(5.000000, 3.000000, 0.000000)),
+                (1.000, new Vector3Double(5.000000, 3.000000, 0.000000))
+            };
+
+            foreach (var (u, expected) in samples)
+            {
+                Assert.Throws<ArgumentException>(() => CurveEvaluator.Evaluate(curve, u));
+            }
+        }
+
+        //degree 0 curve test
+        [Test]
+        public void NurbsCurveDegree1()
+        {
+            int degree = 1;
+            double[] knots = { 0, 0.143, 0.286, 0.429, 0.571, 0.714, 0.857, 1 };
+            ControlPoint[] controlPoints = {
+            new ControlPoint(0.0, 0.0, 0.0, 1),
+            new ControlPoint(1.0, 0.0, 0.0, 1),
+            new ControlPoint(2.0, 0.0, 0.0, 1),
+            new ControlPoint(3.0, 3.0, 0.0, 1),
+            new ControlPoint(4.0, 3.0, 0.0, 1),
+            new ControlPoint(5.0, 3.0, 0.0, 1)
+        };
+            var curve = new NurbsCurve(degree, new KnotVector(knots), controlPoints);
+
+            var samples = new (double u, Vector3Double expected)[] {
+                (0.150, new Vector3Double(0.049, 0.000000, 0.000000)),
+                (0.250, new Vector3Double(0.748, 0.000000, 0.000000)),
+                (0.500, new Vector3Double(2.500, 1.500000, 0.000000)),
+                (0.750, new Vector3Double(4.252, 3.000000, 0.000000)),
+                (0.850, new Vector3Double(4.951, 3.000000, 0.000000))
+            };
+
+            foreach (var (u, expected) in samples)
+            {
+                var pt = CurveEvaluator.Evaluate(curve, u);
+                Console.WriteLine($"u={u}, pt=({pt.x}, {pt.y}, {pt.z})");
+                Assert.That(expected.X, Is.EqualTo(pt.x).Within(0.001));
+                Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.001));
+                Assert.That(expected.Z, Is.EqualTo(pt.z).Within(0.001));
+            }
+        }
+
+        [Test]
+        public void NurbsSurfaceTestA()
+        {
+            
+
+
+        }
     }
 }

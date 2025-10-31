@@ -63,6 +63,8 @@ namespace UnitTests.Core
 
         }
 
+
+
         [Test]
         public void ControlPointCheck()
         {
@@ -98,8 +100,16 @@ namespace UnitTests.Core
 
 
         }
+        [Test]
+        public void Vector3DoubleDistanceCheck()
+        {
+            Vector3Double v1 = new Vector3Double(1.0, 2.0, 3.0);
+            Vector3Double v2 = new Vector3Double(4.0, 6.0, 3.0);
+            double distance = v1.DistanceTo(v2);
+            // sqrt((4-1)^2 + (6-2)^2 + (3-3)^2) = sqrt(9 + 16 + 0) = sqrt(25) = 5
+            Assert.That(distance, Is.EqualTo(5.0));
+        }
 
-
-
+        
     }
 }
