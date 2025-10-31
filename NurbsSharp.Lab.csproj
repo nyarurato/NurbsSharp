@@ -6,6 +6,9 @@
 		<Nullable>enable</Nullable>
 		<VersionPrefix>0.0.1</VersionPrefix>
 		<VersionSuffix>beta</VersionSuffix>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<PackageReadmeFile></PackageReadmeFile>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">

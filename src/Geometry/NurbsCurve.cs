@@ -15,12 +15,12 @@ namespace NurbsSharp.Geometry
         public NurbsCurve(int degree, KnotVector knotVector, ControlPoint[] controlPoints)
         {
             Degree = degree;
-            KnotVector = knotVector;
-            ControlPoints = controlPoints;
-            checkValidity();
+            KnotVector = knotVector ?? throw new ArgumentNullException(nameof(knotVector));
+            ControlPoints = controlPoints ?? throw new ArgumentNullException(nameof(controlPoints));
+            Validate();
         }
 
-        bool checkValidity()
+        private void Validate()
         {
             int n = ControlPoints.Length;
             int m = KnotVector.Knots.Length;
@@ -28,18 +28,28 @@ namespace NurbsSharp.Geometry
             {
                 throw new InvalidOperationException("Invalid NURBS curve: knot vector length does not match control points and degree.");
             }
-            return true;
         }
 
         /// <summary>
-        /// Evaluate the NURBS curve at parameter u in [0, 1]
+        /// (en) Evaluates the position on the NURBS curve at the specified parameter u. The range is the same as the knot vector's minimum and maximum values.
+        /// (ja) 指定したパラメータ u でNURBS曲線上の位置を評価します。レンジはノットベクトルの最小値と最大値と同じです。
         /// </summary>
         /// <param name="u"></param>
-        /// <returns></returns>
-        public Vector3Double GetPos(int u)
+        /// <returns>Position Vector</returns>
+        public Vector3Double GetPos(double u)
         {
             var pos = CurveEvaluator.Evaluate(this, u);
             return new Vector3Double(pos.x, pos.y, pos.z);
+        }
+
+        public double GetLength()
+        {
+            double start_u = KnotVector.Knots[0];
+            double end_u = KnotVector.Knots[KnotVector.Length - 1];
+            double epsilon = (end_u - start_u)/10000;
+
+            double len = CurveEvaluator.CurveLength(this, start_u,end_u,epsilon );
+            return len;
         }
     }
 }

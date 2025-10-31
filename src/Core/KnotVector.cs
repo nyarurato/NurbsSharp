@@ -5,8 +5,17 @@ using System;
 
 namespace NurbsSharp.Core
 {
+    //TODO: Check KnotVector types
+    public enum KnotVectorType
+    {
+        UNIFORM,
+        CLAMPED,
+        CLOSED
+    }
+
     public class KnotVector
     {
+        public KnotVectorType Type { get; set; } = KnotVectorType.UNIFORM;//TODO: 対応未実装
         public double[] Knots { get; set; }
         public int Length => Knots.Length;
         public KnotVector()
@@ -17,6 +26,7 @@ namespace NurbsSharp.Core
         public KnotVector(double[] knots)
         {
             Knots = knots;
+            Validate();
         }
 
         public bool Validate()
