@@ -30,6 +30,7 @@ namespace NurbsSharp.Geometry
             int nV = ControlPoints[0].Length;
             int mU = KnotVectorU.Knots.Length;
             int mV = KnotVectorV.Knots.Length;
+            Console.WriteLine($"nU={nU}, nV={nV}, mU={mU}, mV={mV}, DegreeU={DegreeU}, DegreeV={DegreeV}");
             if (mU != nU + DegreeU + 1)
             {
                 throw new InvalidOperationException("Invalid NURBS surface: U knot vector length does not match control points and degree.");
