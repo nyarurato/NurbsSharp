@@ -9,8 +9,20 @@ using System.IO;
 
 namespace NurbsSharp.IO
 {
+    /// <summary>
+    /// (en)Exporter for STL file format
+    /// (ja)STLファイルのエクスポーター
+    /// </summary>
     public class STLExporter
     {
+        /// <summary>
+        /// (en)Export mesh to STL format
+        /// (ja)メッシュをSTL形式でエクスポートする
+        /// </summary>
+        /// <param name="mesh"></param>
+        /// <param name="stream"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public async static Task<bool> ExportAsync(Mesh mesh, Stream stream)
         {
             if (mesh == null)

@@ -6,6 +6,10 @@ using NurbsSharp.Evaluation;
 
 namespace NurbsSharp.Geometry
 {
+    /// <summary>
+    /// (en) NURBS volume
+    /// (ja) NURBSボリューム
+    /// </summary>
     public class NurbsVolume:IGeometry
     {
         public int DegreeU { get; set; }

@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using NurbsSharp.Core;
 using NurbsSharp.Geometry;
 using NurbsSharp.IO;
-using NurbsSharp.Lab.src.Tesselation;
 using NurbsSharp.Tesselation;
 
 namespace UnitTests.IO

@@ -8,7 +8,8 @@ using NurbsSharp.Core;
 namespace NurbsSharp.Geometry
 {
     /// <summary>
-    /// Triangle Mesh Data Structure
+    /// (en)Triangle Mesh Data Structure
+    /// (ja)三角形メッシュのデータ構造
     /// </summary>
     public class Mesh : IGeometry
     {

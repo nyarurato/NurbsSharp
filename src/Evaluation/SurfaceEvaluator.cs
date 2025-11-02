@@ -9,8 +9,21 @@ using NurbsSharp.Geometry;
 
 namespace NurbsSharp.Evaluation
 {
+    /// <summary>
+    /// (en) Evaluator for NURBS surfaces
+    /// (ja) NURBSサーフェスの評価クラス
+    /// </summary>
     public class SurfaceEvaluator:BasicEvaluator
     {
+        /// <summary>
+        /// (en) Evaluates the position on the NURBS surface at the specified parameters u and v. The range is the same as the knot vector's minimum and maximum values.
+        /// (ja) 指定したパラメータ u と v でNURBSサーフェス上の位置を評価します。レンジはノットベクトルの最小値と最大値と同じです。
+        /// </summary>
+        /// <param name="surface"></param>
+        /// <param name="u"></param>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public static (double x, double y, double z) Evaluate(NurbsSurface surface, double u, double v)
         {
             if (surface == null)

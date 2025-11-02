@@ -13,22 +13,40 @@ namespace NurbsSharp.Core
         CLOSED
     }
 
+    /// <summary>
+    /// (en) knot vector used in NURBS
+    /// (ja) NURBSで使用されるノットベクトル
+    /// </summary>
     public class KnotVector
     {
         public KnotVectorType Type { get; set; } = KnotVectorType.UNIFORM;//TODO: 対応未実装
         public double[] Knots { get; set; }
         public int Length => Knots.Length;
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
         public KnotVector()
         {
             Knots = new double[] { };
         }
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="knots"></param>
         public KnotVector(double[] knots)
         {
             Knots = knots;
             Validate();
         }
 
+        /// <summary>
+        /// (en) Validates the knot vector
+        /// (ja) ノットベクトルを検証
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public bool Validate()
         {
             if (Knots == null || Knots.Length == 0)
@@ -42,14 +60,15 @@ namespace NurbsSharp.Core
             return true;
         }
 
+        
         public override string ToString()
         {
             return $"KnotVector[{Length}] {{ {string.Join(", ", Knots)} }}";
         }
 
         /// <summary>
-        /// (en) Generates a uniform knot vector.
-        /// (ja) 均等分布のノットベクトルを生成します。
+        /// (en) Generates a uniform knot vector
+        /// (ja) 均等分布のノットベクトルを生成
         /// 6 -> {0, 0.2, 0.4, 0.6, 0.8, 1.0}
         /// </summary>
         /// <param name="length"></param>
