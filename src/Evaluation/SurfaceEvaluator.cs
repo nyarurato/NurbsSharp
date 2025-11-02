@@ -9,7 +9,7 @@ using NurbsSharp.Geometry;
 
 namespace NurbsSharp.Evaluation
 {
-    public class SurfaceEvaluator
+    public class SurfaceEvaluator:BasicEvaluator
     {
         public static (double x, double y, double z) Evaluate(NurbsSurface surface, double u, double v)
         {
@@ -43,76 +43,69 @@ namespace NurbsSharp.Evaluation
                 temp[j] = DeBoor(degreeU, knotsU,spanU, row, u);
             }
 
-            // 2. v方向で補間
+            // de Boor's algorithm in V direction
             Vector4Double Sv = DeBoor(degreeV, knotsV,spanV, temp, v);
 
             return (Sv.X/Sv.W, Sv.Y / Sv.W, Sv.Z / Sv.W);
         }
 
-        // Find knot span index
-        static int FindSpan(int degree, double[] knots, double u)
+        //TODO: Optimize using different numerical integration methods
+        // not good for high curvature surface
+        public static double SurfaceArea(NurbsSurface surface, double start_u, double end_u, double start_v, double end_v, double epsilon = 0.01)
         {
-            int k = -1;
-            int s = 0; // multiplicity of u
-            if (u < knots[degree])
+            if (surface == null)
+                throw new ArgumentNullException(nameof(surface));
+            double area = 0.0;
+            for (double u = start_u; u < end_u; u += epsilon)
             {
-                k = degree;
-            }
-            else
-            {
-                for (int i = degree; i < (knots.Length - 1); i++)
+
+                for (double v = start_v; v < end_v; v += epsilon)
                 {
-                    if (u >= knots[i] && u < knots[i + 1])
+                    Vector3Double p1, p2, p3,p4;
+                    //pick small triangle area
+                    var res = Evaluate(surface, u, v);
+                    p1 = new Vector3Double(res.x, res.y, res.z);
+
+                    if (u + epsilon > end_u)
+                        res = Evaluate(surface, end_u, v);
+                    else
+                        res = Evaluate(surface, u + epsilon, v);
+                    p2 = new Vector3Double(res.x, res.y, res.z);
+                    
+                    if (v + epsilon > end_v)
+                        res = Evaluate(surface, u, end_v);
+                    else
+                        res = Evaluate(surface, u, v + epsilon);
+                    p3 = new Vector3Double(res.x, res.y, res.z);
+
+                    if (u + epsilon > end_u)
                     {
-                        k = i;
-                        break;
+                        if (v + epsilon > end_v)
+                            res = Evaluate(surface, end_u, end_v);
+                        else
+                            res = Evaluate(surface, end_u, v + epsilon);
                     }
-                    else if (u == knots[i + 1])
-                    {
-                        s++;
-                    }
-                }
-                if (u == knots[knots.Length - 1])
-                {
-                    k = knots.Length - s - 1;
-                }
-            }
+                    else if(v + epsilon > end_v)
+                        res = Evaluate(surface, u + epsilon, end_v);
+                    else
+                        res = Evaluate(surface, u + epsilon, v + epsilon);
 
-            if (k == -1)
-            {
-                throw new ArgumentOutOfRangeException(nameof(u), "Parameter 'u' is out of the knot vector range.");
-            }
-            return k;
+                    p4 = new Vector3Double(res.x, res.y, res.z);
+                    // S = ||AB x AC||
+                    Vector3Double vec1 = p2 - p1;
+                    Vector3Double vec2 = p3 - p1;
+                    Vector3Double crossProduct = Vector3Double.Cross(vec1, vec2);
+                    area += crossProduct.magnitude / 2; // Triangle area
 
-        }
+                    vec1 = p2 - p4;
+                    vec2 = p3 - p4;
+                    crossProduct = Vector3Double.Cross(vec1, vec2);
 
-        public static Vector4Double DeBoor(int p, double[] knots,int span_i, Vector4Double[] ctrlPoints, double u)
-        {
+                    area += crossProduct.magnitude / 2; // Triangle area
 
-            int n = ctrlPoints.Length - 1;
-            // ノットスパンを検索
-            int span = span_i;
-
-            // 初期化
-            Vector4Double[] d = new Vector4Double[p + 1];
-            for (int j = 0; j <= p; j++)
-            {
-                d[j] = ctrlPoints[span - p + j];
-            }
-
-            // 再帰計算
-            for (int r = 1; r <= p; r++)
-            {
-                for (int j = p; j >= r; j--)
-                {
-                    double alpha = 0;
-                    if(knots[span + 1 + j - r] != knots[span - p + j])
-                        alpha =(u - knots[span - p + j]) / (knots[span + 1 + j - r] - knots[span - p + j]);
-                    d[j] = (1 - alpha) * d[j - 1] + alpha * d[j];
                 }
             }
-
-            return d[p];
+            return area;
         }
     }
 

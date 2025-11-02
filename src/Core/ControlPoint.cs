@@ -10,6 +10,11 @@
             Position = new Vector3Double(0.0, 0.0, 0.0);
             Weight = 1.0;
         }
+        public ControlPoint(double x, double y, double z)
+        {
+            Position = new Vector3Double(x, y, z);
+            Weight = 1.0;
+        }
 
         public ControlPoint(double x,double y,double z,double w) {
             Position = new Vector3Double(x, y, z);
