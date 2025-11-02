@@ -3,7 +3,10 @@ using System.Numerics;
 
 namespace NurbsSharp.Core
 {
-
+    /// <summary>
+    /// (en) 3D vector with double precision
+    /// (ja) 倍精度浮動小数点数を使用した3次元ベクトル
+    /// </summary>
     public class Vector3Double
     {
         private readonly double[] _values = new double[3];
@@ -31,6 +34,7 @@ namespace NurbsSharp.Core
         {
             get => Math.Sqrt(X * X + Y * Y + Z * Z);
         }
+
 
         public Vector3Double()
         {
@@ -100,6 +104,10 @@ namespace NurbsSharp.Core
         }
     }
 
+    /// <summary>
+    /// (en) 4D vector with double precision
+    /// (ja) 倍精度浮動小数点数を使用した4次元ベクトル
+    /// </summary>
     public class Vector4Double
     {
         private readonly double[] _values = new double[4];

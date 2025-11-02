@@ -8,9 +8,22 @@ using System.Diagnostics;
 
 namespace NurbsSharp.Evaluation
 {
-
+    /// <summary>
+    /// (en) Evaluator for NURBS curves
+    /// (ja) NURBS曲線の評価クラス
+    /// </summary>
     public class CurveEvaluator:BasicEvaluator
     {
+        /// <summary>
+        /// (en) Evaluates the position on the NURBS curve at the specified parameter u. The range is the same as the knot vector's minimum and maximum values.
+        /// (ja) 指定したパラメータ u でNURBS曲線上の位置を評価します。レンジはノットベクトルの最小値と最大値と同じです。
+        /// </summary>
+        /// <param name="curve"></param>
+        /// <param name="u"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        /// <exception cref="ArgumentException"></exception>
         public static (double x, double y, double z) Evaluate(NurbsCurve curve, double u)
         {
             if (curve == null)

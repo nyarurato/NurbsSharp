@@ -6,8 +6,12 @@ using System.Threading.Tasks;
 using NurbsSharp.Core;
 using NurbsSharp.Geometry;
 
-namespace NurbsSharp.Lab.src.Tesselation
+namespace NurbsSharp.Tesselation
 {
+    /// <summary>
+    /// (en)Tessellator for NURBS surfaces
+    /// (ja)NURBSサーフェスのテッセレーター
+    /// </summary>
     public class SurfaceTessellator
     {
         public static Mesh Tessellate(NurbsSurface surface,int PointsU,int PointsV)

@@ -6,8 +6,22 @@ using NurbsSharp.Geometry;
 
 namespace NurbsSharp.Evaluation
 {
+    /// <summary>
+    /// (en) Evaluator for NURBS volumes
+    /// (ja) NURBSボリュームの評価クラス
+    /// </summary>
     public class VolumeEvaluator : BasicEvaluator
     {
+        /// <summary>
+        /// (en) Evaluates the position on the NURBS volume at the specified parameters u, v and w. The range is the same as the knot vector's minimum and maximum values.
+        /// (ja) 指定したパラメータ u、v、w でNURBSボリューム上の位置を評価します。レンジはノットベクトルの最小値と最大値と同じです。
+        /// </summary>
+        /// <param name="volume"></param>
+        /// <param name="u"></param>
+        /// <param name="v"></param>
+        /// <param name="w"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public static (double x, double y, double z) Evaluate(NurbsVolume volume, double u, double v, double w)
         {
             if (volume == null)

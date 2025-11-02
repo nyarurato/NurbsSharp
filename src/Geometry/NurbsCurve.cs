@@ -6,10 +6,29 @@ using NurbsSharp.Evaluation;
 
 namespace NurbsSharp.Geometry
 {
+    /// <summary>
+    /// (en) NURBS curve
+    /// (ja) NURBS曲線
+    /// </summary>
     public class NurbsCurve:IGeometry
     {
+        /// <summary>
+        /// (en) Degree of the NURBS curve
+        /// (ja) NURBS曲線の次数
+        /// </summary>
         public int Degree { get; set; }
+
+        /// <summary>
+        /// (en) Knot vector of the NURBS curve
+        /// (ja) NURBS曲線のノットベクトル
+        /// </summary>
+
         public KnotVector KnotVector { get; set; }
+
+        /// <summary>
+        /// (en) Control points of the NURBS curve
+        /// (ja) NURBS曲線の制御点
+        /// </summary>
         public ControlPoint[] ControlPoints { get; set; }
 
         public NurbsCurve(int degree, KnotVector knotVector, ControlPoint[] controlPoints)

@@ -9,8 +9,20 @@ using NurbsSharp.Geometry;
 
 namespace NurbsSharp.IO
 {
+    /// <summary>
+    /// (en)Exporter for OBJ file format
+    /// (ja)OBJファイルのエクスポーター
+    /// </summary>
     public class OBJExporter
     {
+        /// <summary>
+        /// (en)Export mesh to OBJ format
+        /// (ja)メッシュをOBJ形式でエクスポートする
+        /// </summary>
+        /// <param name="mesh"></param>
+        /// <param name="stream"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public async static Task<bool> ExportAsync(Mesh mesh,Stream stream)
         {
             if (mesh == null)
@@ -39,6 +51,15 @@ namespace NurbsSharp.IO
             return true;
         }
 
+        /// <summary>
+        /// Experimental
+        /// (en)Export NURBS surface to OBJ format 
+        /// (ja)NURBSサーフェスをOBJ形式でエクスポートする
+        /// </summary>
+        /// <param name="surface"></param>
+        /// <param name="stream"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public async static Task<bool> ExportAsync(NurbsSurface surface,Stream stream)
         {
             if (surface == null)

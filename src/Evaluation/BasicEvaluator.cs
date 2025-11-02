@@ -6,6 +6,10 @@ using NurbsSharp.Geometry;
 
 namespace NurbsSharp.Evaluation
 {
+    /// <summary>
+    /// (en) Basic evaluator for NURBS curves and surfaces
+    /// (ja) NURBSの基本的な評価用基底クラス
+    /// </summary>
     public class BasicEvaluator
     {
         protected static int FindSpan(int degree, double[] knots, double u)
