@@ -38,5 +38,42 @@ namespace NurbsSharp.IO
             
             return true;
         }
+
+        public async static Task<bool> ExportAsync(NurbsSurface surface,Stream stream)
+        {
+            if (surface == null)
+                throw new ArgumentNullException(nameof(surface));
+            if (stream == null)
+                throw new ArgumentNullException(nameof(stream));
+
+            using(var writer = new StreamWriter(stream, Encoding.UTF8, 1024, true))
+            {
+                writer.WriteLine("# Exported NURBS Surface - OBJ format does not natively support NURBS");
+                int nU = surface.ControlPoints.Length;
+                int nV = surface.ControlPoints[0].Length;
+                var knotsU = surface.KnotVectorU.Knots;
+                var knotsV = surface.KnotVectorV.Knots;
+                // Export control points as vertices
+                for (int i = 0; i < nU; i++)
+                {
+                    for (int j = 0; j < nV; j++)
+                    {
+                        var cp = surface.ControlPoints[i][j];                      
+                        await writer.WriteLineAsync($"v {cp.Position.X} {cp.Position.Y} {cp.Position.Z} {cp.Weight}");
+                    }
+                }
+                await writer.WriteLineAsync("cstype rat bspline");
+                await writer.WriteLineAsync($"deg {surface.DegreeU} {surface.DegreeV}");
+                await writer.WriteLineAsync($"surf {knotsU.First()} {knotsU.Last()} {knotsV.First()} {knotsV.Last()}");
+                // knotsUをスペース区切りで文字列化
+                string knotsUString = string.Join(" ", knotsU.Select(k => k.ToString("G6")));
+                await writer.WriteLineAsync($"param u {knotsUString}");
+                string knotsVString = string.Join(" ", knotsV.Select(k => k.ToString("G6")));
+                await writer.WriteLineAsync($"param v {knotsVString}");
+                await writer.WriteLineAsync("end");
+            }
+
+            return true;
+        }
     }
 }

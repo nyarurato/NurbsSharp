@@ -5,7 +5,7 @@ using NurbsSharp.Core;
 
 namespace NurbsSharp.Geometry
 {
-    public　class NurbsSurface
+    public　class NurbsSurface:IGeometry
     {
         public int DegreeU { get; set; }
         public int DegreeV { get; set; }

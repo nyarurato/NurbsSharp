@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Numerics;
 
 namespace NurbsSharp.Core
 {
+
     public class Vector3Double
     {
         private readonly double[] _values = new double[3];
@@ -21,6 +23,7 @@ namespace NurbsSharp.Core
             get => _values[2];
             set => _values[2] = value;
         }
+
         /// <summary>
         /// L2 norm
         /// </summary>
@@ -48,6 +51,13 @@ namespace NurbsSharp.Core
             double dy = Y - other.Y;
             double dz = Z - other.Z;
             return Math.Sqrt(dx * dx + dy * dy + dz * dz);
+        }
+        public Vector3Double Normalized()
+        {
+            double mag = magnitude;
+            if (mag == 0)
+                throw new InvalidOperationException("Cannot normalize a zero-length vector.");
+            return new Vector3Double(X / mag, Y / mag, Z / mag);
         }
 
         public static Vector3Double operator *(Vector3Double v, double scalar)

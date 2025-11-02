@@ -6,7 +6,7 @@ using NurbsSharp.Evaluation;
 
 namespace NurbsSharp.Geometry
 {
-    public class NurbsVolume
+    public class NurbsVolume:IGeometry
     {
         public int DegreeU { get; set; }
         public int DegreeV { get; set; }

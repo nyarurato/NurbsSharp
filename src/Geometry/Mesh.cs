@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NurbsSharp.Core;
 
-namespace NurbsSharp.Core
+namespace NurbsSharp.Geometry
 {
     /// <summary>
     /// Triangle Mesh Data Structure
     /// </summary>
-    public class Mesh
+    public class Mesh : IGeometry
     {
         public Vector3Double[] Vertices { get; set; }
         public int[] Indexes { get; set; }
