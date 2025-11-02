@@ -377,7 +377,7 @@ namespace UnitTests.Evaluation
         [Test]
         public void NurbsSurfaceTestB()
         {
-            // Bilinear NURBS surface (degree 2 in both directions)
+            // NURBS surface (degree 2 in both directions)
             int degreeU = 2;
             int degreeV = 2;
 
@@ -433,7 +433,7 @@ namespace UnitTests.Evaluation
         [Test]
         public void NurbsSurfaceTestC()
         {
-            // Bilinear NURBS surface (degree 3 in both directions)
+            // NURBS surface (degree 3 in both directions)
             int degreeU = 3;
             int degreeV = 3;
 
@@ -489,6 +489,108 @@ namespace UnitTests.Evaluation
                 var pt = SurfaceEvaluator.Evaluate(surface, u, v);
                 Console.WriteLine($"Evaluating at u={u}, v={v} expected={expected} pt={pt}");
 
+                Assert.That(expected.X, Is.EqualTo(pt.x).Within(0.000001));
+                Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.000001));
+                Assert.That(expected.Z, Is.EqualTo(pt.z).Within(0.000001));
+            }
+        }
+
+        [Test]
+        public void SurfaceAreaTestA()
+        {
+            // Bilinear NURBS surface (degree 1 in both directions)
+            // Rectangle 1x1 elevated to z=1.5
+            int degreeU = 1;
+            int degreeV = 1;
+            double[] knotsU = { 0, 0, 1, 1 };
+            double[] knotsV = { 0, 0, 1, 1 };
+            ControlPoint[][] controlPoints = new ControlPoint[2][];
+            controlPoints[0] = new ControlPoint[] {
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(1.0, 0.0, 0.0, 1)
+            };
+            controlPoints[1] = new ControlPoint[] {
+                new ControlPoint(0.0, 0.0, 1.5, 1),
+                new ControlPoint(1.0, 0.0, 1.5, 1)
+            };
+            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU), new KnotVector(knotsV), controlPoints);
+            double area = SurfaceEvaluator.SurfaceArea(surface,0,1,0,1,0.01);
+            Console.WriteLine($"Surface area: {area}");
+            Assert.That(area, Is.EqualTo(1.50).Within(0.000001));
+        }
+
+        [Test]
+        public void SurfaceAreaTestB()
+        {
+            // Bilinear NURBS surface (degree 1 in both directions)
+            // Rectangle 1x1 elevated same plane
+            int degreeU = 1;
+            int degreeV = 1;
+            double[] knotsU = { 0, 0, 1, 1 };
+            double[] knotsV = { 0, 0, 1, 1 };
+            ControlPoint[][] controlPoints = new ControlPoint[2][];
+            controlPoints[0] = new ControlPoint[] {
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(2.0, 1.0, 1.0, 1)
+            };
+            controlPoints[1] = new ControlPoint[] {
+                new ControlPoint(0.0, 2.0, 1.5, 1),
+                new ControlPoint(4.0, 6.0, 5, 1)
+            };
+            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU), new KnotVector(knotsV), controlPoints);
+            double area = SurfaceEvaluator.SurfaceArea(surface, 0, 1, 0, 1, 0.01);
+            Console.WriteLine($"Surface area: {area}");
+            Assert.That(area, Is.EqualTo(12.562345).Within(0.000001));
+        }
+
+        [Test]
+        public void NurbsVolumeTestA()
+        {
+            // Bilinear NURBS volue (degree 1 in both directions)
+            int degreeU = 1;
+            int degreeV = 1;
+            int degreeW = 1;
+
+            double[] knotsU = { 0, 0, 1, 1 };
+            double[] knotsV = { 0, 0, 1, 1 };
+            double[] knotsW = { 0, 0, 1, 1 };
+            ControlPoint[][][] controlPoints = new ControlPoint[2][][];
+            controlPoints[0] = new ControlPoint[2][];
+            controlPoints[0][0] = new ControlPoint[] {
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(1.0, 0.0, 1.0, 1)
+            };
+            controlPoints[0][1] = new ControlPoint[] {
+                new ControlPoint(0.0, 1.0, 0.5, 1),
+                new ControlPoint(1.0, 1.0, 1.5, 1)
+            };
+            controlPoints[1] = new ControlPoint[2][];
+            controlPoints[1][0] = new ControlPoint[] {
+                new ControlPoint(0.0, 0.0, 1.0, 1),
+                new ControlPoint(1.0, 0.0, 2.0, 1)
+            };
+            controlPoints[1][1] = new ControlPoint[] {
+                new ControlPoint(0.0, 1.0, 1.5, 1),
+                new ControlPoint(1.0, 1.0, 2.5, 1)
+            };
+            var volume = new NurbsVolume(degreeU, degreeV, degreeW, new KnotVector(knotsU), new KnotVector(knotsV), new KnotVector(knotsW), controlPoints);
+
+            var samples = new (double u, double v, double w, Vector3Double expected)[] {
+                (0.000, 0.000, 0.000, new Vector3Double(0.000000, 0.000000, 0.000000)),
+                (1.000, 0.000, 0.000, new Vector3Double(0.000000, 0.000000, 1.000000)),
+                (0.000, 1.000, 0.000, new Vector3Double(0.000000, 1.000000, 0.500000)),
+                (1.000, 1.000, 0.000, new Vector3Double(0.000000, 1.000000, 1.500000)),
+                (0.000, 0.000, 1.000, new Vector3Double(1.000000, 0.000000, 1.000000)),
+                (1.000, 0.000, 1.000, new Vector3Double(1.000000, 0.000000, 2.000000)),
+                (0.000, 1.000, 1.000, new Vector3Double(1.000000, 1.000000, 1.500000)),
+                (1.000, 1.000, 1.000, new Vector3Double(1.000000, 1.000000, 2.500000)),
+                (0.500, 0.500, 0.500, new Vector3Double(0.500000, 0.50000, 1.25000))
+            };
+
+            foreach (var (u, v, w, expected) in samples)
+            {
+                var pt = VolumeEvaluator.Evaluate(volume, u, v, w);
+                Console.WriteLine($"Evaluating at u={u}, v={v}, w={w} expected={expected} pt={pt}");
                 Assert.That(expected.X, Is.EqualTo(pt.x).Within(0.000001));
                 Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.000001));
                 Assert.That(expected.Z, Is.EqualTo(pt.z).Within(0.000001));

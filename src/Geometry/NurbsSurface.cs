@@ -40,5 +40,11 @@ namespace NurbsSharp.Geometry
                 throw new InvalidOperationException("Invalid NURBS surface: V knot vector length does not match control points and degree.");
             }
         }
+
+        public Vector3Double GetPos(double u, double v)
+        {
+            var pos = Evaluation.SurfaceEvaluator.Evaluate(this, u, v);
+            return new Vector3Double(pos.x, pos.y, pos.z);
+        }
     }
 }

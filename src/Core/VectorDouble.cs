@@ -21,6 +21,13 @@ namespace NurbsSharp.Core
             get => _values[2];
             set => _values[2] = value;
         }
+        /// <summary>
+        /// L2 norm
+        /// </summary>
+        public double magnitude
+        {
+            get => Math.Sqrt(X * X + Y * Y + Z * Z);
+        }
 
         public Vector3Double()
         {
@@ -57,6 +64,26 @@ namespace NurbsSharp.Core
         {
             return new Vector3Double(a.X + b.X, a.Y + b.Y, a.Z + b.Z);
         }
+
+        public static Vector3Double operator -(Vector3Double a, Vector3Double b)
+        {
+            return new Vector3Double(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
+        }
+
+        public static double Dot(Vector3Double a, Vector3Double b)
+        {
+            return a.X * b.X + a.Y * b.Y + a.Z * b.Z;
+        }
+
+        public static Vector3Double Cross(Vector3Double a, Vector3Double b)
+        {
+            return new Vector3Double(
+                a.Y * b.Z - a.Z * b.Y,
+                a.Z * b.X - a.X * b.Z,
+                a.X * b.Y - a.Y * b.X
+            );
+        }
+
         public override string ToString()
         {
             return $"({X}, {Y}, {Z})";
@@ -116,6 +143,11 @@ namespace NurbsSharp.Core
         public static Vector4Double operator +(Vector4Double a, Vector4Double b)
         {
             return new Vector4Double(a.X + b.X, a.Y + b.Y, a.Z + b.Z, a.W + b.W);
+        }
+
+        public static Vector4Double operator -(Vector4Double a, Vector4Double b)
+        {
+            return new Vector4Double(a.X - b.X, a.Y - b.Y, a.Z - b.Z, a.W - b.W);
         }
 
         public override string ToString()

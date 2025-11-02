@@ -110,6 +110,47 @@ namespace UnitTests.Core
             Assert.That(distance, Is.EqualTo(5.0));
         }
 
-        
+        [Test]
+        public void Vector3DoubleDotProductCheck()
+        {
+            Vector3Double v1 = new Vector3Double(1.0, 2.0, 3.0);
+            Vector3Double v2 = new Vector3Double(4.0, 5.0, 6.0);
+            double dot = Vector3Double.Dot(v1, v2);
+            // 1*4 + 2*5 + 3*6 = 4 + 10 + 18 = 32
+            Assert.That(dot, Is.EqualTo(32.0));
+
+            v1 = new Vector3Double(0, 0, 0);
+            v2 = new Vector3Double(0, 0, 0);
+            dot = Vector3Double.Dot(v1, v2);
+            // 0*0 + 0*0 + 0*0 = 0
+            Assert.That(dot, Is.EqualTo(0.0));
+
+            v1 = new Vector3Double(-1, -3.5, -5.5);
+            v2 = new Vector3Double(2, -2, 2);
+            dot = Vector3Double.Dot(v1, v2);
+            // -1*2 + -3.5*-2 + -5.5*2 = -2 + 7 - 11 = -6
+            Assert.That(dot, Is.EqualTo(-6.0));
+        }
+
+        [Test]
+        public void Vector3DoubleCrossProductCheck()
+        {
+            Vector3Double v1 = new Vector3Double(1.0, 2.0, 3.0);
+            Vector3Double v2 = new Vector3Double(4.0, 5.0, 6.0);
+            Vector3Double cross = Vector3Double.Cross(v1, v2);
+            // (2*6 - 3*5, 3*4 - 1*6, 1*5 - 2*4) = (-3, 6, -3)
+            Assert.That(cross.X, Is.EqualTo(-3.0));
+            Assert.That(cross.Y, Is.EqualTo(6.0));
+            Assert.That(cross.Z, Is.EqualTo(-3.0));
+
+            v1 = new Vector3Double(0, 0, 0);
+            v2 = new Vector3Double(0, 0, 0);
+            cross = Vector3Double.Cross(v1, v2);
+            // (0, 0, 0)
+            Assert.That(cross.X, Is.EqualTo(0.0));
+            Assert.That(cross.Y, Is.EqualTo(0.0));
+            Assert.That(cross.Z, Is.EqualTo(0.0));
+
+        }
     }
 }
