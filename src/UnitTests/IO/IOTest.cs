@@ -121,5 +121,109 @@ namespace UnitTests.IO
             Assert.That(File.Exists("test_output.obj"), Is.True);
         }
 
+        [Test]
+        public async Task OutputNurbsObjFile()
+        {
+            // Create a simple NURBS surface
+            int degreeU = 3;
+            int degreeV = 3;
+
+            double[] knotsU = { 0, 0, 0, 0, 1, 1, 1, 1 };
+            double[] knotsV = { 0, 0, 0, 0, 1, 1, 1, 1 };
+
+            KnotVector knotVectorU = new KnotVector(knotsU);
+            KnotVector knotVectorV = new KnotVector(knotsV);
+
+            ControlPoint[][] controlPoints = new ControlPoint[4][];
+            controlPoints[0] = new ControlPoint[] {
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(1.0, 0.0, 1.0, 1),
+                new ControlPoint(2.0, 0.0, 3.0, 1),
+                new ControlPoint(3.0, 0.0, 3.0, 1)
+
+            };
+            controlPoints[1] = new ControlPoint[] {
+                new ControlPoint(0.0, 1.0, 0.5, 1),
+                new ControlPoint(1.0, 1.0, 1.5, 1),
+                new ControlPoint(2.0, 1.0, 4.0, 1),
+                new ControlPoint(3.0, 1.0, 3.0, 1)
+
+            };
+            controlPoints[2] = new ControlPoint[] {
+                new ControlPoint(3.0, 1.0, 0.5, 1),
+                new ControlPoint(3.0, 1.0, 1.5, 1),
+                new ControlPoint(3.0, 1.0, 5.0, 1),
+                new ControlPoint(3.0, 1.0, 6.0, 1)
+
+            };
+            controlPoints[3] = new ControlPoint[] {
+                new ControlPoint(3.0, 2.0, 0.5, 1),
+                new ControlPoint(3.0, 2.0, 1.5, 1),
+                new ControlPoint(3.0, 2.0, 5.0, 1),
+                new ControlPoint(3.0, 2.0, 7.0, 1)
+
+            };
+            NurbsSurface nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
+            
+            using (FileStream fs = new FileStream("test_output_nurbs.obj", FileMode.Create, FileAccess.Write))
+            {
+                await OBJExporter.ExportAsync(nurbsSurface, fs);
+            }
+            Console.WriteLine($"OBJ file 'test_output_nurbs.obj' has been created. At Current :{Directory.GetCurrentDirectory()}");
+            Assert.That(File.Exists("test_output_nurbs.obj"), Is.True);
+        }
+
+        [Test]
+        public async Task STLExportTestA()
+        {
+            // Create a simple NURBS surface
+            int degreeU = 3;
+            int degreeV = 3;
+
+            double[] knotsU = { 0, 0, 0, 0, 1, 1, 1, 1 };
+            double[] knotsV = { 0, 0, 0, 0, 1, 1, 1, 1 };
+
+            KnotVector knotVectorU = new KnotVector(knotsU);
+            KnotVector knotVectorV = new KnotVector(knotsV);
+
+            ControlPoint[][] controlPoints = new ControlPoint[4][];
+            controlPoints[0] = new ControlPoint[] {
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(1.0, 0.0, 1.0, 1),
+                new ControlPoint(2.0, 0.0, 3.0, 1),
+                new ControlPoint(3.0, 0.0, 3.0, 1)
+
+            };
+            controlPoints[1] = new ControlPoint[] {
+                new ControlPoint(0.0, 1.0, 0.5, 1),
+                new ControlPoint(1.0, 1.0, 1.5, 1),
+                new ControlPoint(2.0, 1.0, 4.0, 1),
+                new ControlPoint(3.0, 1.0, 3.0, 1)
+
+            };
+            controlPoints[2] = new ControlPoint[] {
+                new ControlPoint(3.0, 1.0, 0.5, 1),
+                new ControlPoint(3.0, 1.0, 1.5, 1),
+                new ControlPoint(3.0, 1.0, 5.0, 1),
+                new ControlPoint(3.0, 1.0, 6.0, 1)
+
+            };
+            controlPoints[3] = new ControlPoint[] {
+                new ControlPoint(3.0, 2.0, 0.5, 1),
+                new ControlPoint(3.0, 2.0, 1.5, 1),
+                new ControlPoint(3.0, 2.0, 5.0, 1),
+                new ControlPoint(3.0, 2.0, 7.0, 1)
+
+            };
+            NurbsSurface nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
+            var mesh = SurfaceTessellator.Tessellate(nurbsSurface, 20, 20);
+            using (FileStream fs = new FileStream("test_output.stl", FileMode.Create, FileAccess.Write))
+            {
+                await STLExporter.ExportAsync(mesh, fs);
+            }
+            Console.WriteLine($"STL file 'test_output.stl' has been created. At Current :{Directory.GetCurrentDirectory()}");
+            Assert.That(File.Exists("test_output.stl"), Is.True);
+        }
+
     }
 }

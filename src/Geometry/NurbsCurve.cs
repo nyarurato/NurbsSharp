@@ -6,7 +6,7 @@ using NurbsSharp.Evaluation;
 
 namespace NurbsSharp.Geometry
 {
-    public class NurbsCurve
+    public class NurbsCurve:IGeometry
     {
         public int Degree { get; set; }
         public KnotVector KnotVector { get; set; }

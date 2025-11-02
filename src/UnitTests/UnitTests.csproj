@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\NurbsSharp.Lab.csproj" />
+    <ProjectReference Include="..\..\NurbsSharp.csproj" />
   </ItemGroup>
 
 </Project>
