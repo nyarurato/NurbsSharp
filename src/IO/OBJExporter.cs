@@ -86,7 +86,6 @@ namespace NurbsSharp.IO
                 await writer.WriteLineAsync("cstype rat bspline");
                 await writer.WriteLineAsync($"deg {surface.DegreeU} {surface.DegreeV}");
                 await writer.WriteLineAsync($"surf {knotsU.First()} {knotsU.Last()} {knotsV.First()} {knotsV.Last()}");
-                // knotsUをスペース区切りで文字列化
                 string knotsUString = string.Join(" ", knotsU.Select(k => k.ToString("G6")));
                 await writer.WriteLineAsync($"param u {knotsUString}");
                 string knotsVString = string.Join(" ", knotsV.Select(k => k.ToString("G6")));

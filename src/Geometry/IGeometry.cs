@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace NurbsSharp.Geometry
 {
+    /// <summary>
+    /// Interface for geometric entities
+    /// </summary>
     public interface IGeometry
     {
     }

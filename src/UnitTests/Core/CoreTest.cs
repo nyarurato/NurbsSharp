@@ -61,6 +61,31 @@ namespace UnitTests.Core
             Assert.That(9.0, Is.EqualTo(w4.Z));
             Assert.That(12.0, Is.EqualTo(w4.W));
 
+            // div
+            Vector3Double v5 = v2 / 2.0;
+            Assert.That(2.0, Is.EqualTo(v5.X));
+            Assert.That(2.5, Is.EqualTo(v5.Y));
+            Assert.That(3.0, Is.EqualTo(v5.Z));
+            //zero division check
+            Assert.Throws<DivideByZeroException>(() => { var v6 = v2 / 0.0; });
+
+            Vector4Double w5 = w2 / 2.0;
+            Assert.That(2.5, Is.EqualTo(w5.X));
+            Assert.That(3.0, Is.EqualTo(w5.Y));
+            Assert.That(3.5, Is.EqualTo(w5.Z));
+            Assert.That(4.0, Is.EqualTo(w5.W));
+
+            Vector3Double v6 = -v1;
+            Assert.That(-1.0, Is.EqualTo(v6.X));
+            Assert.That(-2.0, Is.EqualTo(v6.Y));
+            Assert.That(-3.0, Is.EqualTo(v6.Z));
+
+            Vector4Double w6 = -w1;
+            Assert.That(-1.0, Is.EqualTo(w6.X));
+            Assert.That(-2.0, Is.EqualTo(w6.Y));
+            Assert.That(-3.0, Is.EqualTo(w6.Z));
+            Assert.That(-4.0, Is.EqualTo(w6.W));
+
         }
 
 
@@ -151,6 +176,37 @@ namespace UnitTests.Core
             Assert.That(cross.Y, Is.EqualTo(0.0));
             Assert.That(cross.Z, Is.EqualTo(0.0));
 
+        }
+
+        [Test]
+        public void Vector3DoublMagnitudeCheck()
+        {
+            Vector3Double v = new Vector3Double(3.0, 4.0, 12.0);
+            double length = v.magnitude;
+            // sqrt(3^2 + 4^2 + 12^2) = sqrt(9 + 16 + 144) = sqrt(169) = 13
+            Assert.That(length, Is.EqualTo(13.0));
+
+            v = new Vector3Double(0.0, 0.0, 0.0);
+            length = v.magnitude;
+            // sqrt(0^2 + 0^2 + 0^2) = sqrt(0) = 0
+            Assert.That(length, Is.EqualTo(0.0));
+        }
+
+        [Test]
+        public void Vector3DoubleNormalizationCheck()
+        {
+            Vector3Double v = new Vector3Double(3.0, 4.0, 0.0);
+            Vector3Double normalized = v.normalized;
+            // Length should be 1
+            double length = Math.Sqrt(normalized.X * normalized.X + normalized.Y * normalized.Y + normalized.Z * normalized.Z);
+            Assert.That(length, Is.EqualTo(1.0).Within(0.000001));
+            // Components should be (0.6, 0.8, 0.0)
+            Assert.That(normalized.X, Is.EqualTo(0.6).Within(0.000001));
+            Assert.That(normalized.Y, Is.EqualTo(0.8).Within(0.000001));
+            Assert.That(normalized.Z, Is.EqualTo(0.0).Within(0.000001));
+
+            v = new Vector3Double(0.0, 0.0, 0.0);
+            Assert.Throws<InvalidOperationException>(() => _ =v.normalized);
         }
     }
 }

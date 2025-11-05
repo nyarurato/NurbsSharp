@@ -35,6 +35,16 @@ namespace NurbsSharp.Core
             get => Math.Sqrt(X * X + Y * Y + Z * Z);
         }
 
+        public Vector3Double normalized
+        {
+            get{ 
+                double mag = magnitude;
+                if (mag == 0)
+                    throw new InvalidOperationException("Cannot normalize a zero-length vector.");
+                return new Vector3Double(X / mag, Y / mag, Z / mag);
+            }
+        }
+
 
         public Vector3Double()
         {
@@ -56,13 +66,6 @@ namespace NurbsSharp.Core
             double dz = Z - other.Z;
             return Math.Sqrt(dx * dx + dy * dy + dz * dz);
         }
-        public Vector3Double Normalized()
-        {
-            double mag = magnitude;
-            if (mag == 0)
-                throw new InvalidOperationException("Cannot normalize a zero-length vector.");
-            return new Vector3Double(X / mag, Y / mag, Z / mag);
-        }
 
         public static Vector3Double operator *(Vector3Double v, double scalar)
         {
@@ -82,6 +85,18 @@ namespace NurbsSharp.Core
         public static Vector3Double operator -(Vector3Double a, Vector3Double b)
         {
             return new Vector3Double(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
+        }
+
+        public static Vector3Double operator -(Vector3Double v)
+        {
+            return new Vector3Double(-v.X, -v.Y, -v.Z);
+        }
+
+        public static Vector3Double operator /(Vector3Double v, double scalar)
+        {
+            if (scalar == 0)
+                throw new DivideByZeroException("Cannot divide by zero.");
+            return new Vector3Double(v.X / scalar, v.Y / scalar, v.Z / scalar);
         }
 
         public static double Dot(Vector3Double a, Vector3Double b)
@@ -166,6 +181,16 @@ namespace NurbsSharp.Core
         public static Vector4Double operator -(Vector4Double a, Vector4Double b)
         {
             return new Vector4Double(a.X - b.X, a.Y - b.Y, a.Z - b.Z, a.W - b.W);
+        }
+        public static Vector4Double operator -(Vector4Double v)
+        {
+            return new Vector4Double(-v.X, -v.Y, -v.Z, -v.W);
+        }
+        public static Vector4Double operator /(Vector4Double v, double scalar)
+        {
+            if (scalar == 0)
+                throw new DivideByZeroException("Cannot divide by zero.");
+            return new Vector4Double(v.X / scalar, v.Y / scalar, v.Z / scalar, v.W / scalar);
         }
 
         public override string ToString()
