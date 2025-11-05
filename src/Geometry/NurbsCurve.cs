@@ -45,7 +45,7 @@ namespace NurbsSharp.Geometry
             int m = KnotVector.Knots.Length;
             if (m != n + Degree + 1)
             {
-                throw new InvalidOperationException("Invalid NURBS curve: knot vector length does not match control points and degree.");
+                throw new InvalidOperationException($"Invalid NURBS curve: knot vector length does not match control points and degree. n{n} + p{Degree} + 1 != m{m}");
             }
         }
 
@@ -69,6 +69,11 @@ namespace NurbsSharp.Geometry
 
             double len = CurveEvaluator.CurveLength(this, start_u,end_u,epsilon );
             return len;
+        }
+
+        public override string ToString()
+        {
+            return $"NurbsCurve(Degree={Degree}, ControlPoints={ControlPoints.Length}, Knots={KnotVector.Length})";
         }
     }
 }

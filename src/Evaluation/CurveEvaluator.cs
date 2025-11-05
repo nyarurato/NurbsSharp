@@ -57,6 +57,62 @@ namespace NurbsSharp.Evaluation
             return (resultH.X / resultH.W, resultH.Y / resultH.W, resultH.Z / resultH.W);
         }
 
+        /// <summary>
+        /// (en) Evaluates the first derivative vector on the NURBS curve at the specified parameter u.
+        /// (ja) 指定したパラメータ u でNURBS曲線上の一階微分ベクトルを評価します。
+        /// </summary>
+        /// <param name="curve"></param>
+        /// <param name="u"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentException"></exception>
+        public static Vector3Double EvaluateFirstDerivative(NurbsCurve curve,double u)
+        {
+            if (curve == null)
+                throw new ArgumentNullException(nameof(curve));
+
+            int degree = curve.Degree;
+            if (degree < 2)
+                throw new ArgumentException("Curve degree must be at least 2 for derivative", nameof(curve));
+
+            var knots = curve.KnotVector.Knots;
+            var controlPoints = curve.ControlPoints;
+            if (controlPoints.Length < 2)
+                throw new ArgumentException("At least two control points are required", nameof(curve));
+
+            int n = controlPoints.Length - 1;
+            double denom = 0.0;
+            Vector3Double left, right;
+            double left_factor=0, right_factor=0;
+            double N = 0.0, dN=0;
+
+            left = new Vector3Double(0.0, 0.0, 0.0);
+            right = new Vector3Double(0.0, 0.0, 0.0);
+
+            // Compute the derivative control points
+            for (int i= 0; i <= n; i++)
+            {
+                N = BSplineBasisFunction(i, degree, u,knots);
+                dN = DerivativeBSplineBasisFunction(i, degree, u, knots);
+                denom += controlPoints[i].Weight * N;
+
+                left += controlPoints[i].Weight * controlPoints[i].Position * dN;//wPN'
+                left_factor += controlPoints[i].Weight * N;//wN
+
+                right += controlPoints[i].Weight * controlPoints[i].Position * N;//wPN
+                right_factor += controlPoints[i].Weight * dN;//wN'
+            }
+            
+            if(denom == 0)
+                return new Vector3Double(0.0,0.0,0.0);
+
+            Vector3Double result = (left*left_factor - right*right_factor)/(denom * denom);
+
+            return result;
+
+        }
+
+
         // TODO: Optimize using different numerical integration methods
         public static double CurveLength(NurbsCurve curve, double start_u, double end_u, double epsilon = 0.001)
         {

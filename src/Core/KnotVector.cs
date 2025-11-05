@@ -60,7 +60,17 @@ namespace NurbsSharp.Core
             return true;
         }
 
-        
+        public void Normalize()
+        {
+            double min = Knots[0];
+            double max = Knots[Knots.Length - 1];
+            double range = max - min;
+            if (range == 0)
+                throw new Exception("Cannot normalize knot vector with zero range.");
+            double[] normalizedKnots = Knots.Select(k => (k - min) / range).ToArray();
+        }
+
+
         public override string ToString()
         {
             return $"KnotVector[{Length}] {{ {string.Join(", ", Knots)} }}";

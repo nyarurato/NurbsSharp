@@ -25,6 +25,7 @@ namespace NurbsSharp.Geometry
         {
             Vertices = vertices ?? throw new ArgumentNullException(nameof(vertices));
             Indexes = indexes ?? throw new ArgumentNullException(nameof(indexes));
+            Validate();
         }
 
         bool Validate()

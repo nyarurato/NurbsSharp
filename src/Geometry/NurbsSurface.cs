@@ -50,5 +50,10 @@ namespace NurbsSharp.Geometry
             var pos = Evaluation.SurfaceEvaluator.Evaluate(this, u, v);
             return new Vector3Double(pos.x, pos.y, pos.z);
         }
+
+        public override string ToString()
+        {
+            return $"NurbsSurface(DegreeU={DegreeU}, DegreeV={DegreeV}, ControlPoints=({ControlPoints.Length} x {ControlPoints[0].Length}), KnotsU={KnotVectorU.Length}, KnotsV={KnotVectorV.Length})";
+        }
     }
 }

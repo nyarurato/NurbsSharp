@@ -8,8 +8,21 @@ using NurbsSharp.Geometry;
 
 namespace NurbsSharp.Tesselation
 {
+    /// <summary>
+    /// (en)Tessellator for NURBS curves
+    /// (ja)NURBS曲線のテッセレーター
+    /// </summary>
     public class CurveTessellator
     {
+        /// <summary>
+        /// (en)Tessellate NURBS curve into a list of points
+        /// (ja)NURBS曲線を点のリストに分割する
+        /// </summary>
+        /// <param name="curve"></param>
+        /// <param name="numPoints"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         public static List<Vector3Double> Tessellate(NurbsCurve curve, int numPoints)
         {
             if (curve == null)

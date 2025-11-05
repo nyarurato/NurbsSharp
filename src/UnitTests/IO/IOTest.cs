@@ -21,7 +21,7 @@ namespace UnitTests.IO
 
         [Test]
         public async Task OutputObj()
-        {             
+        {
             // Create a simple NURBS surface
             int degreeU = 1;
             int degreeV = 1;
@@ -49,7 +49,7 @@ namespace UnitTests.IO
                                  "f 1 4 2";
 
             NurbsSurface nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
-            var mesh = SurfaceTessellator.Tessellate(nurbsSurface,2,2);
+            var mesh = SurfaceTessellator.Tessellate(nurbsSurface, 2, 2);
 
             using (MemoryStream ms = new MemoryStream())
             {
@@ -163,7 +163,7 @@ namespace UnitTests.IO
 
             };
             NurbsSurface nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
-            
+
             using (FileStream fs = new FileStream("test_output_nurbs.obj", FileMode.Create, FileAccess.Write))
             {
                 await OBJExporter.ExportAsync(nurbsSurface, fs);
@@ -224,5 +224,33 @@ namespace UnitTests.IO
             Assert.That(File.Exists("test_output.stl"), Is.True);
         }
 
+        [Test]
+        public async Task STLExportTestB()
+        {
+            // Rectangular NURBS surface
+            int degreeU = 1;
+            int degreeV = 1;
+            double[] knotsU = { 0, 0, 1, 1 };
+            double[] knotsV = { 0, 0, 1, 1 };
+            ControlPoint[][] controlPoints = new ControlPoint[2][];
+            controlPoints[0] = new ControlPoint[] {
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(1.0, 0.0, 0.0, 1)
+            };
+            controlPoints[1] = new ControlPoint[] {
+                new ControlPoint(0.0, 0.0, 1.5, 1),
+                new ControlPoint(1.0, 0.0, 1.5, 1)
+            };
+            KnotVector knotVectorU = new KnotVector(knotsU);
+            KnotVector knotVectorV = new KnotVector(knotsV);
+            NurbsSurface nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
+            var mesh = SurfaceTessellator.Tessellate(nurbsSurface, 100, 100);
+            using (FileStream fs = new FileStream("test_outputB.stl", FileMode.Create, FileAccess.Write))
+            {
+                await STLExporter.ExportAsync(mesh, fs);
+            }
+            Console.WriteLine($"STL file 'test_outputB.stl' has been created. At Current :{Directory.GetCurrentDirectory()}");
+            Assert.That(File.Exists("test_outputB.stl"), Is.True);
+        }
     }
 }

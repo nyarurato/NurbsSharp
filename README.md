@@ -41,6 +41,7 @@ KnotVector knotVectorV = new KnotVector(knotsV);
 // Define control points [u][v]
 ControlPoint[][] controlPoints = new ControlPoint[4][];
 controlPoints[0] = new ControlPoint[] {
+    // (x, y, z, weight)
     new ControlPoint(0.0, 0.0, 0.0, 1),
     new ControlPoint(1.0, 0.0, 1.0, 1),
     new ControlPoint(2.0, 0.0, 3.0, 1),

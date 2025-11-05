@@ -14,35 +14,44 @@ namespace NurbsSharp.Tesselation
     /// </summary>
     public class SurfaceTessellator
     {
-        public static Mesh Tessellate(NurbsSurface surface,int PointsU,int PointsV)
+        /// <summary>
+        /// (en)Tessellate NURBS surface into triangle mesh
+        /// (ja)NURBSサーフェスを三角形メッシュにする
+        /// </summary>
+        /// <param name="surface"></param>
+        /// <param name="numPointsU"></param>
+        /// <param name="numPointsV"></param>
+        /// <returns></returns>
+        public static Mesh Tessellate(NurbsSurface surface,int numPointsU,int numPointsV)
         {
-            Vector3Double[] vertices = new Vector3Double[PointsU * PointsV];
-            int[] indexes = new int[(PointsU - 1) * (PointsV - 1) * 6];
+            Vector3Double[] vertices = new Vector3Double[numPointsU * numPointsV];
+            int[] indexes = new int[(numPointsU - 1) * (numPointsV - 1) * 6];
             double uStart = surface.KnotVectorU.Knots[surface.DegreeU];
             double uEnd = surface.KnotVectorU.Knots[surface.KnotVectorU.Knots.Length - surface.DegreeU - 1];
             double vStart = surface.KnotVectorV.Knots[surface.DegreeV];
             double vEnd = surface.KnotVectorV.Knots[surface.KnotVectorV.Knots.Length - surface.DegreeV - 1];
-            
-            for (int i = 0; i < PointsU; i++)
+
+            //TODO: Parallelize these loop
+            for (int i = 0; i < numPointsU; i++)
             {
-                double u = uStart + (uEnd - uStart) * i / (PointsU - 1);
-                for (int j = 0; j < PointsV; j++)
+                double u = uStart + (uEnd - uStart) * i / (numPointsU - 1);
+                for (int j = 0; j < numPointsV; j++)
                 {
-                    double v = vStart + (vEnd - vStart) * j / (PointsV - 1);
+                    double v = vStart + (vEnd - vStart) * j / (numPointsV - 1);
                     var point = surface.GetPos(u, v);
-                    vertices[i * PointsV + j] = point;
+                    vertices[i * numPointsV + j] = point;
                 }
             }
 
             int index = 0;
-            for (int i = 0; i < PointsU - 1; i++)
+            for (int i = 0; i < numPointsU - 1; i++)
             {
-                for (int j = 0; j < PointsV - 1; j++)
+                for (int j = 0; j < numPointsV - 1; j++)
                 {
-                    int v0 = i * PointsV + j;
-                    int v1 = (i + 1) * PointsV + j;
-                    int v2 = (i + 1) * PointsV + (j + 1);
-                    int v3 = i * PointsV + (j + 1);
+                    int v0 = i * numPointsV + j;
+                    int v1 = (i + 1) * numPointsV + j;
+                    int v2 = (i + 1) * numPointsV + (j + 1);
+                    int v3 = i * numPointsV + (j + 1);
                     // First triangle
                     indexes[index++] = v0;
                     indexes[index++] = v1;

@@ -54,7 +54,7 @@
         }
 
         /// <summary>
-        /// return (x/w, y/w, z/w, w)
+        /// return (x*w, y*w, z*w, w)
         /// </summary>
         public Vector4Double HomogeneousPosition
         {
