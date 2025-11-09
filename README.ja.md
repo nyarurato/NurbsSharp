@@ -1,21 +1,18 @@
 # NURBS Sharp
+NURBS Sharpは、.NETをターゲットとしたNURBS（非一様有理Bスプライン）曲線・サーフェスの計算ライブラリです。  
+標準ライブラリのみを用いて実装しています。
 
-NURBS Sharp is a NURBS (Non-Uniform Rational B-Spline) curve and surface computation library targeting .NET .  
-It is implemented using only the standard library.
+## 特長
 
-[Japanese Readme](./README.ja.md)
-
-## Features
-
-- Generation and evaluation of NURBS curves and surfaces  
-- Cross-platform support (.NET 8, .NET Standard 2.1)  
+- NURBS曲線・サーフェスの生成と評価
+- クロスプラットフォーム対応（.NET 8, .NET Standard 2.1）
 
 
-## Installation
+## インストール
 TODO
 
 
-## Usage
+## 使い方
 ```csharp
 using NurbsSharp.Core;
 using NurbsSharp.Geometry;
@@ -86,6 +83,6 @@ using (FileStream fs = new FileStream("test_output.stl", FileMode.Create, FileAc
 
 ```
 
-## License
+## ライセンス
 
 MIT License

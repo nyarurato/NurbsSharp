@@ -34,6 +34,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Folder Include="src\IO\IGES\Import\" />
 	  <Folder Include="src\Operation\" />
 	</ItemGroup>
 
