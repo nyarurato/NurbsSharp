@@ -1,4 +1,4 @@
-﻿using NurbsSharp.Core;
+using NurbsSharp.Core;
 using NurbsSharp.Geometry;
 using System;
 using System.Collections.Generic;

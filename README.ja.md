@@ -1,18 +1,18 @@
 # NURBS Sharp
-NURBS Sharp‚ÍA.NET‚ðƒ^[ƒQƒbƒg‚Æ‚µ‚½NURBSi”ñˆê—l—L—BƒXƒvƒ‰ƒCƒ“j‹ÈüEƒT[ƒtƒFƒX‚ÌŒvŽZƒ‰ƒCƒuƒ‰ƒŠ‚Å‚·B  
-•W€ƒ‰ƒCƒuƒ‰ƒŠ‚Ì‚Ý‚ð—p‚¢‚ÄŽÀ‘•‚µ‚Ä‚¢‚Ü‚·B
+NURBS Sharpã¯ã€.NETã‚’ã‚¿ãƒ¼ã‚²ãƒƒãƒˆã¨ã—ãŸNURBSï¼ˆéžä¸€æ§˜æœ‰ç†Bã‚¹ãƒ—ãƒ©ã‚¤ãƒ³ï¼‰æ›²ç·šãƒ»ã‚µãƒ¼ãƒ•ã‚§ã‚¹ã®è¨ˆç®—ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã§ã™ã€‚  
+æ¨™æº–ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã®ã¿ã‚’ç”¨ã„ã¦å®Ÿè£…ã—ã¦ã„ã¾ã™ã€‚
 
-## “Á’·
+## ç‰¹é•·
 
-- NURBS‹ÈüEƒT[ƒtƒFƒX‚Ì¶¬‚Æ•]‰¿
-- ƒNƒƒXƒvƒ‰ƒbƒgƒtƒH[ƒ€‘Î‰ži.NET 8, .NET Standard 2.1j
+- NURBSæ›²ç·šãƒ»ã‚µãƒ¼ãƒ•ã‚§ã‚¹ã®ç”Ÿæˆã¨è©•ä¾¡
+- ã‚¯ãƒ­ã‚¹ãƒ—ãƒ©ãƒƒãƒˆãƒ•ã‚©ãƒ¼ãƒ å¯¾å¿œï¼ˆ.NET 8, .NET Standard 2.1ï¼‰
 
 
-## ƒCƒ“ƒXƒg[ƒ‹
+## ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«
 TODO
 
 
-## Žg‚¢•û
+## ä½¿ã„æ–¹
 ```csharp
 using NurbsSharp.Core;
 using NurbsSharp.Geometry;
@@ -83,6 +83,6 @@ using (FileStream fs = new FileStream("test_output.stl", FileMode.Create, FileAc
 
 ```
 
-## ƒ‰ƒCƒZƒ“ƒX
+## ãƒ©ã‚¤ã‚»ãƒ³ã‚¹
 
 MIT License

@@ -1,4 +1,4 @@
-﻿using NurbsSharp.IO.IGES;
+using NurbsSharp.IO.IGES;
 using System;
 using System.Collections.Generic;
 using System.Linq;
