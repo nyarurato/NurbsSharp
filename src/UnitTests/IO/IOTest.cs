@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using NurbsSharp.Core;
 using NurbsSharp.Geometry;
 using NurbsSharp.IO;
+using NurbsSharp.IO.IGES;
 using NurbsSharp.Tesselation;
 
 namespace UnitTests.IO
@@ -251,6 +252,116 @@ namespace UnitTests.IO
             }
             Console.WriteLine($"STL file 'test_outputB.stl' has been created. At Current :{Directory.GetCurrentDirectory()}");
             Assert.That(File.Exists("test_outputB.stl"), Is.True);
+        }
+
+        [Test]
+        public async Task IgesExportTestA()
+        {
+            // Create a simple NURBS surface
+            int degreeU = 3;
+            int degreeV = 3;
+
+            double[] knotsU = { 0, 0, 0, 0, 1, 1, 1, 1 };
+            double[] knotsV = { 0, 0, 0, 0, 1, 1, 1, 1 };
+
+            KnotVector knotVectorU = new KnotVector(knotsU);
+            KnotVector knotVectorV = new KnotVector(knotsV);
+
+            ControlPoint[][] controlPoints = new ControlPoint[4][];
+            controlPoints[0] = new ControlPoint[] {
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(1.0, 0.0, 1.0, 1),
+                new ControlPoint(2.0, 0.0, 3.0, 1),
+                new ControlPoint(3.0, 0.0, 3.0, 1)
+
+            };
+            controlPoints[1] = new ControlPoint[] {
+                new ControlPoint(0.0, 1.0, 0.5, 1),
+                new ControlPoint(1.0, 1.0, 1.5, 1),
+                new ControlPoint(2.0, 1.0, 4.0, 1),
+                new ControlPoint(3.0, 1.0, 3.0, 1)
+
+            };
+            controlPoints[2] = new ControlPoint[] {
+                new ControlPoint(3.0, 1.0, 0.5, 1),
+                new ControlPoint(3.0, 1.0, 1.5, 1),
+                new ControlPoint(3.0, 1.0, 5.0, 1),
+                new ControlPoint(3.0, 1.0, 6.0, 1)
+
+            };
+            controlPoints[3] = new ControlPoint[] {
+                new ControlPoint(3.0, 2.0, 0.5, 1),
+                new ControlPoint(3.0, 2.0, 1.5, 1),
+                new ControlPoint(3.0, 2.0, 5.0, 1),
+                new ControlPoint(3.0, 2.0, 7.0, 1)
+
+            };
+            NurbsSurface nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
+
+            using (FileStream fs = new FileStream("test_output.igs", FileMode.Create, FileAccess.Write))
+            {
+                await IGESExporter.ExportAsync(nurbsSurface, fs);
+            }
+            Console.WriteLine($"STL file 'test_output.igs' has been created. At Current :{Directory.GetCurrentDirectory()}");
+            Assert.That(File.Exists("test_output.igs"), Is.True);
+        }
+    
+
+
+    [Test]
+        public async Task OutputIgesFileB()
+        {
+            // Create a simple NURBS surface
+            int degreeU = 3;
+            int degreeV = 3;
+            double[] knotsU = { 0, 0, 0, 0, 0.5,1, 1, 1, 1 };
+            double[] knotsV = { 0, 0, 0, 0, 0.5,1, 1, 1, 1 };
+            KnotVector knotVectorU = new KnotVector(knotsU);
+            KnotVector knotVectorV = new KnotVector(knotsV);
+            ControlPoint[][] controlPoints = new ControlPoint[5][];
+            controlPoints[0] = new ControlPoint[] {
+            new ControlPoint(0.0, 0.0, 0.0, 1),
+            new ControlPoint(1.0, 0.0, 0.0, 1),
+            new ControlPoint(2.0, 0.0, 0.0, 1),
+            new ControlPoint(3.0, 0.0, 0.0, 1),
+            new ControlPoint(4.0, 0.0, 0.0, 1)
+            };
+            controlPoints[1] = new ControlPoint[] {
+            new ControlPoint(0.0, 1.0, 0.5, 1),
+            new ControlPoint(1.0, 1.0, 1.5, 1),
+            new ControlPoint(2.0, 1.0, 4.0, 1),
+            new ControlPoint(3.0, 1.0, 3.0, 1),
+            new ControlPoint(4.0, 1.0, 2.5, 1)
+            };
+            controlPoints[2] = new ControlPoint[] {
+            new ControlPoint(0.0, 2.0, 0.5, 1),
+            new ControlPoint(1.0, 2.0, 1.5, 1),
+            new ControlPoint(2.0, 2.0, 5.0, 1),
+            new ControlPoint(3.0, 2.0, 6.0, 1),
+            new ControlPoint(4.0, 2.0, 7.0, 1)
+            };
+            controlPoints[3] = new ControlPoint[] {
+            new ControlPoint(0.0, 3.0, 0.5, 1),
+            new ControlPoint(1.5, 3.0, 1.5, 1),
+            new ControlPoint(2.5, 3.0, 5.0 ,1),
+            new ControlPoint(3.5, 3.0, 7.0, 1),
+            new ControlPoint(4.5, 3.0, 8.0, 1)
+            };
+            controlPoints[4] = new ControlPoint[] {
+            new ControlPoint(0.0, 2.0, 0.5, 1),
+            new ControlPoint(1.0, 2.0, 1.5, 1),
+            new ControlPoint(2.0, 2.0, 5.0, 1),
+            new ControlPoint(3.0, 2.0, 7.0, 1),
+            new ControlPoint(4.0, 2.0, 8.0, 1) 
+            };
+            NurbsSurface nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
+            using (FileStream fs = new FileStream("test_outputB.igs", FileMode.Create, FileAccess.Write))
+            {
+                await IGESExporter.ExportAsync(nurbsSurface, fs);
+            }
+            Console.WriteLine($"STL file 'test_outputB.igs' has been created. At Current :{Directory.GetCurrentDirectory()}");
+            Assert.That(File.Exists("test_outputB.igs"), Is.True);
+
         }
     }
 }

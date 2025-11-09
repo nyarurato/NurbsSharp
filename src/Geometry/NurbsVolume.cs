@@ -7,6 +7,7 @@ using NurbsSharp.Evaluation;
 namespace NurbsSharp.Geometry
 {
     /// <summary>
+    /// Experimental
     /// (en) NURBS volume
     /// (ja) NURBSボリューム
     /// </summary>

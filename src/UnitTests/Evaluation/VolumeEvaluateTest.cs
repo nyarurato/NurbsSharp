@@ -12,7 +12,7 @@ using NurbsSharp.Evaluation;
 namespace UnitTests.Evaluation
 {
     [TestFixture]
-    public class EvaluateTest
+    public class VolumeEvaluateTest
     {
       
 
