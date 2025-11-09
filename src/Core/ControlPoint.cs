@@ -1,4 +1,4 @@
-﻿namespace NurbsSharp.Core
+namespace NurbsSharp.Core
 {
     /// <summary>
     /// (en) Control point used in NURBS

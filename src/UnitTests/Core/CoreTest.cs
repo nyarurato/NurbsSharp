@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using NurbsSharp.Core;
 using NUnit.Framework;
