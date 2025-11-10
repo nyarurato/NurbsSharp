@@ -114,6 +114,16 @@ namespace NurbsSharp.Evaluation
 
 
         // TODO: Optimize using different numerical integration methods
+        /// <summary>
+        /// (en) Calc the length of the NURBS curve
+        /// (ja) NURBS曲線の長さを計算する
+        /// </summary>
+        /// <param name="curve"></param>
+        /// <param name="start_u"></param>
+        /// <param name="end_u"></param>
+        /// <param name="epsilon"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public static double CurveLength(NurbsCurve curve, double start_u, double end_u, double epsilon = 0.001)
         {
             if (curve == null)

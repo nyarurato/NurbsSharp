@@ -15,13 +15,38 @@ namespace NurbsSharp.IO.IGES
     public class IgesRationalBSplineSurface : IIgesExportEntity
     {
         private readonly NurbsSurface _surf;
-        public IgesRationalBSplineSurface(NurbsSurface surf) { _surf = surf; }
-
+        /// <summary>
+        /// Gets the entity type identifier.
+        /// </summary>
         public int EntityType => 128;
-        public string ShortName => "RationalBSplineSurface";
+        /// <summary>
+        /// Parameter Entity Data
+        /// </summary>
         public string[] ParameterData { get; private set; }
+        /// <summary>
+        /// Parameter Line Count
+        /// </summary>
         public int ParameterLineCount => ParameterData.Length;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="surf"></param>
+        public IgesRationalBSplineSurface(NurbsSurface surf)
+        {
+            _surf = surf;
+            ParameterData = Array.Empty<string>();
+        }
+
+        /// <summary>
+        /// (en) Generates the directory entry for the IGES.
+        /// (ja) IGESのディレクトリエントリを生成します。
+        /// </summary>
+        /// <param name="parameterPointer"></param>
+        /// <param name="parameterLineCount"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         public string[] GenerateDirectoryEntry(int parameterPointer, int parameterLineCount)
         {
             if (ParameterData.Length == 0)
@@ -40,6 +65,11 @@ namespace NurbsSharp.IO.IGES
             return new[] { s1, s2 };
         }
 
+        /// <summary>
+        /// (en) Generates the parameter data for the IGES Rational B-spline surface.
+        /// (ja) IGES Rational B-spline サーフェスのパラメータデータを生成します。
+        /// </summary>
+        /// <returns></returns>
         public string[] GenerateParameterData()
         {
             int D_pointer = 1; // placeholder

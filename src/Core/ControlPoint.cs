@@ -6,8 +6,13 @@ namespace NurbsSharp.Core
     /// </summary>
     public class ControlPoint
     {
-
+        /// <summary>
+        /// XYZ
+        /// </summary>
         public Vector3Double Position { get; set; }
+        /// <summary>
+        /// Control point weight
+        /// </summary>
         public double Weight { get; set; }
 
         /// <summary>

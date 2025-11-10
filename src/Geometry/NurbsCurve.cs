@@ -31,6 +31,13 @@ namespace NurbsSharp.Geometry
         /// </summary>
         public ControlPoint[] ControlPoints { get; set; }
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="degree"></param>
+        /// <param name="knotVector"></param>
+        /// <param name="controlPoints"></param>
+        /// <exception cref="ArgumentNullException"></exception>
         public NurbsCurve(int degree, KnotVector knotVector, ControlPoint[] controlPoints)
         {
             Degree = degree;
@@ -61,6 +68,11 @@ namespace NurbsSharp.Geometry
             return new Vector3Double(pos.x, pos.y, pos.z);
         }
 
+        /// <summary>
+        /// (en) Return the calulated length of the NURBS curve
+        /// (ja) NURBS曲線の計算された長さを返します
+        /// </summary>
+        /// <returns></returns>
         public double GetLength()
         {
             double start_u = KnotVector.Knots[0];
@@ -71,6 +83,10 @@ namespace NurbsSharp.Geometry
             return len;
         }
 
+        /// <summary>
+        /// Returns a string that represents the current object.
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             return $"NurbsCurve(Degree={Degree}, ControlPoints={ControlPoints.Length}, Knots={KnotVector.Length})";

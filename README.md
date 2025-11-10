@@ -12,7 +12,10 @@ It is implemented using only the standard library.
 
 
 ## Installation
-TODO
+You can install NURBS Sharp via NuGet Package Manager:
+```sh
+dotnet add package NurbsSharp
+```
 
 
 ## Usage
@@ -84,6 +87,17 @@ using (FileStream fs = new FileStream("test_output.stl", FileMode.Create, FileAc
 }
 
 
+```
+
+## Development
+### Build
+```sh
+dotnet build
+```
+
+### Test
+```sh
+dotnet test
 ```
 
 ## License

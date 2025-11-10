@@ -64,6 +64,18 @@ namespace NurbsSharp.Evaluation
 
         //TODO: Optimize using different numerical integration methods
         // not good for high curvature surface
+        /// <summary>
+        /// (en) Calc Area of the NURBS Surface
+        /// (ja) NURBSサーフェスの面積を計算します
+        /// </summary>
+        /// <param name="surface"></param>
+        /// <param name="start_u"></param>
+        /// <param name="end_u"></param>
+        /// <param name="start_v"></param>
+        /// <param name="end_v"></param>
+        /// <param name="epsilon"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public static double SurfaceArea(NurbsSurface surface, double start_u, double end_u, double start_v, double end_v, double epsilon = 0.01)
         {
             if (surface == null)

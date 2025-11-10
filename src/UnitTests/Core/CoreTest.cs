@@ -19,19 +19,19 @@ namespace UnitTests.Core
         public void Vector4DoubleCheck()
         {
             Vector4Double v = new Vector4Double(1.0, 2.0, 3.0, 4.0);
-            Assert.That(1.0, Is.EqualTo(v.X));
-            Assert.That(2.0, Is.EqualTo(v.Y));
-            Assert.That(3.0, Is.EqualTo(v.Z));
-            Assert.That(4.0, Is.EqualTo(v.W));
+            Assert.That(v.X, Is.EqualTo(1.0));
+            Assert.That(v.Y, Is.EqualTo(2.0));
+            Assert.That(v.Z, Is.EqualTo(3.0));
+            Assert.That(v.W, Is.EqualTo(4.0));
         }
 
         [Test]
         public void Vector3DoubleCheck()
         {
             Vector3Double v = new Vector3Double(1.0, 2.0, 3.0);
-            Assert.That(1.0, Is.EqualTo(v.X));
-            Assert.That(2.0, Is.EqualTo(v.Y));
-            Assert.That(3.0, Is.EqualTo(v.Z));
+            Assert.That(v.X, Is.EqualTo(1.0));
+            Assert.That(v.Y, Is.EqualTo(2.0));
+            Assert.That(v.Z, Is.EqualTo(3.0));
         }
 
         [Test]
@@ -40,51 +40,51 @@ namespace UnitTests.Core
             Vector3Double v1 = new Vector3Double(1.0, 2.0, 3.0);
             Vector3Double v2 = new Vector3Double(4.0, 5.0, 6.0);
             Vector3Double v3 = v1 + v2;
-            Assert.That(5.0, Is.EqualTo(v3.X));
-            Assert.That(7.0, Is.EqualTo(v3.Y));
-            Assert.That(9.0, Is.EqualTo(v3.Z));
+            Assert.That(v3.X, Is.EqualTo(5.0));
+            Assert.That(v3.Y, Is.EqualTo(7.0));
+            Assert.That(v3.Z, Is.EqualTo(9.0));
             Vector4Double w1 = new Vector4Double(1.0, 2.0, 3.0, 4.0);
             Vector4Double w2 = new Vector4Double(5.0, 6.0, 7.0, 8.0);
             Vector4Double w3 = w1 + w2;
-            Assert.That(6.0, Is.EqualTo(w3.X));
-            Assert.That(8.0, Is.EqualTo(w3.Y));
-            Assert.That(10.0, Is.EqualTo(w3.Z));
-            Assert.That(12.0, Is.EqualTo(w3.W));
+            Assert.That(w3.X, Is.EqualTo(6.0));
+            Assert.That(w3.Y, Is.EqualTo(8.0));
+            Assert.That(w3.Z, Is.EqualTo(10.0));
+            Assert.That(w3.W, Is.EqualTo(12.0));
             // Scalar multiplication
             Vector3Double v4 = v1 * 2.0;
-            Assert.That(2.0, Is.EqualTo(v4.X));
-            Assert.That(4.0, Is.EqualTo(v4.Y));
-            Assert.That(6.0, Is.EqualTo(v4.Z));
+            Assert.That(v4.X, Is.EqualTo(2.0));
+            Assert.That(v4.Y, Is.EqualTo(4.0));
+            Assert.That(v4.Z, Is.EqualTo(6.0));
             Vector4Double w4 = 3.0 * w1;
-            Assert.That(3.0, Is.EqualTo(w4.X));
-            Assert.That(6.0, Is.EqualTo(w4.Y));
-            Assert.That(9.0, Is.EqualTo(w4.Z));
-            Assert.That(12.0, Is.EqualTo(w4.W));
+            Assert.That(w4.X, Is.EqualTo(3.0));
+            Assert.That(w4.Y, Is.EqualTo(6.0));
+            Assert.That(w4.Z, Is.EqualTo(9.0));
+            Assert.That(w4.W, Is.EqualTo(12.0));
 
             // div
             Vector3Double v5 = v2 / 2.0;
-            Assert.That(2.0, Is.EqualTo(v5.X));
-            Assert.That(2.5, Is.EqualTo(v5.Y));
-            Assert.That(3.0, Is.EqualTo(v5.Z));
+            Assert.That(v5.X, Is.EqualTo(2.0));
+            Assert.That(v5.Y, Is.EqualTo(2.5));
+            Assert.That(v5.Z, Is.EqualTo(3.0));
             //zero division check
             Assert.Throws<DivideByZeroException>(() => { var v6 = v2 / 0.0; });
 
             Vector4Double w5 = w2 / 2.0;
-            Assert.That(2.5, Is.EqualTo(w5.X));
-            Assert.That(3.0, Is.EqualTo(w5.Y));
-            Assert.That(3.5, Is.EqualTo(w5.Z));
-            Assert.That(4.0, Is.EqualTo(w5.W));
+            Assert.That(w5.X, Is.EqualTo(2.5));
+            Assert.That(w5.Y, Is.EqualTo(3.0));
+            Assert.That(w5.Z, Is.EqualTo(3.5));
+            Assert.That(w5.W, Is.EqualTo(4.0));
 
             Vector3Double v6 = -v1;
-            Assert.That(-1.0, Is.EqualTo(v6.X));
-            Assert.That(-2.0, Is.EqualTo(v6.Y));
-            Assert.That(-3.0, Is.EqualTo(v6.Z));
+            Assert.That(v6.X, Is.EqualTo(-1.0));
+            Assert.That(v6.Y, Is.EqualTo(-2.0));
+            Assert.That(v6.Z, Is.EqualTo(-3.0));
 
             Vector4Double w6 = -w1;
-            Assert.That(-1.0, Is.EqualTo(w6.X));
-            Assert.That(-2.0, Is.EqualTo(w6.Y));
-            Assert.That(-3.0, Is.EqualTo(w6.Z));
-            Assert.That(-4.0, Is.EqualTo(w6.W));
+            Assert.That(w6.X, Is.EqualTo(-1.0));
+            Assert.That(w6.Y, Is.EqualTo(-2.0));
+            Assert.That(w6.Z, Is.EqualTo(-3.0));
+            Assert.That(w6.W, Is.EqualTo(-4.0));
 
         }
 
@@ -94,15 +94,15 @@ namespace UnitTests.Core
         public void ControlPointCheck()
         {
             ControlPoint cp = new ControlPoint(1.0, 2.0, 3.0, 4.0);
-            Assert.That(1.0, Is.EqualTo(cp.Position.X));
-            Assert.That(2.0, Is.EqualTo(cp.Position.Y));
-            Assert.That(3.0, Is.EqualTo(cp.Position.Z));
-            Assert.That(4.0, Is.EqualTo(cp.Weight));
+            Assert.That(cp.Position.X, Is.EqualTo(1.0));
+            Assert.That(cp.Position.Y, Is.EqualTo(2.0));
+            Assert.That(cp.Position.Z, Is.EqualTo(3.0));
+            Assert.That(cp.Weight, Is.EqualTo(4.0));
             Vector4Double hp = cp.HomogeneousPosition;
-            Assert.That(4.0, Is.EqualTo(hp.X));
-            Assert.That(8.0, Is.EqualTo(hp.Y));
-            Assert.That(12.0, Is.EqualTo(hp.Z));
-            Assert.That(4.0, Is.EqualTo(hp.W));
+            Assert.That(hp.X, Is.EqualTo(4.0));
+            Assert.That(hp.Y, Is.EqualTo(8.0));
+            Assert.That(hp.Z, Is.EqualTo(12.0));
+            Assert.That(hp.W, Is.EqualTo(4.0));
         }
 
         [Test]
@@ -110,20 +110,32 @@ namespace UnitTests.Core
         {
             double[] knots = { 0.0, 0.0, 0.0, 1.0, 1.0, 1.0 };
             KnotVector kv = new KnotVector(knots);
-            Assert.That(6, Is.EqualTo(kv.Knots.Length));
-            Assert.That(0.0, Is.EqualTo(kv.Knots[0]));
-            Assert.That(1.0, Is.EqualTo(kv.Knots[5]));
+            Assert.That(kv.Knots.Length, Is.EqualTo(6));
+            Assert.That(kv.Knots[0], Is.EqualTo(0.0));
+            Assert.That(kv.Knots[5], Is.EqualTo(1.0));
 
             KnotVector uniformKv = KnotVector.GetUniformKnot(6);
-            Assert.That(6, Is.EqualTo(uniformKv.Knots.Length));
-            Assert.That(0.0, Is.EqualTo(uniformKv.Knots[0]));
-            Assert.That(0.2, Is.EqualTo(uniformKv.Knots[1]));
-            Assert.That(0.4, Is.EqualTo(uniformKv.Knots[2]));
-            Assert.That(0.6, Is.EqualTo(uniformKv.Knots[3]));
-            Assert.That(0.8, Is.EqualTo(uniformKv.Knots[4]));
-            Assert.That(1.0, Is.EqualTo(uniformKv.Knots[5]));
+            Assert.That(uniformKv.Knots.Length, Is.EqualTo(6));
+            Assert.That(uniformKv.Knots[0], Is.EqualTo(0.0));
+            Assert.That(uniformKv.Knots[1], Is.EqualTo(0.2));
+            Assert.That(uniformKv.Knots[2], Is.EqualTo(0.4));
+            Assert.That(uniformKv.Knots[3], Is.EqualTo(0.6));
+            Assert.That(uniformKv.Knots[4], Is.EqualTo(0.8));
+            Assert.That(uniformKv.Knots[5], Is.EqualTo(1.0));
 
-
+            //normalize test
+            double[] knots2 = { 1.0, 2.0, 3.0, 3.5, 4.0, 5.0 };
+            KnotVector kv2 = new KnotVector(knots2);
+            kv2.Normalize();
+            Assert.That(kv2.Knots.Length, Is.EqualTo(6));
+            Assert.That(kv2.Knots[0], Is.EqualTo(0.0));
+            Assert.That(kv2.Knots[1], Is.EqualTo(0.25));
+            Assert.That(kv2.Knots[2], Is.EqualTo(0.5));
+            Assert.That(kv2.Knots[3], Is.EqualTo(0.625));
+            Assert.That(kv2.Knots[4], Is.EqualTo(0.75));
+            Assert.That(kv2.Knots[5], Is.EqualTo(1.0));
+            
+            
         }
         [Test]
         public void Vector3DoubleDistanceCheck()

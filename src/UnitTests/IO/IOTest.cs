@@ -59,7 +59,6 @@ namespace UnitTests.IO
                 using (StreamReader reader = new StreamReader(ms))
                 {
                     string objData = reader.ReadToEnd();
-                    Console.WriteLine(objData);
 
                     Assert.That(
                         objData.Replace("\r\n", "\n").Trim(['\r', '\n', ' ']),
@@ -328,31 +327,31 @@ namespace UnitTests.IO
             };
             controlPoints[1] = new ControlPoint[] {
             new ControlPoint(0.0, 1.0, 0.5, 1),
-            new ControlPoint(1.0, 1.0, 1.5, 1),
+            new ControlPoint(1.0, 1.0, -1.5, 1),
             new ControlPoint(2.0, 1.0, 4.0, 1),
-            new ControlPoint(3.0, 1.0, 3.0, 1),
-            new ControlPoint(4.0, 1.0, 2.5, 1)
+            new ControlPoint(3.0, 1.0, -3.0, 1),
+            new ControlPoint(4.0, 1.0, 0.5, 1)
             };
             controlPoints[2] = new ControlPoint[] {
-            new ControlPoint(0.0, 2.0, 0.5, 1),
-            new ControlPoint(1.0, 2.0, 1.5, 1),
-            new ControlPoint(2.0, 2.0, 5.0, 1),
-            new ControlPoint(3.0, 2.0, 6.0, 1),
-            new ControlPoint(4.0, 2.0, 7.0, 1)
+            new ControlPoint(0.0, 2.0, 1.5, 1),
+            new ControlPoint(1.0, 2.0, 2.5, 1),
+            new ControlPoint(2.0, 2.0, 3.5, 0.7),
+            new ControlPoint(3.0, 2.0, 3.0, 1),
+            new ControlPoint(4.0, 2.0, 0.0, 1)
             };
             controlPoints[3] = new ControlPoint[] {
             new ControlPoint(0.0, 3.0, 0.5, 1),
-            new ControlPoint(1.5, 3.0, 1.5, 1),
-            new ControlPoint(2.5, 3.0, 5.0 ,1),
-            new ControlPoint(3.5, 3.0, 7.0, 1),
-            new ControlPoint(4.5, 3.0, 8.0, 1)
+            new ControlPoint(1.5, 3.0, -1.5, 1),
+            new ControlPoint(2.5, 3.0, 2.0 ,1),
+            new ControlPoint(3.5, 3.0, -1.5, 1),
+            new ControlPoint(4.5, 3.0, -1.0, 1)
             };
             controlPoints[4] = new ControlPoint[] {
-            new ControlPoint(0.0, 2.0, 0.5, 1),
-            new ControlPoint(1.0, 2.0, 1.5, 1),
-            new ControlPoint(2.0, 2.0, 5.0, 1),
-            new ControlPoint(3.0, 2.0, 7.0, 1),
-            new ControlPoint(4.0, 2.0, 8.0, 1) 
+            new ControlPoint(0.0, 4.0, 0.5, 1),
+            new ControlPoint(1.0, 4.0, 0.5, 1),
+            new ControlPoint(2.0, 4.0, 0.0, 1),
+            new ControlPoint(3.0, 4.0, 0.0, 1),
+            new ControlPoint(4.0, 4.0, 0.0, 1) 
             };
             NurbsSurface nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
             using (FileStream fs = new FileStream("test_outputB.igs", FileMode.Create, FileAccess.Write))

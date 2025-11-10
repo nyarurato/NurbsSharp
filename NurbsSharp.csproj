@@ -1,14 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net8.0;netstandard2.1</TargetFrameworks>
+		<TargetFrameworks>net8.0;netstandard2.1;</TargetFrameworks>
 		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<VersionPrefix>0.0.1</VersionPrefix>
 		<VersionSuffix>beta</VersionSuffix>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-		<PackageReadmeFile></PackageReadmeFile>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">
@@ -36,6 +36,6 @@
 	<ItemGroup>
 	  <Folder Include="src\IO\IGES\Import\" />
 	  <Folder Include="src\Operation\" />
+    <None Include="README.md" Pack="true" PackagePath="" />
 	</ItemGroup>
-
 </Project>

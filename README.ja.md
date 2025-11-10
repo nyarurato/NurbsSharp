@@ -9,8 +9,10 @@ NURBS Sharpは、.NETをターゲットとしたNURBS（非一様有理Bスプ�
 
 
 ## インストール
-TODO
-
+NURBS SharpはNuGetパッケージマネージャーからインストールできます:
+```sh
+dotnet add package NurbsSharp
+```
 
 ## 使い方
 ```csharp
@@ -81,6 +83,17 @@ using (FileStream fs = new FileStream("test_output.stl", FileMode.Create, FileAc
 }
 
 
+```
+
+## Development
+### ビルド
+```sh
+dotnet build
+```
+
+### テスト
+```sh
+dotnet test
 ```
 
 ## ライセンス
