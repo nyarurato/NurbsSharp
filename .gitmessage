@@ -1,0 +1,13 @@
+# ## Commit Message Guidelines / コミットメッセージガイドライン
+#
+#  [type] : Subject
+#
+# - build: Changes to the build system / ビルドシステムまたは外部依存関係に影響を与える変更
+# - ci: Changes to CI files / CI 関連のファイルとスクリプトへの変更
+# - docs: Documentation only changes/ドキュメントのみの変更
+# - feat: A new feature/ 新機能
+# - fix: A bug fix/ バグ修正
+# - perf: A code change that improves performance/ パフォーマンスを向上させるコード変更
+# - refactor: A code change that neither fixes a bug nor adds a feature/ バグの修正も機能の追加も行わないコード変更
+# - test: Adding missing or correcting existing tests/ 不足しているテストの追加または既存のテストの修正
+# - chore: Changes to the build process/ 依存性のアップデートなど

@@ -1,0 +1,35 @@
+name: Build and and deploy nuget packages to Github Packages
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Deployment target"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+            - dev
+            - prod
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 8
+      - name: Restore
+        run: dotnet restore
+      - name: Test
+        run: dotnet test --no-restore
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+      - name: Pack
+        run: dotnet pack --no-build --configuration Release NurbsSharp
+      - name: Publish to GitHub Packages
+        run : dotnet nuget push ./NurbsSharp/bin/Release/*.nupkg --source "github" --api-key ${{ secrets.GITHUB_TOKEN }}
