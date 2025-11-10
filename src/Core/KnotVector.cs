@@ -6,21 +6,29 @@ using System;
 namespace NurbsSharp.Core
 {
     //TODO: Check KnotVector types
+    /*
     public enum KnotVectorType
     {
         UNIFORM,
         CLAMPED,
         CLOSED
     }
+    */
 
     /// <summary>
     /// (en) knot vector used in NURBS
     /// (ja) NURBSで使用されるノットベクトル
     /// </summary>
     public class KnotVector
-    {
-        public KnotVectorType Type { get; set; } = KnotVectorType.UNIFORM;//TODO: 対応未実装
+    {   //TODO: 対応未実装
+        //public KnotVectorType Type { get; set; } = KnotVectorType.UNIFORM;
+        /// <summary>
+        /// Knot vector like {0,0,0,0.5,0.5,1,1,1}
+        /// </summary>
         public double[] Knots { get; set; }
+        /// <summary>
+        /// Knot vector length
+        /// </summary>
         public int Length => Knots.Length;
 
         /// <summary>
@@ -60,6 +68,11 @@ namespace NurbsSharp.Core
             return true;
         }
 
+        /// <summary>
+        /// (en) Normalizes the knot vector to the range [0, 1]
+        /// (ja) ノットベクトルを [0, 1] の範囲に正規化
+        /// </summary>
+        /// <exception cref="Exception"></exception>
         public void Normalize()
         {
             double min = Knots[0];
@@ -68,9 +81,14 @@ namespace NurbsSharp.Core
             if (range == 0)
                 throw new Exception("Cannot normalize knot vector with zero range.");
             double[] normalizedKnots = Knots.Select(k => (k - min) / range).ToArray();
+            Knots = normalizedKnots;
+            Validate();
         }
 
-
+        /// <summary>
+        /// returns a string representation of the knot vector
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             return $"KnotVector[{Length}] {{ {string.Join(", ", Knots)} }}";

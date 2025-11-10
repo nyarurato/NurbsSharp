@@ -6,11 +6,12 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static System.Collections.Specialized.BitVector32;
 
 
 namespace NurbsSharp.IO.IGES
 {
+    //reference: https://wiki.eclipse.org/IGES_file_Specification
+
     /// <summary>
     /// IGESエクスポーター
     /// - 現状: NURBS（Rational B-spline curve: 126 / surface: 128）のエクスポートに限定
@@ -40,31 +41,31 @@ namespace NurbsSharp.IO.IGES
             int countS = 0, countG = 0, countD = 0, countP = 0;
 
 
-            // 1) Start セクション
+            // 1) Start Section
             countS = await WriteStartSection(iges, fileName, author);
 
-            // 2) Global セクション（簡易）
+            // 2) Global Section
             countG = await WriteGlobalSection(iges, fileName);
 
-            // 3) Directory / Parameter 用にエンティティ準備
+            // 3) Create Export Entities
             var entities = new List<IIgesExportEntity>
             {
                 new IgesRationalBSplineSurface(surface)
             };
 
-            //3.5 ) Directory / Parameter セクションの準備
+            //3.5 ) Prepare Directory / Parameter Section
             foreach (var e in entities)
             {
                 e.GenerateParameterData();
             }
 
-            // 4) Directory セクション（簡易フォーマット）
+            // 4) Directory Section
             countD = await WriteDirectorySection(iges, entities);
 
-            // 5) Parameter セクション（JAMA-IS で許容されるパラメータ表現を目指す）
+            // 5) Parameter Section
             countP = await WriteParameterSectionAsync(iges, entities);
 
-            // 6) Terminate セクション
+            // 6) Terminate Section
             WriteTerminateSection(iges, countS, countG, countD, countP);
 
             await writer.FlushAsync();
@@ -109,27 +110,25 @@ namespace NurbsSharp.IO.IGES
         }
 
         /// <summary>
-        /// Mesh のエクスポートは現時点で非対応（将来追加）
+        /// Export Mesh (Not Supported Yet) 
         /// </summary>
+        [Obsolete("IGES export:Export Mesh not support yet")]
         public static Task<bool> ExportAsync(Mesh mesh, Stream stream)
         {
-            throw new NotSupportedException("IGES export: Mesh を出力する機能は未実装です（将来対応予定）。");
+            throw new NotSupportedException("IGES export:Export Mesh not support yet");
         }
 
         private static async Task<int> WriteStartSection(IgesWriter w, string fileName, string author)
         {
 
-            // Sセクション: 説明的な一行（データ領域は1-72）
+            // S Section
             return await w.WriteRecordForS_G_TAsync("Start section - IGES export by " + author + " - " + fileName, 'S');
         }
 
         private static async Task<int> WriteGlobalSection(IgesWriter w, string fileName)
         {
             int countG = 0;
-            // Gセクション: 簡易グローバル情報
-            // パラメータ区切り文字: ',')
-            // レコード区切り文字: ';'
-            // データ領域には先頭の "G," を含めず、セクションコードは外側で付与する
+            // G Section
             countG += await w.WriteRecordForS_G_TAsync("1H,,1H;,10HNURBSSHARP,6HCSharp,4HRecv,4HData,16,38,06,38,13,", 'G');//Parm1-11
             countG += await w.WriteRecordForS_G_TAsync("10HNURBSSHARP,1.0,2,2HMM,1,,15H20250101.000000,1E-8,1E10,", 'G');//Parm12-20
             countG += await w.WriteRecordForS_G_TAsync("10HNURBSSHARP,6HCSharp,6,0;", 'G');//Parm21-24
@@ -138,7 +137,7 @@ namespace NurbsSharp.IO.IGES
 
         private static async Task<int> WriteDirectorySection(IgesWriter w, IEnumerable<IIgesExportEntity> entities)
         {
-            // 簡易 D セクション。各エンティティタイプとインデックスを列挙する。
+            // D section
             int idx = 1;
             int paramPointerIndex = 1;
             foreach (var e in entities)
@@ -156,15 +155,15 @@ namespace NurbsSharp.IO.IGES
 
         private static async Task<int> WriteParameterSectionAsync(IgesWriter w, IEnumerable<IIgesExportEntity> entities)
         {
-            // Pセクション: 各エンティティのパラメータデータ
-            // 各行のデータ領域は1-72。長いパラメータは72文字ごとに分割して複数レコードとして出力。
+            // P Section
+            // Data Column 1-72
             int idx = 1;
             foreach (var e in entities)
             {
                 foreach (var paramData in e.ParameterData)
                 {
                     
-                    await w.WriteRecordChunksAsync(paramData, 'P');
+                    await w.WriteRecordForPAsync(paramData, 'P');
                     idx++;
                 }
             }
@@ -177,10 +176,11 @@ namespace NurbsSharp.IO.IGES
             await w.WriteRecordForS_G_TAsync(record, 'T');
         }
 
-        
+
 
         /// <summary>
-        /// IGES 固定長レコード（80文字: 1-72 データ、73 section code (char)、74-80 seq number (7 chars)）を管理して書き出すヘルパー
+        /// (en) Helper class to manage and write IGES fixed-length records (80 characters: 1-72 data, 73 section code (char), 74-80 seq number (7 chars))
+        /// (ja)IGES 固定長レコード（80文字: 1-72 データ、73 section code (char)、74-80 seq number (7 chars)）を管理して書き出すヘルパー
         /// </summary>
         private class IgesWriter
         {
@@ -273,9 +273,9 @@ namespace NurbsSharp.IO.IGES
             /// <param name="fullData"></param>
             /// <param name="section"></param>
             /// <returns></returns>
-            public async Task WriteRecordChunksAsync(string fullData, char section)
+            public async Task WriteRecordForPAsync(string fullData, char section)
             {
-                // 明示的に非同期で72文字チャンクを書き出す（Pセクション用）
+                // For P section
                 foreach (var chunk in Split72(fullData))
                 {
                     string line = FormatRecordLine(chunk, section);

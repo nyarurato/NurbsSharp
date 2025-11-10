@@ -13,14 +13,32 @@ namespace NurbsSharp.Geometry
     /// </summary>
     public class Mesh : IGeometry
     {
+        /// <summary>
+        /// (en) Array of vertices
+        /// (ja) 頂点の配列
+        /// </summary>
         public Vector3Double[] Vertices { get; set; }
+        /// <summary>
+        /// (en) Array of triangle indexes (each consecutive 3 integers represent one triangle)
+        /// (ja) 三角形のインデックスの配列（連続する3つの整数が1つの三角形を表す）
+        /// </summary>
         public int[] Indexes { get; set; }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
         public Mesh()
         {
             Vertices = Array.Empty<Vector3Double>();
             Indexes = Array.Empty<int>();
         }
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <param name="indexes"></param>
+        /// <exception cref="ArgumentNullException"></exception>
         public Mesh(Vector3Double[] vertices, int[] indexes)
         {
             Vertices = vertices ?? throw new ArgumentNullException(nameof(vertices));

@@ -63,7 +63,6 @@ namespace UnitTests.Evaluation
             foreach (var (u, v, w, expected) in samples)
             {
                 var pt = VolumeEvaluator.Evaluate(volume, u, v, w);
-                Console.WriteLine($"Evaluating at u={u}, v={v}, w={w} expected={expected} pt={pt}");
                 Assert.That(expected.X, Is.EqualTo(pt.x).Within(0.000001));
                 Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.000001));
                 Assert.That(expected.Z, Is.EqualTo(pt.z).Within(0.000001));

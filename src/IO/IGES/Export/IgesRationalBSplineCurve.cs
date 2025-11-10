@@ -17,13 +17,33 @@ namespace NurbsSharp.IO.IGES
     public class IgesRationalBSplineCurve : IIgesExportEntity
     {
         private readonly NurbsCurve _curve;
-        public IgesRationalBSplineCurve(NurbsCurve curve) { _curve = curve; }
-
+        /// <summary>
+        /// Entity Type Identifier
+        /// </summary>
         public int EntityType => 126;
-        public string ShortName => "RationalBSplineCurve";
+        /// <summary>
+        /// Parameter Entity Data
+        /// </summary>
         public string[] ParameterData { get; private set; }
+        /// <summary>
+        /// Parameter Line Count
+        /// </summary>
         public int ParameterLineCount => ParameterData.Length;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="curve"></param>
+        public IgesRationalBSplineCurve(NurbsCurve curve) { 
+            _curve = curve; 
+            ParameterData = Array.Empty<string>();
+        }
+
+        /// <summary>
+        /// (en) Generates the parameter data for the IGES.
+        /// (ja) IGESのパラメータデータを生成します。
+        /// </summary>
+        /// <returns></returns>
         public string[] GenerateParameterData()
         {
             // IGES 126 (Rational B-spline curve) の主要フィールド（簡易）
@@ -41,6 +61,15 @@ namespace NurbsSharp.IO.IGES
 
         }
 
+        /// <summary>
+        /// (en) Generates the directory entry for the IGES.
+        /// (ja) IGESのディレクトリエントリを生成します。
+        /// </summary>
+        /// <param name="parameterPointer"></param>
+        /// <param name="parameterLineCount"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         public string[] GenerateDirectoryEntry(int parameterPointer, int parameterLineCount)
         {
             if (ParameterData.Length == 0)

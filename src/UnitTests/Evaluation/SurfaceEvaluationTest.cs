@@ -51,7 +51,6 @@ namespace UnitTests.Evaluation
             foreach (var (u, v, expected) in samples)
             {
                 var pt = SurfaceEvaluator.Evaluate(surface, u, v);
-                Console.WriteLine($"Evaluating at u={u}, v={v} expected={expected} pt={pt}");
 
                 Assert.That(expected.X, Is.EqualTo(pt.x).Within(0.000001));
                 Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.000001));
@@ -107,7 +106,6 @@ namespace UnitTests.Evaluation
             foreach (var (u, v, expected) in samples)
             {
                 var pt = SurfaceEvaluator.Evaluate(surface, u, v);
-                Console.WriteLine($"Evaluating at u={u}, v={v} expected={expected} pt={pt}");
 
                 Assert.That(expected.X, Is.EqualTo(pt.x).Within(0.000001));
                 Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.000001));
@@ -172,7 +170,6 @@ namespace UnitTests.Evaluation
             foreach (var (u, v, expected) in samples)
             {
                 var pt = SurfaceEvaluator.Evaluate(surface, u, v);
-                Console.WriteLine($"Evaluating at u={u}, v={v} expected={expected} pt={pt}");
 
                 Assert.That(expected.X, Is.EqualTo(pt.x).Within(0.000001));
                 Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.000001));
@@ -200,7 +197,6 @@ namespace UnitTests.Evaluation
             };
             var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU), new KnotVector(knotsV), controlPoints);
             double area = SurfaceEvaluator.SurfaceArea(surface, 0, 1, 0, 1, 0.01);
-            Console.WriteLine($"Surface area: {area}");
             Assert.That(area, Is.EqualTo(1.50).Within(0.000001));
         }
 
@@ -225,7 +221,6 @@ namespace UnitTests.Evaluation
             var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU), new KnotVector(knotsV), controlPoints);
 
             double area = SurfaceEvaluator.SurfaceArea(surface, 0, 1, 0, 1, 0.01);
-            Console.WriteLine($"Surface area: {area}");
             Assert.That(area, Is.EqualTo(10.05).Within(0.01));
         }
     }

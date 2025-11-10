@@ -47,7 +47,6 @@ namespace UnitTests.Evaluation
             foreach (var (u, expected) in samples)
             {
                 var pt = CurveEvaluator.Evaluate(curve, u);
-                Console.WriteLine($"Evaluating at u={u} expected={expected} pt={pt}");
 
                 Assert.That(expected.X, Is.EqualTo(pt.x).Within(0.000001));
                 Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.000001));
@@ -270,7 +269,6 @@ namespace UnitTests.Evaluation
             foreach (var (u, expected) in samples)
             {
                 var pt = CurveEvaluator.Evaluate(curve, u);
-                Console.WriteLine($"u={u} => pt=({pt.x}, {pt.y}, {pt.z})");
                 Assert.That(expected.X, Is.EqualTo(pt.x).Within(0.0001));
                 Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.0001));
                 Assert.That(expected.Z, Is.EqualTo(pt.z).Within(0.0001));
@@ -365,7 +363,6 @@ namespace UnitTests.Evaluation
             foreach (var (u, expected) in samples)
             {
                 var pt = CurveEvaluator.Evaluate(curve, u);
-                Console.WriteLine($"u={u}, pt=({pt.x}, {pt.y}, {pt.z})");
                 Assert.That(expected.X, Is.EqualTo(pt.x).Within(0.001));
                 Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.001));
                 Assert.That(expected.Z, Is.EqualTo(pt.z).Within(0.001));
@@ -402,13 +399,11 @@ namespace UnitTests.Evaluation
                 //finite difference approximation
                 var evalPt = CurveEvaluator.Evaluate(curve, u);
                 var evalPt2 = CurveEvaluator.Evaluate(curve, u+h);
-                //Console.WriteLine($"u={u}: evalPt=({evalPt.x}, {evalPt.y}, {evalPt.z}), evalPt2=({evalPt2.x}, {evalPt2.y}, {evalPt2.z})");
                 var evalDerivPt = new Vector3Double(
                     (evalPt2.x - evalPt.x)/h,
                     (evalPt2.y - evalPt.y)/h,
                     (evalPt2.z - evalPt.z)/h
                 );
-                Console.WriteLine($"u={u}: derivVal=({derivVal.X}, {derivVal.Y}, {derivVal.Z}) vs finite dif=({evalDerivPt.X}, {evalDerivPt.Y}, {evalDerivPt.Z})");
                 Assert.That(derivVal.X, Is.EqualTo(evalDerivPt.X).Within(0.001));
                 Assert.That(derivVal.Y, Is.EqualTo(evalDerivPt.Y).Within(0.001));
                 Assert.That(derivVal.Z, Is.EqualTo(evalDerivPt.Z).Within(0.001));
@@ -445,7 +440,6 @@ namespace UnitTests.Evaluation
                     (evalPt2.y - evalPt.y) / h,
                     (evalPt2.z - evalPt.z) / h
                 );
-                Console.WriteLine($"u={u}: derivVal=({derivVal.X}, {derivVal.Y}, {derivVal.Z}) vs finite dif=({evalDerivPt.X}, {evalDerivPt.Y}, {evalDerivPt.Z})");
                 Assert.That(derivVal.X, Is.EqualTo(evalDerivPt.X).Within(0.001));
                 Assert.That(derivVal.Y, Is.EqualTo(evalDerivPt.Y).Within(0.001));
                 Assert.That(derivVal.Z, Is.EqualTo(evalDerivPt.Z).Within(0.001));
