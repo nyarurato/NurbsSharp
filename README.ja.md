@@ -73,6 +73,9 @@ NurbsSurface nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knot
 // Evaluate a point on the surface at (u, v) = (0.5, 0.5)
 var point = nurbsSurface.GetPos(0.5, 0.5);
 
+// It show the evaluated point
+Console.WriteLine(point);
+
 // Make a mesh from the NURBS surface
 var mesh = SurfaceTessellator.Tessellate(nurbsSurface, 20, 20);
 
@@ -84,6 +87,9 @@ using (FileStream fs = new FileStream("test_output.stl", FileMode.Create, FileAc
 
 
 ```
+
+## ドキュメント
+API Docs: [https://nyarurato.github.io/NurbsSharp/](https://nyarurato.github.io/NurbsSharp/)
 
 ## Development
 ### ビルド
