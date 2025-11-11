@@ -4,7 +4,7 @@
 #
 # - build: Changes to the build system / ビルドシステムまたは外部依存関係に影響を与える変更
 # - ci: Changes to CI files / CI 関連のファイルとスクリプトへの変更
-# - docs: Documentation only changes/ドキュメントのみの変更
+# - doc: Documentation only changes/ドキュメントのみの変更
 # - feat: A new feature/ 新機能
 # - fix: A bug fix/ バグ修正
 # - perf: A code change that improves performance/ パフォーマンスを向上させるコード変更
