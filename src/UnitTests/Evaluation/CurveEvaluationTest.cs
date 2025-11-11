@@ -265,7 +265,7 @@ namespace UnitTests.Evaluation
                 (0.999, new Vector3Double(0.999984, -0.0056344, 0.00)),
                 (1.000, new Vector3Double(1.000000, 0.000000, 0.000000))
             };
-            
+
             foreach (var (u, expected) in samples)
             {
                 var pt = CurveEvaluator.Evaluate(curve, u);
@@ -273,7 +273,7 @@ namespace UnitTests.Evaluation
                 Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.0001));
                 Assert.That(expected.Z, Is.EqualTo(pt.z).Within(0.0001));
             }
-            
+
         }
 
         [Test]
@@ -369,7 +369,7 @@ namespace UnitTests.Evaluation
             }
         }
 
-        
+
         [Test]
         public void NurbsCurveDerivationTestA()
         {
@@ -395,20 +395,20 @@ namespace UnitTests.Evaluation
             const double h = 1e-10;
             foreach (var u in samplePoints)
             {
-                var derivVal = CurveEvaluator.EvaluateFirstDerivative(curve,u);
+                var derivVal = CurveEvaluator.EvaluateFirstDerivative(curve, u);
                 //finite difference approximation
                 var evalPt = CurveEvaluator.Evaluate(curve, u);
-                var evalPt2 = CurveEvaluator.Evaluate(curve, u+h);
+                var evalPt2 = CurveEvaluator.Evaluate(curve, u + h);
                 var evalDerivPt = new Vector3Double(
-                    (evalPt2.x - evalPt.x)/h,
-                    (evalPt2.y - evalPt.y)/h,
-                    (evalPt2.z - evalPt.z)/h
+                    (evalPt2.x - evalPt.x) / h,
+                    (evalPt2.y - evalPt.y) / h,
+                    (evalPt2.z - evalPt.z) / h
                 );
                 Assert.That(derivVal.X, Is.EqualTo(evalDerivPt.X).Within(0.001));
                 Assert.That(derivVal.Y, Is.EqualTo(evalDerivPt.Y).Within(0.001));
                 Assert.That(derivVal.Z, Is.EqualTo(evalDerivPt.Z).Within(0.001));
             }
-            
+
         }
 
         [Test]
@@ -446,6 +446,86 @@ namespace UnitTests.Evaluation
             }
         }
 
+        [Test]
+        public void NurbsCurveSecondDerivationTestA()
+        {
+            int degree = 3;
+            double[] knots = { 0, 0, 0, 0, 0.5, 0.5, 1, 1, 1, 1 };
+            ControlPoint[] controlPoints = {
+            new ControlPoint(0.0, 0.0, 0.0, 1),
+            new ControlPoint(1.0, 2.0, 0.0, 1),
+            new ControlPoint(2.0, 2.0, 0.0, 1),
+            new ControlPoint(3.0, 0.0, 0.0, 1),
+            new ControlPoint(4.0, 2.0, 0.0, 1),
+            new ControlPoint(5.0, 0.0, 0.0, 1)
+            };
+            var curve = new NurbsCurve(degree, new KnotVector(knots), controlPoints);
+            var samplePoints = new double[] { 0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99 };
+            const double h = 1e-6;
+            foreach (var u in samplePoints)
+            {
+                var derivVal = CurveEvaluator.EvaluateSecondDerivative(curve, u);
+                //finite difference approximation
+                var deriv1 = CurveEvaluator.EvaluateFirstDerivative(curve, u);
+                var deriv1b = CurveEvaluator.EvaluateFirstDerivative(curve, u + h);
+                var evalDeriv2Pt = new Vector3Double(
+                    (deriv1b.X - deriv1.X) / h,
+                    (deriv1b.Y - deriv1.Y) / h,
+                    (deriv1b.Z - deriv1.Z) / h
+                );
+                Assert.That(derivVal.X, Is.EqualTo(evalDeriv2Pt.X).Within(0.01));
+                Assert.That(derivVal.Y, Is.EqualTo(evalDeriv2Pt.Y).Within(0.01));
+                Assert.That(derivVal.Z, Is.EqualTo(evalDeriv2Pt.Z).Within(0.01));
+            }
+        }
 
+        [Test]
+        public void NurbsCurveSecondDerivationTestB()
+        {
+            // Circle R=2
+            int degree = 2;
+            double[] knots = { 0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1 };
+            ControlPoint[] controlPoints = {
+                new ControlPoint(2 ,  0, 0, 1),
+                new ControlPoint(2 ,  2, 0, 0.70710678),
+                new ControlPoint(0 ,  2, 0, 1),
+                new ControlPoint(-2,  2, 0, 0.70710678),
+                new ControlPoint(-2,  0, 0, 1),
+                new ControlPoint(-2, -2, 0, 0.70710678),
+                new ControlPoint(0 , -2, 0, 1),
+                new ControlPoint(2 , -2, 0, 0.70710678),
+                new ControlPoint(2 ,  0, 0, 1),
+            };
+            var curve = new NurbsCurve(degree, new KnotVector(knots), controlPoints);
+
+            var samplePoints = new double[] { 0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99 };
+            const double h = 1e-6;
+            bool isFirst = true;
+            double R = 2.0;
+            foreach (var u in samplePoints)
+            {
+                var point = CurveEvaluator.Evaluate(curve, u);
+                var derivVal = CurveEvaluator.EvaluateSecondDerivative(curve, u);
+                //finite difference approximation
+                var deriv1 = CurveEvaluator.EvaluateFirstDerivative(curve, u);
+                var deriv1b = CurveEvaluator.EvaluateFirstDerivative(curve, u + h);
+                var evalDeriv2Pt = new Vector3Double(
+                    (deriv1b.X - deriv1.X) / h,
+                    (deriv1b.Y - deriv1.Y) / h,
+                    (deriv1b.Z - deriv1.Z) / h
+                );
+                Assert.That(derivVal.X, Is.EqualTo(evalDeriv2Pt.X).Within(0.01));
+                Assert.That(derivVal.Y, Is.EqualTo(evalDeriv2Pt.Y).Within(0.01));
+                Assert.That(derivVal.Z, Is.EqualTo(evalDeriv2Pt.Z).Within(0.01));
+
+                // Curve curvature k = |r' x r''| / |r'|^3
+                var curvature_magnitude = Vector3Double.Cross(deriv1, derivVal).magnitude / Math.Pow(deriv1.magnitude, 3);
+
+                //Cirle is special case where second derivative can be computed exactly
+                Assert.That(curvature_magnitude, Is.EqualTo(1/R).Within(0.01));
+                
+            }
+
+        }
     }
 }
