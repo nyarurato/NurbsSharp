@@ -132,8 +132,8 @@ namespace NurbsSharp.Evaluation
             }
         }
         /// <summary>
-        /// (en) Derivative of Bspline basis function
-        /// (ja) Bspline基底関数の微分
+        /// (en) Derivative of Bspline basis function N'_{i,p}(u)
+        /// (ja) Bspline基底関数の微分 N'_{i,p}(u)
         /// </summary>
         /// <param name="i"></param>
         /// <param name="p"></param>
@@ -156,10 +156,45 @@ namespace NurbsSharp.Evaluation
                 double term1 = 0.0;
                 double term2 = 0.0;
                 if (denom1 != 0)
-                    term1 = p / denom1 * BSplineBasisFunction(i, p - 1, u, knots);
+                    term1 = p / denom1 * BSplineBasisFunction(i, p - 1, u, knots);// p/(u_{i+p} - u_i) * N_{i,p-1}(u)
                 if (denom2 != 0)
-                    term2 = -p / denom2 * BSplineBasisFunction(i + 1, p - 1, u, knots);
+                    term2 = -p / denom2 * BSplineBasisFunction(i + 1, p - 1, u, knots);//- p/(u_{i+p+1} - u_{i+1}) * N_{i+1,p-1}(u) 
                 return term1 + term2;
+            }
+        }
+
+        /// <summary>
+        /// (en) Derivative of Bspline basis function of given order
+        /// (ja) 指定した階数のBspline基底関数の微分
+        /// </summary>
+        /// <param name="i"></param>
+        /// <param name="p"></param>
+        /// <param name="u"></param>
+        /// <param name="knots"></param>
+        /// <param name="order"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        protected static double DerivativeBSplineBasisFunction(int i, int p, double u, double[] knots,int order=1)
+        {
+            if(order < 1)
+                throw new ArgumentOutOfRangeException(nameof(order), "Order must be at least 1.");
+            if(order ==1)
+                return DerivativeBSplineBasisFunction(i, p, u, knots);
+            else
+            {
+                // 2nd or higher order derivative
+                // Iteratively apply the derivative formula
+
+                double denom1 = knots[i + p] - knots[i];
+                double denom2 = knots[i + p + 1] - knots[i + 1];
+                double term1 = 0.0;
+                double term2 = 0.0;
+                if (denom1 != 0)
+                    term1 = p / denom1 * DerivativeBSplineBasisFunction(i, p - 1, u, knots, order - 1);
+                if (denom2 != 0)
+                    term2 = -p / denom2 * DerivativeBSplineBasisFunction(i + 1, p - 1, u, knots, order - 1);
+                return term1 + term2;
+
             }
         }
 

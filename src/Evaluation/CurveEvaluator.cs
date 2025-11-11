@@ -72,8 +72,8 @@ namespace NurbsSharp.Evaluation
                 throw new ArgumentNullException(nameof(curve));
 
             int degree = curve.Degree;
-            if (degree < 2)
-                throw new ArgumentException("Curve degree must be at least 2 for derivative", nameof(curve));
+            if (degree < 1)
+                throw new ArgumentException("Curve degree must be at least 1 for derivative", nameof(curve));
 
             var knots = curve.KnotVector.Knots;
             var controlPoints = curve.ControlPoints;
@@ -82,12 +82,12 @@ namespace NurbsSharp.Evaluation
 
             int n = controlPoints.Length - 1;
             double denom = 0.0;
-            Vector3Double left, right;
-            double left_factor=0, right_factor=0;
+            Vector3Double weightPosDerivSum, weightPosSum;//ΣwPN' and ΣwPN
+            double sumWeightBasis=0, sumWeightBasisDeriv=0;//ΣwN and ΣwN'
             double N = 0.0, dN=0;
 
-            left = new Vector3Double(0.0, 0.0, 0.0);
-            right = new Vector3Double(0.0, 0.0, 0.0);
+            weightPosDerivSum = new Vector3Double(0.0, 0.0, 0.0);
+            weightPosSum = new Vector3Double(0.0, 0.0, 0.0);
 
             // Compute the derivative control points
             for (int i= 0; i <= n; i++)
@@ -96,20 +96,66 @@ namespace NurbsSharp.Evaluation
                 dN = DerivativeBSplineBasisFunction(i, degree, u, knots);
                 denom += controlPoints[i].Weight * N;
 
-                left += controlPoints[i].Weight * controlPoints[i].Position * dN;//wPN'
-                left_factor += controlPoints[i].Weight * N;//wN
+                weightPosDerivSum += controlPoints[i].Weight * controlPoints[i].Position * dN;//wPN'
+                sumWeightBasis += controlPoints[i].Weight * N;//wN
 
-                right += controlPoints[i].Weight * controlPoints[i].Position * N;//wPN
-                right_factor += controlPoints[i].Weight * dN;//wN'
+                weightPosSum += controlPoints[i].Weight * controlPoints[i].Position * N;//wPN
+                sumWeightBasisDeriv += controlPoints[i].Weight * dN;//wN'
             }
             
             if(denom == 0)
                 return new Vector3Double(0.0,0.0,0.0);
 
-            Vector3Double result = (left*left_factor - right*right_factor)/(denom * denom);
+            Vector3Double result = (weightPosDerivSum*sumWeightBasis - weightPosSum*sumWeightBasisDeriv)/(denom * denom);
 
             return result;
 
+        }
+
+        /// <summary>
+        /// (en) Evaluates the second derivative vector on the NURBS curve at the specified parameter u.
+        /// (ja) 指定したパラメータ u でNURBS曲線上の二階微分ベクトルを評価します。
+        /// </summary>
+        /// <param name="curve"></param>
+        /// <param name="u"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentException"></exception>
+        public static Vector3Double EvaluateSecondDerivative(NurbsCurve curve, double u)
+        {
+            if (curve == null)
+                throw new ArgumentNullException(nameof(curve));
+            int degree = curve.Degree;
+            if (degree < 2)
+                throw new ArgumentException("Curve degree must be at least 2 for second derivative", nameof(curve));
+
+            var knots = curve.KnotVector.Knots;
+            var controlPoints = curve.ControlPoints;
+            if (controlPoints.Length < 2)
+                throw new ArgumentException("At least two control points are required", nameof(curve));
+            
+            int n = controlPoints.Length - 1;
+
+            Vector3Double A = new(), A_deriv = new(), A_deriv2 = new();
+            double W = 0.0, W_deriv= 0.0, W_deriv2 = 0.0;
+
+            // Compute the derivative control points
+            for (int i = 0; i <= n; i++) { 
+                var N = BSplineBasisFunction(i, degree, u, knots);
+                var dN = DerivativeBSplineBasisFunction(i, degree, u, knots);
+                var d2N = DerivativeBSplineBasisFunction(i, degree, u, knots, 2);
+
+                A += controlPoints[i].Weight * controlPoints[i].Position * N; // wP N
+                A_deriv += controlPoints[i].Weight * controlPoints[i].Position * dN; // wP N'
+                A_deriv2 += controlPoints[i].Weight * controlPoints[i].Position * d2N; // wP N''
+                W += controlPoints[i].Weight * N; // w N
+                W_deriv += controlPoints[i].Weight * dN; // w N'
+                W_deriv2 += controlPoints[i].Weight * d2N; // w N''
+            }
+            //C2 = (A'' * W^2 - 2 A' W W' - A W W'' + 2 A (W')^2) / (W^3)
+            Vector3Double secondDeriv = (A_deriv2 * W * W - 2 * A_deriv * W * W_deriv - A * W * W_deriv2 + 2 * A * W_deriv * W_deriv) / (W * W * W);
+
+            return secondDeriv;
         }
 
 
