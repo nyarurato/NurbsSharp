@@ -23,37 +23,29 @@ namespace NurbsSharp.Evaluation
         /// <exception cref="ArgumentOutOfRangeException"></exception>
         protected static int FindSpan(int degree, double[] knots, double u)
         {
-            int k = -1;
-            int s = 0; // multiplicity of u
-            if (u < knots[degree])
-            {
-                k = degree;
-            }
-            else
-            {
-                for (int i = degree; i < (knots.Length - 1); i++)
-                {
-                    if (u >= knots[i] && u < knots[i + 1])
-                    {
-                        k = i;
-                        break;
-                    }
-                    else if (u == knots[i + 1])
-                    {
-                        s++;
-                    }
-                }
-                if (u == knots[knots.Length - 1])
-                {
-                    k = knots.Length - s - 1;
-                }
-            }
+            // n: last control point index
+            int n = knots.Length - degree - 2;
+            if (n < 0)
+                throw new ArgumentOutOfRangeException(nameof(knots), "Invalid knot vector or degree.");
 
-            if (k == -1)
+            // Clamp to valid domain [U[p], U[n+1]] with robust end handling
+            if (u <= knots[degree]) return degree;
+            if (u >= knots[n + 1]) return n;
+
+            int low = degree;
+            int high = n + 1; // invariant: knots[low] <= u < knots[high]
+            int mid = (low + high) / 2;
+
+            while (u < knots[mid] || u >= knots[mid + 1])
             {
-                throw new ArgumentOutOfRangeException(nameof(u), "Parameter 'u' is out of the knot vector range.");
+                if (u < knots[mid])
+                    high = mid;
+                else
+                    low = mid;
+
+                mid = (low + high) / 2;
             }
-            return k;
+            return mid;
 
         }
 
@@ -87,7 +79,7 @@ namespace NurbsSharp.Evaluation
                 for (int j = p; j >= r; j--)
                 {
                     double alpha = 0;
-                    if (knots[span + 1 + j - r] != knots[span - p + j])
+                    if (LinAlg.ApproxNotEqual(knots[span + 1 + j - r], knots[span - p + j]))
                         alpha = (u - knots[span - p + j]) / (knots[span + 1 + j - r] - knots[span - p + j]);
                     d[j] = (1 - alpha) * d[j - 1] + alpha * d[j];
                 }
@@ -107,6 +99,15 @@ namespace NurbsSharp.Evaluation
         /// <returns></returns>
         protected static double BSplineBasisFunction(int i, int p, double u, double[] knots)
         {
+    
+            if (LinAlg.ApproxEqual(u, knots[knots.Length - 1]))
+            {
+                if(i == knots.Length - p - 2)
+                    return 1.0;
+                else
+                    return 0.0;
+            }
+
             /*
              * N_{i,0}(u) = { 1 if u_i <= u < u_{i+1}
              * N_{i,p}(u) = (u - u_i)/(u_{i+p} - u_i) * N_{i,p-1}(u) + (u_{i+p+1} - u)/(u_{i+p+1} - u_{i+1}) * N_{i+1,p-1}(u) 
@@ -124,16 +125,16 @@ namespace NurbsSharp.Evaluation
                 double denom2 = knots[i + p + 1] - knots[i + 1];
                 double term1 = 0.0;
                 double term2 = 0.0;
-                if (denom1 != 0)
+                if (LinAlg.IsNotZero(denom1))
                     term1 = (u - knots[i]) / denom1 * BSplineBasisFunction(i, p - 1, u, knots);
-                if (denom2 != 0)
+                if (LinAlg.IsNotZero(denom2))
                     term2 = (knots[i + p + 1] - u) / denom2 * BSplineBasisFunction(i + 1, p - 1, u, knots);
                 return term1 + term2;
             }
         }
         /// <summary>
-        /// (en) Derivative of Bspline basis function N'_{i,p}(u)
-        /// (ja) Bspline基底関数の微分 N'_{i,p}(u)
+        /// (en) First derivative of Bspline basis function N'_{i,p}(u)
+        /// (ja) Bspline基底関数の1階微分 N'_{i,p}(u)
         /// </summary>
         /// <param name="i"></param>
         /// <param name="p"></param>
@@ -155,9 +156,9 @@ namespace NurbsSharp.Evaluation
                 double denom2 = knots[i + p + 1] - knots[i + 1];
                 double term1 = 0.0;
                 double term2 = 0.0;
-                if (denom1 != 0)
+                if (LinAlg.IsNotZero(denom1))
                     term1 = p / denom1 * BSplineBasisFunction(i, p - 1, u, knots);// p/(u_{i+p} - u_i) * N_{i,p-1}(u)
-                if (denom2 != 0)
+                if (LinAlg.IsNotZero(denom2))
                     term2 = -p / denom2 * BSplineBasisFunction(i + 1, p - 1, u, knots);//- p/(u_{i+p+1} - u_{i+1}) * N_{i+1,p-1}(u) 
                 return term1 + term2;
             }
@@ -189,9 +190,9 @@ namespace NurbsSharp.Evaluation
                 double denom2 = knots[i + p + 1] - knots[i + 1];
                 double term1 = 0.0;
                 double term2 = 0.0;
-                if (denom1 != 0)
+                if (LinAlg.IsNotZero(denom1))
                     term1 = p / denom1 * DerivativeBSplineBasisFunction(i, p - 1, u, knots, order - 1);
-                if (denom2 != 0)
+                if (LinAlg.IsNotZero(denom2))
                     term2 = -p / denom2 * DerivativeBSplineBasisFunction(i + 1, p - 1, u, knots, order - 1);
                 return term1 + term2;
 

@@ -132,6 +132,106 @@ namespace NurbsSharp.Evaluation
             }
             return area;
         }
+
+
+        public static (Vector3Double u_deriv,Vector3Double v_deriv) EvaluateFirstDerivative(NurbsSurface surface, double u, double v)
+        {
+            if (surface == null)
+                throw new ArgumentNullException(nameof(surface));
+
+            int p = surface.DegreeU;
+            int q = surface.DegreeV;
+            if (p < 0 || q < 0)
+                throw new ArgumentException("Surface degrees must be non-negative.", nameof(surface));
+
+            var cps = surface.ControlPoints;
+            int nu = cps.Length;           // #CP in U
+            int nv = cps[0].Length;        // #CP in V
+
+            double[] U = surface.KnotVectorU.Knots;
+            double[] V = surface.KnotVectorV.Knots;
+
+            // 1) パラメータを有効ドメインにクランプ（最終ノットは半開区間対策で 1ULP 手前へ）
+            double umin = U[p];
+            double umax = U[U.Length - p - 1];
+            double vmin = V[q];
+            double vmax = V[V.Length - q - 1];
+
+            if (u < umin) u = umin;
+            if (u > umax) u = LinAlg.BitDecrement(umax);
+            if (v < vmin) v = vmin;
+            if (v > vmax) v = LinAlg.BitDecrement(vmax);
+
+            // 2) スパンを取得
+            int spanU = FindSpan(p, U, u);
+            int spanV = FindSpan(q, V, v);
+
+            int iu0 = spanU - p;
+            int iv0 = spanV - q;
+
+            // 3) 局所基底とその1階微分のみを計算
+            double[] Nu = new double[p + 1];
+            double[] Nu_d = new double[p + 1];
+            for (int k = 0; k <= p; k++)
+            {
+                int i = iu0 + k;
+                Nu[k]   = BSplineBasisFunction(i, p, u, U);
+                Nu_d[k] = DerivativeBSplineBasisFunction(i, p, u, U);
+            }
+
+            double[] Nv = new double[q + 1];
+            double[] Nv_d = new double[q + 1];
+            for (int l = 0; l <= q; l++)
+            {
+                int j = iv0 + l;
+                Nv[l]   = BSplineBasisFunction(j, q, v, V);
+                Nv_d[l] = DerivativeBSplineBasisFunction(j, q, v, V);
+            }
+
+            // 4) 重み付き和
+            Vector3Double A  = Vector3Double.Zero;
+            Vector3Double Au = Vector3Double.Zero;
+            Vector3Double Av = Vector3Double.Zero;
+            double W = 0.0, Wu = 0.0, Wv = 0.0;
+
+            for (int k = 0; k <= p; k++)
+            {
+                int i = iu0 + k;
+                for (int l = 0; l <= q; l++)
+                {
+                    int j = iv0 + l;
+
+                    ControlPoint cp = cps[i][j];
+                    double w = cp.Weight;
+                    Vector3Double Pw = cp.Position * w;
+
+                    double Nuv    = Nu[k]   * Nv[l];
+                    double Nu_dNv = Nu_d[k] * Nv[l];
+                    double NuNv_d = Nu[k]   * Nv_d[l];
+
+                    A  += Pw * Nuv;
+                    W  += w  * Nuv;
+
+                    Au += Pw * Nu_dNv;
+                    Wu += w  * Nu_dNv;
+
+                    Av += Pw * NuNv_d;
+                    Wv += w  * NuNv_d;
+                }
+            }
+
+            Console.WriteLine($"Final A{A} , W{W}");
+
+            if (W == 0.0)
+                throw new DivideByZeroException("The weight function evaluated to zero.");
+                //return (Vector3Double.Zero,Vector3Double.Zero);
+
+            var resultU = (Au * W - A * Wu) / (W * W);
+            
+            var resultV = (Av * W - A * Wv) / (W * W);
+
+            return (resultU,resultV);
+        }
     }
 
 }

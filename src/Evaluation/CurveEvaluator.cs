@@ -68,6 +68,7 @@ namespace NurbsSharp.Evaluation
         /// <exception cref="ArgumentException"></exception>
         public static Vector3Double EvaluateFirstDerivative(NurbsCurve curve,double u)
         {
+            //TODO: Optimize Deboor-based derivative evaluation
             if (curve == null)
                 throw new ArgumentNullException(nameof(curve));
 
