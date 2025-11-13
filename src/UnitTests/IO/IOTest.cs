@@ -26,8 +26,8 @@ namespace UnitTests.IO
             // Create a simple NURBS surface
             int degreeU = 1;
             int degreeV = 1;
-            KnotVector knotVectorU = new KnotVector(new double[] { 0, 0, 1, 1 });
-            KnotVector knotVectorV = new KnotVector(new double[] { 0, 0, 1, 1 });
+            KnotVector knotVectorU = new KnotVector(new double[] { 0, 0, 1, 1 },degreeU);
+            KnotVector knotVectorV = new KnotVector(new double[] { 0, 0, 1, 1 },degreeV);
             ControlPoint[][] controlPoints = new ControlPoint[][]
             {
                 new ControlPoint[]
@@ -78,8 +78,8 @@ namespace UnitTests.IO
             double[] knotsU = { 0, 0, 0, 0, 1, 1, 1, 1 };
             double[] knotsV = { 0, 0, 0, 0, 1, 1, 1, 1 };
 
-            KnotVector knotVectorU = new KnotVector(knotsU);
-            KnotVector knotVectorV = new KnotVector(knotsV);
+            KnotVector knotVectorU = new KnotVector(knotsU,degreeU);
+            KnotVector knotVectorV = new KnotVector(knotsV,degreeV);
 
             ControlPoint[][] controlPoints = new ControlPoint[4][];
             controlPoints[0] = new ControlPoint[] {
@@ -130,8 +130,8 @@ namespace UnitTests.IO
             double[] knotsU = { 0, 0, 0, 0, 1, 1, 1, 1 };
             double[] knotsV = { 0, 0, 0, 0, 1, 1, 1, 1 };
 
-            KnotVector knotVectorU = new KnotVector(knotsU);
-            KnotVector knotVectorV = new KnotVector(knotsV);
+            KnotVector knotVectorU = new KnotVector(knotsU, degreeU);
+            KnotVector knotVectorV = new KnotVector(knotsV, degreeV);
 
             ControlPoint[][] controlPoints = new ControlPoint[4][];
             controlPoints[0] = new ControlPoint[] {
@@ -182,8 +182,8 @@ namespace UnitTests.IO
             double[] knotsU = { 0, 0, 0, 0, 1, 1, 1, 1 };
             double[] knotsV = { 0, 0, 0, 0, 1, 1, 1, 1 };
 
-            KnotVector knotVectorU = new KnotVector(knotsU);
-            KnotVector knotVectorV = new KnotVector(knotsV);
+            KnotVector knotVectorU = new KnotVector(knotsU, degreeU);
+            KnotVector knotVectorV = new KnotVector(knotsV, degreeV);
 
             ControlPoint[][] controlPoints = new ControlPoint[4][];
             controlPoints[0] = new ControlPoint[] {
@@ -241,8 +241,8 @@ namespace UnitTests.IO
                 new ControlPoint(0.0, 0.0, 1.5, 1),
                 new ControlPoint(1.0, 0.0, 1.5, 1)
             };
-            KnotVector knotVectorU = new KnotVector(knotsU);
-            KnotVector knotVectorV = new KnotVector(knotsV);
+            KnotVector knotVectorU = new KnotVector(knotsU, degreeU);
+            KnotVector knotVectorV = new KnotVector(knotsV, degreeV);
             NurbsSurface nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
             var mesh = SurfaceTessellator.Tessellate(nurbsSurface, 100, 100);
             using (FileStream fs = new FileStream("test_outputB.stl", FileMode.Create, FileAccess.Write))
@@ -263,8 +263,8 @@ namespace UnitTests.IO
             double[] knotsU = { 0, 0, 0, 0, 1, 1, 1, 1 };
             double[] knotsV = { 0, 0, 0, 0, 1, 1, 1, 1 };
 
-            KnotVector knotVectorU = new KnotVector(knotsU);
-            KnotVector knotVectorV = new KnotVector(knotsV);
+            KnotVector knotVectorU = new KnotVector(knotsU, degreeU);
+            KnotVector knotVectorV = new KnotVector(knotsV, degreeV);
 
             ControlPoint[][] controlPoints = new ControlPoint[4][];
             controlPoints[0] = new ControlPoint[] {
@@ -315,8 +315,8 @@ namespace UnitTests.IO
             int degreeV = 3;
             double[] knotsU = { 0, 0, 0, 0, 0.5,1, 1, 1, 1 };
             double[] knotsV = { 0, 0, 0, 0, 0.5,1, 1, 1, 1 };
-            KnotVector knotVectorU = new KnotVector(knotsU);
-            KnotVector knotVectorV = new KnotVector(knotsV);
+            KnotVector knotVectorU = new KnotVector(knotsU, degreeU);
+            KnotVector knotVectorV = new KnotVector(knotsV, degreeV);
             ControlPoint[][] controlPoints = new ControlPoint[5][];
             controlPoints[0] = new ControlPoint[] {
             new ControlPoint(0.0, 0.0, 0.0, 1),

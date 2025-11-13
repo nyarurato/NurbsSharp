@@ -46,7 +46,7 @@ namespace UnitTests.Evaluation
                 new ControlPoint(0.0, 1.0, 1.5, 1),
                 new ControlPoint(1.0, 1.0, 2.5, 1)
             };
-            var volume = new NurbsVolume(degreeU, degreeV, degreeW, new KnotVector(knotsU), new KnotVector(knotsV), new KnotVector(knotsW), controlPoints);
+            var volume = new NurbsVolume(degreeU, degreeV, degreeW, new KnotVector(knotsU,degreeU), new KnotVector(knotsV,degreeV), new KnotVector(knotsW,degreeW), controlPoints);
 
             var samples = new (double u, double v, double w, Vector3Double expected)[] {
                 (0.000, 0.000, 0.000, new Vector3Double(0.000000, 0.000000, 0.000000)),

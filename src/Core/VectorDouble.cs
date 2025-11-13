@@ -51,6 +51,8 @@ namespace NurbsSharp.Core
             }
         }
 
+        public static Vector3Double Zero => new Vector3Double(0.0, 0.0, 0.0);
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -86,6 +88,16 @@ namespace NurbsSharp.Core
             return Math.Sqrt(dx * dx + dy * dy + dz * dz);
         }
 
+        /// <summary>
+        /// (en) Convert to System.Numerics.Vector3
+        /// (ja) System.Numerics.Vector3 に変換する
+        /// </summary>
+        /// <returns></returns>
+        public Vector3 ToVector3()
+        {
+            return new Vector3((float)X, (float)Y, (float)Z);
+        }
+
         public static Vector3Double operator *(Vector3Double v, double scalar)
         {
             return new Vector3Double(v.X * scalar, v.Y * scalar, v.Z * scalar);
@@ -116,6 +128,11 @@ namespace NurbsSharp.Core
             if (scalar == 0)
                 throw new DivideByZeroException("Cannot divide by zero.");
             return new Vector3Double(v.X / scalar, v.Y / scalar, v.Z / scalar);
+        }
+
+        public static explicit operator Vector3(Vector3Double v)
+        {
+            return v.ToVector3();
         }
 
         /// <summary>

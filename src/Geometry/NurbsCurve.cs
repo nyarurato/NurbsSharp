@@ -16,14 +16,14 @@ namespace NurbsSharp.Geometry
         /// (en) Degree of the NURBS curve
         /// (ja) NURBS曲線の次数
         /// </summary>
-        public int Degree { get; set; }
+        public int Degree { get; private set; }
 
         /// <summary>
         /// (en) Knot vector of the NURBS curve
         /// (ja) NURBS曲線のノットベクトル
         /// </summary>
 
-        public KnotVector KnotVector { get; set; }
+        public KnotVector KnotVector { get; private set; }
 
         /// <summary>
         /// (en) Control points of the NURBS curve
@@ -50,6 +50,15 @@ namespace NurbsSharp.Geometry
         {
             int n = ControlPoints.Length;
             int m = KnotVector.Knots.Length;
+
+            if(n == 0)
+            {
+                throw new InvalidOperationException("Invalid NURBS curve: no control points defined.");
+            }
+            if (n < Degree + 1)
+            {
+                throw new InvalidOperationException($"Invalid NURBS curve: not enough control points for the given degree. ControlPoints{n} < Degree{Degree} + 1");
+            }
             if (m != n + Degree + 1)
             {
                 throw new InvalidOperationException($"Invalid NURBS curve: knot vector length does not match control points and degree. n{n} + p{Degree} + 1 != m{m}");

@@ -14,21 +14,26 @@ namespace NurbsSharp.Geometry
         /// <summary>
         /// Degree in U direction
         /// </summary>
-        public int DegreeU { get; set; }
+        public int DegreeU { get; private set; }
         /// <summary>
         /// Degree in V direction
         /// </summary>
-        public int DegreeV { get; set; }
+        public int DegreeV { get; private set; }
         /// <summary>
         /// Knot vector in U direction
         /// </summary>
-        public KnotVector KnotVectorU { get; set; }
+        public KnotVector KnotVectorU { get; private set; }
         /// <summary>
         /// Knot vector in V direction
         /// </summary>
-        public KnotVector KnotVectorV { get; set; }
+        public KnotVector KnotVectorV { get; private set; }
         /// <summary>
-        /// Control points grid [U][V]
+        /// Control points grid [U][V]  <br/>
+        ///     V direction ->          <br/>
+        /// U [[CP00, CP01, CP02, ...], <br/>
+        /// d  [CP10, CP11, CP12, ...], <br/>
+        /// i  [CP20, CP21, CP22, ...], <br/>
+        /// r  [...   ...   ...  ...]] 
         /// </summary>
         public ControlPoint[][] ControlPoints { get; set; }
 
@@ -57,6 +62,20 @@ namespace NurbsSharp.Geometry
             int nV = ControlPoints[0].Length;
             int mU = KnotVectorU.Knots.Length;
             int mV = KnotVectorV.Knots.Length;
+
+            if(nU == 0 || nV == 0)
+            {
+                throw new InvalidOperationException("Invalid NURBS surface: Control points grid is empty.");
+            }
+
+            if(nU < DegreeU + 1)
+            {
+                throw new InvalidOperationException("Invalid NURBS surface: Not enough control points in U direction for the given degree.");
+            }
+            if(nV < DegreeV + 1)
+            {
+                throw new InvalidOperationException("Invalid NURBS surface: Not enough control points in V direction for the given degree.");
+            }
 
             if (mU != nU + DegreeU + 1)
             {
