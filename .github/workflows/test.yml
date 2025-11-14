@@ -1,0 +1,25 @@
+name: Tests
+on:
+  workflow_call:
+    inputs:
+      configuration:
+        required: false
+        default: Release
+        type: string
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 8
+      - name: Restore
+        run: dotnet restore
+      - name: Test
+        run: dotnet test --no-restore --configuration ${{ inputs.configuration }}
