@@ -11,7 +11,13 @@ on:
             - dev
             - prod
 jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+    with:
+      configuration: Release
+
   build:
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -25,11 +31,20 @@ jobs:
           dotnet-version: 8
       - name: Restore
         run: dotnet restore
-      - name: Test
-        run: dotnet test --no-restore
       - name: Build
         run: dotnet build --no-restore --configuration Release
+
       - name: Pack
         run: dotnet pack --no-build --configuration Release NurbsSharp.csproj
+
       - name: Publish to GitHub Packages
         run: dotnet nuget push ./bin/Release/*.nupkg --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
+
+      - name: NuGet login (OIDC → temp API key)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+      - name: NuGet push
+        run: dotnet nuget push ./bin/Release/*.nupkg --source "https://api.nuget.org/v3/index.json" --api-key ${{steps.login.outputs.NUGET_API_KEY}} --skip-duplicate
+  
