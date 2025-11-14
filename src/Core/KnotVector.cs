@@ -10,8 +10,16 @@ namespace NurbsSharp.Core
     /// (ja) NURBSで使用されるノットベクトル
     /// </summary>
     public class KnotVector
-    {   
+    {
+        /// <summary>
+        /// (en) Indicates whether the knot vector is clamped
+        /// (ja) ノットベクトルがクランプされているかどうかを示す
+        /// </summary>
         public bool IsClamped { get; private set; } = true;
+        /// <summary>
+        /// (en) Indicates whether the knot vector is closed
+        /// (ja) ノットベクトルが閉じているかどうかを示す
+        /// </summary>
         //TODO: 対応未実装
         public bool IsClosed { get; private set; } = false;
         /// <summary>
@@ -35,6 +43,7 @@ namespace NurbsSharp.Core
         /// Constructor
         /// </summary>
         /// <param name="knots"></param>
+        /// <param name="degree"></param>
         public KnotVector(double[] knots, int degree)
         {
             Knots = knots;
@@ -87,7 +96,7 @@ namespace NurbsSharp.Core
                     throw new InvalidOperationException("Knot vector START multiplicity does not match clamped type.");
                 // Check end multiplicity
                 double lastKnot = Knots[Knots.Length - 1];
-                int endMultiplicity = Knots.Reverse().TakeWhile(k => k == lastKnot).Count();
+                int endMultiplicity = Knots.AsEnumerable().Reverse().TakeWhile(k => k == lastKnot).Count();
                 if (endMultiplicity != expectedMultiplicity)
                     throw new InvalidOperationException("Knot vector END multiplicity does not match clamped type.");
             }
