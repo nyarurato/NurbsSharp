@@ -48,9 +48,9 @@ namespace UnitTests.Evaluation
             {
                 var pt = CurveEvaluator.Evaluate(curve, u);
 
-                Assert.That(expected.X, Is.EqualTo(pt.x).Within(0.000001));
-                Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.000001));
-                Assert.That(expected.Z, Is.EqualTo(pt.z).Within(0.000001));
+                Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.000001));
+                Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.000001));
+                Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.000001));
             }
         }
 
@@ -82,9 +82,9 @@ namespace UnitTests.Evaluation
             foreach (var (u, expected) in samples)
             {
                 var pt = CurveEvaluator.Evaluate(curve, u);
-                Assert.That(expected.X, Is.EqualTo(pt.x).Within(0.000001));
-                Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.000001));
-                Assert.That(expected.Z, Is.EqualTo(pt.z).Within(0.000001));
+                Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.000001));
+                Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.000001));
+                Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.000001));
             }
         }
 
@@ -119,9 +119,9 @@ namespace UnitTests.Evaluation
             foreach (var (u, expected) in samples)
             {
                 var pt = CurveEvaluator.Evaluate(curve, u);
-                Assert.That(expected.X, Is.EqualTo(pt.x).Within(0.000001));
-                Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.000001));
-                Assert.That(expected.Z, Is.EqualTo(pt.z).Within(0.000001));
+                Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.000001));
+                Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.000001));
+                Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.000001));
             }
         }
 
@@ -156,9 +156,9 @@ namespace UnitTests.Evaluation
             foreach (var (u, expected) in samples)
             {
                 var pt = CurveEvaluator.Evaluate(curve, u);
-                Assert.That(expected.X, Is.EqualTo(pt.x).Within(0.000001));
-                Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.000001));
-                Assert.That(expected.Z, Is.EqualTo(pt.z).Within(0.000001));
+                Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.000001));
+                Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.000001));
+                Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.000001));
             }
         }
 
@@ -192,9 +192,9 @@ namespace UnitTests.Evaluation
             foreach (var (u, expected) in samples)
             {
                 var pt = CurveEvaluator.Evaluate(curve, u);
-                Assert.That(expected.X, Is.EqualTo(pt.x).Within(0.000001));
-                Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.000001));
-                Assert.That(expected.Z, Is.EqualTo(pt.z).Within(0.000001));
+                Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.000001));
+                Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.000001));
+                Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.000001));
             }
         }
 
@@ -228,9 +228,9 @@ namespace UnitTests.Evaluation
             foreach (var (u, expected) in samples)
             {
                 var pt = CurveEvaluator.Evaluate(curve, u);
-                Assert.That(expected.X, Is.EqualTo(pt.x).Within(0.000001));
-                Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.000001));
-                Assert.That(expected.Z, Is.EqualTo(pt.z).Within(0.000001));
+                Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.000001));
+                Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.000001));
+                Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.000001));
             }
         }
 
@@ -269,9 +269,9 @@ namespace UnitTests.Evaluation
             foreach (var (u, expected) in samples)
             {
                 var pt = CurveEvaluator.Evaluate(curve, u);
-                Assert.That(expected.X, Is.EqualTo(pt.x).Within(0.0001));
-                Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.0001));
-                Assert.That(expected.Z, Is.EqualTo(pt.z).Within(0.0001));
+                Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.0001));
+                Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.0001));
+                Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.0001));
             }
 
         }
@@ -296,10 +296,45 @@ namespace UnitTests.Evaluation
             };
             var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
 
-            double expectedLength = Math.PI * 2;
+            double expectedLength = Math.PI * 2;// full circle length
             double length = curve.GetLength();
 
             Assert.That(length, Is.EqualTo(expectedLength).Within(0.001));
+
+            length = curve.GetLength(0.0, 0.25);
+            double expectedQuarterLength = Math.PI / 2;// quarter circle length
+            Assert.That(length, Is.EqualTo(expectedQuarterLength).Within(0.001));
+        }
+
+        [Test]
+        public void NurbsCurve_GetLength_Line()
+        {
+            int degree = 1;
+            double[] knots = { 0, 0, 1, 1 };
+            ControlPoint[] controlPoints = {
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(3.0, 4.0, 0.0, 1)
+            };
+            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
+            double expectedLength = 5.0; // Length of the line from (0,0,0) to (3,4,0)
+            double length = curve.GetLength();
+            Assert.That(length, Is.EqualTo(expectedLength).Within(0.0001));
+        }
+
+        [Test]
+        public void NurbsCurve_GetLength0()
+        {
+            int degree = 2;
+            double[] knots = { 0, 0, 0, 1, 1, 1 };
+            ControlPoint[] controlPoints = {
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(0.0, 0.0, 0.0, 1)
+            };
+            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
+            double expectedLength = 0.0; // Approximate length of the quadratic curve
+            double length = curve.GetLength();
+            Assert.That(length, Is.EqualTo(expectedLength).Within(0.0001));
         }
 
         //degree 0 curve test
@@ -364,9 +399,9 @@ namespace UnitTests.Evaluation
             foreach (var (u, expected) in samples)
             {
                 var pt = CurveEvaluator.Evaluate(curve, u);
-                Assert.That(expected.X, Is.EqualTo(pt.x).Within(0.001));
-                Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.001));
-                Assert.That(expected.Z, Is.EqualTo(pt.z).Within(0.001));
+                Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.001));
+                Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.001));
+                Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.001));
             }
         }
 
@@ -400,11 +435,7 @@ namespace UnitTests.Evaluation
                 //finite difference approximation
                 var evalPt = CurveEvaluator.Evaluate(curve, u);
                 var evalPt2 = CurveEvaluator.Evaluate(curve, u + h);
-                var evalDerivPt = new Vector3Double(
-                    (evalPt2.x - evalPt.x) / h,
-                    (evalPt2.y - evalPt.y) / h,
-                    (evalPt2.z - evalPt.z) / h
-                );
+                var evalDerivPt = (evalPt2 - evalPt) / h;
                 Assert.That(derivVal.X, Is.EqualTo(evalDerivPt.X).Within(0.001));
                 Assert.That(derivVal.Y, Is.EqualTo(evalDerivPt.Y).Within(0.001));
                 Assert.That(derivVal.Z, Is.EqualTo(evalDerivPt.Z).Within(0.001));
@@ -436,11 +467,7 @@ namespace UnitTests.Evaluation
                 //finite difference approximation
                 var evalPt = CurveEvaluator.Evaluate(curve, u);
                 var evalPt2 = CurveEvaluator.Evaluate(curve, u + h);
-                var evalDerivPt = new Vector3Double(
-                    (evalPt2.x - evalPt.x) / h,
-                    (evalPt2.y - evalPt.y) / h,
-                    (evalPt2.z - evalPt.z) / h
-                );
+                var evalDerivPt = (evalPt2 - evalPt) / h;
                 Assert.That(derivVal.X, Is.EqualTo(evalDerivPt.X).Within(0.001));
                 Assert.That(derivVal.Y, Is.EqualTo(evalDerivPt.Y).Within(0.001));
                 Assert.That(derivVal.Z, Is.EqualTo(evalDerivPt.Z).Within(0.001));

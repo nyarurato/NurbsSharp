@@ -13,6 +13,29 @@ namespace NurbsSharp.Evaluation
     public class BasicEvaluator
     {
         /// <summary>
+        /// (en) 5-point Gauss-Legendre quadrature nodes
+        /// (ja) 5点ガウス・ルジャンドル求積法のノード
+        /// </summary>
+        protected static readonly double[] GaussNode5 = [
+            -0.906179845938664,
+            -0.538469310105683,
+            0,
+            0.538469310105683,
+            0.906179845938664
+        ];
+        /// <summary>
+        /// (en) 5-point Gauss-Legendre quadrature weights
+        /// (ja) 5点ガウス・ルジャンドル求積法の重み
+        /// </summary>
+        protected static readonly double[] GaussWeight5 = [
+            0.236926885056189,
+            0.478628670499366,
+            0.568888888888889,
+            0.478628670499366,
+            0.236926885056189
+        ];
+
+        /// <summary>
         /// (en) Find the knot span index for the given parameter u
         /// (ja) 指定したパラメータ u に対するノットベクトルの区間インデックスを見つける
         /// </summary>
@@ -198,9 +221,6 @@ namespace NurbsSharp.Evaluation
 
             }
         }
-
-
-
     }
 
 }

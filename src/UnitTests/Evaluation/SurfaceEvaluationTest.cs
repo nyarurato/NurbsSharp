@@ -53,9 +53,9 @@ namespace UnitTests.Evaluation
             {
                 var pt = SurfaceEvaluator.Evaluate(surface, u, v);
 
-                Assert.That(expected.X, Is.EqualTo(pt.x).Within(0.000001));
-                Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.000001));
-                Assert.That(expected.Z, Is.EqualTo(pt.z).Within(0.000001));
+                Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.000001));
+                Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.000001));
+                Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.000001));
             }
         }
 
@@ -108,9 +108,9 @@ namespace UnitTests.Evaluation
             {
                 var pt = SurfaceEvaluator.Evaluate(surface, u, v);
 
-                Assert.That(expected.X, Is.EqualTo(pt.x).Within(0.000001));
-                Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.000001));
-                Assert.That(expected.Z, Is.EqualTo(pt.z).Within(0.000001));
+                Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.000001));
+                Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.000001));
+                Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.000001));
             }
         }
 
@@ -172,9 +172,9 @@ namespace UnitTests.Evaluation
             {
                 var pt = SurfaceEvaluator.Evaluate(surface, u, v);
 
-                Assert.That(expected.X, Is.EqualTo(pt.x).Within(0.000001));
-                Assert.That(expected.Y, Is.EqualTo(pt.y).Within(0.000001));
-                Assert.That(expected.Z, Is.EqualTo(pt.z).Within(0.000001));
+                Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.000001));
+                Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.000001));
+                Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.000001));
             }
         }
 
@@ -197,7 +197,7 @@ namespace UnitTests.Evaluation
                 new ControlPoint(1.0, 0.0, 1.5, 1)
             };
             var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU, degreeU), new KnotVector(knotsV, degreeV), controlPoints);
-            double area = SurfaceEvaluator.SurfaceArea(surface, 0, 1, 0, 1, 0.01);
+            double area = SurfaceEvaluator.SurfaceArea(surface, 0, 1, 0, 1);
             Assert.That(area, Is.EqualTo(1.50).Within(0.000001));
         }
 
@@ -221,8 +221,96 @@ namespace UnitTests.Evaluation
             };
             var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU,degreeU), new KnotVector(knotsV,degreeV), controlPoints);
 
-            double area = SurfaceEvaluator.SurfaceArea(surface, 0, 1, 0, 1, 0.01);
+            double area = SurfaceEvaluator.SurfaceArea(surface, 0, 1, 0, 1);
             Assert.That(area, Is.EqualTo(10.05).Within(0.01));
+            area = SurfaceEvaluator.SurfaceArea(surface, 0, 0.5, 0, 0.25);
+        }
+
+        [Test]
+        public void SurfaceAreaTestC()
+        {
+            int degreeU = 3;
+            int degreeV = 3;
+            ControlPoint[][] controlPoints = new ControlPoint[4][];
+            controlPoints[0] = new ControlPoint[] {
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(1.0, 0.0, 0.0, 1),
+                new ControlPoint(2.0, 0.0, 0.0, 1),
+                new ControlPoint(3.0, 0.0, 0.0, 1)
+            };
+
+            controlPoints[1] = new ControlPoint[] {
+                new ControlPoint(0.0, 1.0, 0.0, 1),
+                new ControlPoint(1.0, 1.0, 0.0, 1),
+                new ControlPoint(2.0, 1.0, 0.0, 1),
+                new ControlPoint(3.0, 1.0, 0.0, 1)
+            };
+
+            controlPoints[2] = new ControlPoint[] {
+                new ControlPoint(0.0, 2.0, 0.0, 1),
+                new ControlPoint(1.0, 2.0, 0.0, 1),
+                new ControlPoint(2.0, 2.0, 0.0, 1),
+                new ControlPoint(3.0, 2.0, 0.0, 1)
+            };
+
+            controlPoints[3] = new ControlPoint[] {
+                new ControlPoint(0.0, 3.0, 0.0, 1),
+                new ControlPoint(1.0, 3.0, 0.0, 1),
+                new ControlPoint(2.0, 3.0, 0.0, 1),
+                new ControlPoint(3.0, 3.0, 0.0, 1)
+            };
+            double[] knotsU = { 0, 0, 0, 0, 1, 1, 1, 1 };
+            double[] knotsV = { 0, 0, 0, 0, 1, 1, 1, 1 };
+            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU,degreeU), new KnotVector(knotsV,degreeV), controlPoints);
+
+            double area = SurfaceEvaluator.SurfaceArea(surface, 0, 1, 0, 1);
+            Assert.That(area, Is.EqualTo(9.0).Within(0.000001));
+            area = SurfaceEvaluator.SurfaceArea(surface, 0, 0.5, 0, 0.5);
+            Assert.That(area, Is.EqualTo(9.0/4).Within(0.000001));
+            area = SurfaceEvaluator.SurfaceArea(surface, 0.5, 1, 0.5, 1);
+            Assert.That(area, Is.EqualTo(9.0/4).Within(0.000001));
+        }
+
+        [Test]
+        public void SurfaceAreaTestD()
+        {
+            //Circle surface
+            int degreeU = 3;
+            int degreeV = 3;
+            ControlPoint[][] controlPoints = new ControlPoint[4][];
+            controlPoints[0] = new ControlPoint[] {
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(1.0, 0.0, 0.0, 1),
+                new ControlPoint(2.0, 0.0, 0.0, 1),
+                new ControlPoint(3.0, 0.0, 0.0, 1)
+            };
+            controlPoints[1] = new ControlPoint[] {
+                new ControlPoint(0.0, 1.0, 0.0, 1),
+                new ControlPoint(1.0, 1.0, 2.5, 1),
+                new ControlPoint(2.0, 1.0, 2.0, 1),
+                new ControlPoint(3.0, 1.0, 0.0, 1)
+            };
+            controlPoints[2] = new ControlPoint[] {
+                new ControlPoint(0.0, 2.0, 0.0, 1),
+                new ControlPoint(1.0, 2.0, 2.5, 1),
+                new ControlPoint(2.0, 2.0, 2.0, 1),
+                new ControlPoint(3.0, 2.0, 0.0, 1)
+            };
+            controlPoints[3] = new ControlPoint[] {
+                new ControlPoint(0.0, 3.0, 0.0, 1),
+                new ControlPoint(1.0, 3.0, 0.0, 1),
+                new ControlPoint(2.0, 3.0, 0.0, 1),
+                new ControlPoint(3.0, 3.0, 0.0, 1)
+            };
+            double[] knotsU = { 0, 0, 0,0,1,1, 1, 1 };
+            double[] knotsV = { 0, 0, 0, 0,1, 1, 1, 1 };
+
+            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU, degreeU), new KnotVector(knotsV, degreeV), controlPoints);
+
+            double area = SurfaceEvaluator.SurfaceArea(surface, 0, 1, 0, 1);
+
+            Assert.That(area, Is.EqualTo(12.62).Within(0.01));
+
         }
 
         [Test]
@@ -286,14 +374,14 @@ namespace UnitTests.Evaluation
                 var derib1bv = SurfaceEvaluator.Evaluate(surface, u, v + h);
 
                 var evalDeriv2PtU = new Vector3Double(
-                    (deriv1bu.x - deriv1.x) / h,
-                    (deriv1bu.y - deriv1.y) / h,
-                    (deriv1bu.z - deriv1.z) / h
+                    (deriv1bu.X - deriv1.X) / h,
+                    (deriv1bu.Y - deriv1.Y) / h,
+                    (deriv1bu.Z - deriv1.Z) / h
                 );
                 var evalDeriv2PtV = new Vector3Double(
-                    (derib1bv.x - deriv1.x) / h,
-                    (derib1bv.y - deriv1.y) / h,
-                    (derib1bv.z - deriv1.z) / h
+                    (derib1bv.X - deriv1.X) / h,
+                    (derib1bv.Y - deriv1.Y) / h,
+                    (derib1bv.Z - deriv1.Z) / h
                 );
 
                 Assert.That(derivVal.u_deriv.X, Is.EqualTo(evalDeriv2PtU.X).Within(0.01));
@@ -367,14 +455,14 @@ namespace UnitTests.Evaluation
                 var evalpt_dv = SurfaceEvaluator.Evaluate(surface, u, v + h);
 
                 var evalDeriv2PtU = new Vector3Double(
-                    (evalpt_du.x - evalpt.x) / h,
-                    (evalpt_du.y - evalpt.y) / h,
-                    (evalpt_du.z - evalpt.z) / h
+                    (evalpt_du.X - evalpt.X) / h,
+                    (evalpt_du.Y - evalpt.Y) / h,
+                    (evalpt_du.Z - evalpt.Z) / h
                 );
                 var evalDeriv2PtV = new Vector3Double(
-                    (evalpt_dv.x - evalpt.x) / h,
-                    (evalpt_dv.y - evalpt.y) / h,
-                    (evalpt_dv.z - evalpt.z) / h
+                    (evalpt_dv.X - evalpt.X) / h,
+                    (evalpt_dv.Y - evalpt.Y) / h,
+                    (evalpt_dv.Z - evalpt.Z) / h
                 );
                 //Console.WriteLine($"{evalpt_du},{evalpt_dv}");
                 Console.WriteLine($"uv=({u},{v}), eval={evalpt}, fdu={evalDeriv2PtU}, fdv={evalDeriv2PtV}");

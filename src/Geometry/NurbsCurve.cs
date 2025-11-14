@@ -73,8 +73,7 @@ namespace NurbsSharp.Geometry
         /// <returns>Position Vector</returns>
         public Vector3Double GetPos(double u)
         {
-            var pos = CurveEvaluator.Evaluate(this, u);
-            return new Vector3Double(pos.x, pos.y, pos.z);
+            return CurveEvaluator.Evaluate(this, u);
         }
 
         /// <summary>
@@ -86,9 +85,20 @@ namespace NurbsSharp.Geometry
         {
             double start_u = KnotVector.Knots[0];
             double end_u = KnotVector.Knots[KnotVector.Length - 1];
-            double epsilon = (end_u - start_u)/10000;
 
-            double len = CurveEvaluator.CurveLength(this, start_u,end_u,epsilon );
+            double len = CurveEvaluator.CurveLength(this, start_u,end_u);
+            return len;
+        }
+        /// <summary>
+        /// (en) Return the calulated length of the NURBS curve between the specified parameters
+        /// (ja) 指定したパラメータ間のNURBS曲線の計算された長さを返します
+        /// </summary>
+        /// <param name="start_u"></param>
+        /// <param name="end_u"></param>
+        /// <returns></returns>
+        public double GetLength(double start_u, double end_u)
+        {
+            double len = CurveEvaluator.CurveLength(this, start_u, end_u);
             return len;
         }
 
