@@ -5,11 +5,23 @@
 		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<VersionPrefix>0.0.1</VersionPrefix>
-		<VersionSuffix>beta</VersionSuffix>
+		<VersionSuffix>beta2</VersionSuffix>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
     <LangVersion>latest</LangVersion>
+    
+    <PackageId>NurbsSharp</PackageId>
+    <Title>NURBS Sharp</Title>
+    <Authors>kyano</Authors>
+		<Copyright>Copyright (c) kyano 2025</Copyright>
+    <Description>NURBS Sharp is a simple .NET library for creating and manipulating NURBS. </Description>
+		
+		<PackageProjectUrl>https://github.com/nyarurato/NurbsSharp</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/nyarurato/NurbsSharp</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>NURBS;B-Spline;CAD;CAM;Geometry;3D;Modeling</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">

@@ -24,7 +24,7 @@ namespace NurbsSharp.Evaluation
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
         /// <exception cref="ArgumentException"></exception>
-        public static (double x, double y, double z) Evaluate(NurbsCurve curve, double u)
+        public static Vector3Double Evaluate(NurbsCurve curve, double u)
         {
             if (curve == null)
                 throw new ArgumentNullException(nameof(curve));
@@ -54,7 +54,7 @@ namespace NurbsSharp.Evaluation
             
             // convert back to 3D
             Vector4Double resultH = DeBoor(degree, knots, k, controlPoints.Select(cp => cp.HomogeneousPosition).ToArray(), u);
-            return (resultH.X / resultH.W, resultH.Y / resultH.W, resultH.Z / resultH.W);
+            return new Vector3Double(resultH.X / resultH.W, resultH.Y / resultH.W, resultH.Z / resultH.W);
         }
 
         /// <summary>
@@ -160,7 +160,6 @@ namespace NurbsSharp.Evaluation
         }
 
 
-        // TODO: Optimize using different numerical integration methods
         /// <summary>
         /// (en) Calc the length of the NURBS curve
         /// (ja) NURBS曲線の長さを計算する
@@ -168,35 +167,65 @@ namespace NurbsSharp.Evaluation
         /// <param name="curve"></param>
         /// <param name="start_u"></param>
         /// <param name="end_u"></param>
-        /// <param name="epsilon"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
-        public static double CurveLength(NurbsCurve curve, double start_u, double end_u, double epsilon = 0.001)
+        public static double CurveLength(NurbsCurve curve, double start_u, double end_u)
         {
-            if (curve == null)
+            if(curve == null)
                 throw new ArgumentNullException(nameof(curve));
+            if(start_u> end_u)
+                throw new ArgumentOutOfRangeException(nameof(start_u), "start_u must be less than or equal to end_u.");
+            if (start_u < curve.KnotVector.Knots[0])
+                throw new ArgumentOutOfRangeException(nameof(start_u), "start_u is out of the knot vector range.");
+            if (end_u > curve.KnotVector.Knots[curve.KnotVector.Length - 1])
+                throw new ArgumentOutOfRangeException(nameof(end_u), "end_u is out of the knot vector range.");
 
-            double length = 0.0;
-            Vector3Double prevPoint = new Vector3Double();
-            bool isFirstPoint = true;
+            // Calculate the length of the NURBS curve using 5-point Gaussian quadrature
 
-            for (double u = start_u; u <= end_u; u += epsilon)
+            int degree = curve.Degree;
+            var knots = curve.KnotVector.Knots;
+            if (knots == null || knots.Length < 2)
+                return 0.0;
+
+            // clamp integration range to valid evaluation domain
+            double uMin = knots[degree];
+            double uMax = knots[knots.Length - degree - 1];
+
+            start_u = Math.Max(start_u, uMin);
+            end_u = Math.Min(end_u, uMax);
+
+            double total = 0.0;
+
+            // integrate over each knot span to better capture local behavior
+            for (int i = 0; i < knots.Length - 1; i++)
             {
-                var pos = Evaluate(curve, u);
-                Vector3Double currentPoint = new Vector3Double(pos.x, pos.y, pos.z);
-                if (isFirstPoint)
+                double a = Math.Max(start_u, knots[i]);
+                double b = Math.Min(end_u, knots[i + 1]);
+
+                if (b <= a)
+                    continue;
+
+                double half = 0.5 * (b - a);
+                double center = 0.5 * (a + b);
+
+                double spanSum = 0.0;
+                for (int k = 0; k < GaussNode5.Length; k++)
                 {
-                    prevPoint = currentPoint;
-                    isFirstPoint = false;
+                    double xi = GaussNode5[k];
+                    double wi = GaussWeight5[k];
+
+                    double u = center + half * xi;// map from [-1,1] to [a,b] -> u = 1/2*((b-a)*xi + (a+b))
+
+                    // Evaluate first derivative and take its magnitude
+                    Vector3Double d = EvaluateFirstDerivative(curve, u);
+                    double speed = d?.magnitude ?? 0.0;
+                    spanSum += wi * speed;
                 }
-                else
-                {
-                    length += prevPoint.DistanceTo(currentPoint);
-                    prevPoint = currentPoint;
-                }
+
+                total += half * spanSum; // multiply by Jacobian 0.5*(b-a)
             }
 
-            return length;
+            return total;
         }
 
     }

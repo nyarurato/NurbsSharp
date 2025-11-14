@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NurbsSharp.Core;
+using NurbsSharp.Evaluation;
 
 namespace NurbsSharp.Geometry
 {
@@ -96,8 +97,35 @@ namespace NurbsSharp.Geometry
         /// <returns></returns>
         public Vector3Double GetPos(double u, double v)
         {
-            var pos = Evaluation.SurfaceEvaluator.Evaluate(this, u, v);
-            return new Vector3Double(pos.x, pos.y, pos.z);
+            return SurfaceEvaluator.Evaluate(this, u, v);
+        }
+
+        /// <summary>
+        /// (en) Calculate the surface area of the NURBS Surface
+        /// (ja) NURBSサーフェスの表面積を計算する
+        /// </summary>
+        /// <returns></returns>
+        public double GetSurfaceArea()
+        {
+            double startU = KnotVectorU.Knots.First();
+            double endU = KnotVectorU.Knots.Last();
+            double startV = KnotVectorV.Knots.First();
+            double endV = KnotVectorV.Knots.Last();
+            return SurfaceEvaluator.SurfaceArea(this,startU,endU,startV,endV);
+        }
+
+        /// <summary>
+        /// (en) Calculate the surface area of the NURBS Surface within the specified parameter range
+        /// (ja) 指定したパラメータ範囲内のNURBSサーフェスの表面積を計算する
+        /// </summary>
+        /// <param name="startU"></param>
+        /// <param name="endU"></param>
+        /// <param name="startV"></param>
+        /// <param name="endV"></param>
+        /// <returns></returns>
+        public double GetSurfaceArea(double startU, double endU, double startV, double endV)
+        {
+            return SurfaceEvaluator.SurfaceArea(this, startU, endU, startV, endV);
         }
 
         /// <summary>

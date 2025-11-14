@@ -1,4 +1,5 @@
 # NURBS Sharp
+![NuGet Version](https://img.shields.io/nuget/vpre/NurbsSharp)
 
 NURBS Sharp is a NURBS (Non-Uniform Rational B-Spline) curve and surface computation library targeting .NET .  
 It is implemented using only the standard library.

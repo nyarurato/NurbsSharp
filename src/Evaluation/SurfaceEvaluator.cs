@@ -1,11 +1,13 @@
+using NurbsSharp.Core;
+using NurbsSharp.Geometry;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using NurbsSharp.Core;
-using NurbsSharp.Geometry;
 
 namespace NurbsSharp.Evaluation
 {
@@ -24,7 +26,7 @@ namespace NurbsSharp.Evaluation
         /// <param name="v"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
-        public static (double x, double y, double z) Evaluate(NurbsSurface surface, double u, double v)
+        public static Vector3Double Evaluate(NurbsSurface surface, double u, double v)
         {
             if (surface == null)
                 throw new ArgumentNullException(nameof(surface));
@@ -59,7 +61,7 @@ namespace NurbsSharp.Evaluation
             // de Boor's algorithm in V direction
             Vector4Double Sv = DeBoor(degreeV, knotsV,spanV, temp, v);
 
-            return (Sv.X/Sv.W, Sv.Y / Sv.W, Sv.Z / Sv.W);
+            return new Vector3Double(Sv.X/Sv.W, Sv.Y / Sv.W, Sv.Z / Sv.W);
         }
 
         //TODO: Optimize using different numerical integration methods
@@ -76,60 +78,85 @@ namespace NurbsSharp.Evaluation
         /// <param name="epsilon"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
-        public static double SurfaceArea(NurbsSurface surface, double start_u, double end_u, double start_v, double end_v, double epsilon = 0.01)
+        public static double SurfaceArea(NurbsSurface surface, double start_u, double end_u, double start_v, double end_v)
         {
             if (surface == null)
                 throw new ArgumentNullException(nameof(surface));
+            if( start_u >= end_u || start_v >= end_v)
+                throw new ArgumentException("Invalid parameter range.");
+            if(start_u < surface.KnotVectorU.Knots[surface.DegreeU])
+                throw new ArgumentOutOfRangeException(nameof(start_u) ,"Parameter u is out of range.");
+            if(end_u > surface.KnotVectorU.Knots[surface.KnotVectorU.Knots.Length - surface.DegreeU -1])
+                throw new ArgumentOutOfRangeException(nameof(end_u) ,"Parameter u is out of range.");
+            if(start_v < surface.KnotVectorV.Knots[surface.DegreeV])
+                throw new ArgumentOutOfRangeException(nameof(start_v) ,"Parameter v is out of range.");
+            if(end_v > surface.KnotVectorV.Knots[surface.KnotVectorV.Knots.Length - surface.DegreeV -1])
+                throw new ArgumentOutOfRangeException(nameof(end_v) ,"Parameter v is out of range.");
+
+            // Calculate the length of the NURBS Surface using 5-point Gaussian quadrature
+
+            int degreeU = surface.DegreeU;
+            int degreeV = surface.DegreeV;
+            var knotsU = surface.KnotVectorU.Knots;
+            var knotsV = surface.KnotVectorV.Knots;
+
+            if (knotsU == null || knotsU.Length < 2)
+                return 0.0;
+            if (knotsV == null || knotsV.Length < 2)
+                return 0.0;
+
+            // clamp integration range to valid evaluation domain
+
             double area = 0.0;
-            for (double u = start_u; u < end_u; u += epsilon)
+
+            // integrate over each knot span to better capture local behavior
+            for (int i = 0; i < knotsU.Length - 1; i++)
             {
+                double a_u = Math.Max(start_u, knotsU[i]);
+                double b_u = Math.Min(end_u, knotsU[i + 1]);
 
-                for (double v = start_v; v < end_v; v += epsilon)
+                if (b_u <= a_u)
+                    continue;
+
+                double half_u = 0.5 * (b_u - a_u);
+                double center_u = 0.5 * (a_u + b_u);
+
+                double spanSum = 0.0;
+                for (int j = 0; j < knotsV.Length - 1; j++)
                 {
-                    Vector3Double p1, p2, p3,p4;
-                    //pick small triangle area
-                    var res = Evaluate(surface, u, v);
-                    p1 = new Vector3Double(res.x, res.y, res.z);
-
-                    if (u + epsilon > end_u)
-                        res = Evaluate(surface, end_u, v);
-                    else
-                        res = Evaluate(surface, u + epsilon, v);
-                    p2 = new Vector3Double(res.x, res.y, res.z);
-                    
-                    if (v + epsilon > end_v)
-                        res = Evaluate(surface, u, end_v);
-                    else
-                        res = Evaluate(surface, u, v + epsilon);
-                    p3 = new Vector3Double(res.x, res.y, res.z);
-
-                    if (u + epsilon > end_u)
+                    double a_v = Math.Max(start_v, knotsV[j]);
+                    double b_v = Math.Min(end_v, knotsV[j + 1]);
+                    if (b_v <= a_v)
+                        continue;
+                    double half_v = 0.5 * (b_v - a_v);
+                    double center_v = 0.5 * (a_v + b_v);
+                    double spanSumV = 0.0;
+                    // double Gauss loop: u-nodes and v-nodes
+                    for (int iu = 0; iu < GaussNode5.Length; iu++)
                     {
-                        if (v + epsilon > end_v)
-                            res = Evaluate(surface, end_u, end_v);
-                        else
-                            res = Evaluate(surface, end_u, v + epsilon);
+                        double xi_u = GaussNode5[iu];
+                        double wi_u = GaussWeight5[iu];
+                        double u = center_u + half_u * xi_u;// map from [-1,1] to [a_u,b_u]
+
+                        for (int iv = 0; iv < GaussNode5.Length; iv++)
+                        {
+                            double xi_v = GaussNode5[iv];
+                            double wi_v = GaussWeight5[iv];
+                            double v = center_v + half_v * xi_v;// map from [-1,1] to [a_v,b_v]
+
+                            (Vector3Double dU, Vector3Double dV) = EvaluateFirstDerivative(surface, u, v);
+                            double dA = Vector3Double.Cross(dU, dV).magnitude;
+                            spanSum += wi_u * wi_v * dA;
+                        }
                     }
-                    else if(v + epsilon > end_v)
-                        res = Evaluate(surface, u + epsilon, end_v);
-                    else
-                        res = Evaluate(surface, u + epsilon, v + epsilon);
 
-                    p4 = new Vector3Double(res.x, res.y, res.z);
-                    // S = ||AB x AC||
-                    Vector3Double vec1 = p2 - p1;
-                    Vector3Double vec2 = p3 - p1;
-                    Vector3Double crossProduct = Vector3Double.Cross(vec1, vec2);
-                    area += crossProduct.magnitude / 2; // Triangle area
-
-                    vec1 = p2 - p4;
-                    vec2 = p3 - p4;
-                    crossProduct = Vector3Double.Cross(vec1, vec2);
-
-                    area += crossProduct.magnitude / 2; // Triangle area
-
+                    // multiply by Jacobian of the mapping from [-1,1]^2 -> [a_u,b_u]x[a_v,b_v]
+                    area += half_u * half_v * spanSum;
                 }
+
+       
             }
+
             return area;
         }
 
