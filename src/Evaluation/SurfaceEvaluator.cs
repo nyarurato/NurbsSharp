@@ -133,7 +133,17 @@ namespace NurbsSharp.Evaluation
             return area;
         }
 
-
+        /// <summary>
+        /// (en) Evaluates the first derivatives of the NURBS surface at the specified parameters u and v.
+        /// (ja) 指定したパラメータ u と v でNURBSサーフェスの1階微分を評価します。
+        /// </summary>
+        /// <param name="surface"></param>
+        /// <param name="u"></param>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="DivideByZeroException"></exception>
         public static (Vector3Double u_deriv,Vector3Double v_deriv) EvaluateFirstDerivative(NurbsSurface surface, double u, double v)
         {
             if (surface == null)
@@ -219,8 +229,6 @@ namespace NurbsSharp.Evaluation
                     Wv += w  * NuNv_d;
                 }
             }
-
-            Console.WriteLine($"Final A{A} , W{W}");
 
             if (W == 0.0)
                 throw new DivideByZeroException("The weight function evaluated to zero.");

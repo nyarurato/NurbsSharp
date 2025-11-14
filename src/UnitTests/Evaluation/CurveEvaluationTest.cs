@@ -501,7 +501,6 @@ namespace UnitTests.Evaluation
 
             var samplePoints = new double[] { 0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99 };
             const double h = 1e-6;
-            bool isFirst = true;
             double R = 2.0;
             foreach (var u in samplePoints)
             {
