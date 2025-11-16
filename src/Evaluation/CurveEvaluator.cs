@@ -234,28 +234,27 @@ namespace NurbsSharp.Evaluation
         }
 
         /// <summary>
-        /// (en) Evaluates the Frenet frame (tangent, normal, binormal) on the NURBS curve at the specified parameter u.
-        /// (ja) 指定したパラメータ u でNURBS曲線上のフレネフレーム（接線、法線、従法線）を評価します。
+        /// (en) tangent, normal on the NURBS curve at the specified parameter u.
+        /// (ja) 指定したパラメータ u でNURBS曲線上の接線、法線を評価します。
         /// </summary>
         /// <param name="curve"></param>
         /// <param name="u"></param>
         /// <returns></returns>
-        public static (Vector3Double tangent, Vector3Double normal,Vector3Double binomarl) EvaluateFrenetFrame(NurbsCurve curve, double u)
+        public static (Vector3Double tangent, Vector3Double normal) EvaluatTangentNormal(NurbsCurve curve, double u)
         {
             Vector3Double T = EvaluateFirstDerivative(curve, u);
             if (T.magnitude == 0.0)
-                return (Vector3Double.Zero, Vector3Double.Zero, Vector3Double.Zero);
+                return (Vector3Double.Zero, Vector3Double.Zero);
             T = T.normalized;
             Vector3Double C2 = EvaluateSecondDerivative(curve, u);
             if (C2.magnitude == 0.0)
-                return (T, Vector3Double.Zero, Vector3Double.Zero);
+                return (T, Vector3Double.Zero);
             double proj = Vector3Double.Dot(C2, T);
             Vector3Double normalVec = C2 - T * proj; // eliminate tangential component of C''
             if (normalVec.magnitude == 0.0)
-                return (T, Vector3Double.Zero, Vector3Double.Zero);
+                return (T, Vector3Double.Zero);
             Vector3Double N = normalVec.normalized;
-            Vector3Double B = Vector3Double.Cross(T, N);
-            return (T, N, B);
+            return (T, N);
         }
 
         /// <summary>
@@ -287,7 +286,7 @@ namespace NurbsSharp.Evaluation
         /// <returns></returns>
         public static Vector3Double EvaluateNormal(NurbsCurve curve, double u)
         {
-           return EvaluateFrenetFrame(curve, u).normal;
+           return EvaluatTangentNormal(curve, u).normal;
         }
 
         /// <summary>
@@ -299,20 +298,10 @@ namespace NurbsSharp.Evaluation
         /// <returns></returns>
         public static Vector3Double EvaluateTangent(NurbsCurve curve, double u)
         {
-            return EvaluateFrenetFrame(curve, u).tangent;
+            return EvaluatTangentNormal(curve, u).tangent;
         }
 
-        /// <summary>
-        /// (en) Evaluates the binormal vector on the NURBS curve at the specified parameter u.
-        /// (ja) 指定したパラメータ u でNURBS曲線上の従法線ベクトルを評価します。
-        /// </summary>
-        /// <param name="curve"></param>
-        /// <param name="u"></param>
-        /// <returns></returns>
-        public static Vector3Double EvaluateBinormal(NurbsCurve curve, double u)
-        {
-            return EvaluateFrenetFrame(curve, u).binomarl;
-        }
+
 
     }
 }

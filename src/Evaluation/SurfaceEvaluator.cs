@@ -376,6 +376,60 @@ namespace NurbsSharp.Evaluation
             var result_vv = (A_deriv_vv * W - 2.0 * A_deriv_v * W_deriv_v - A * W_deriv_vv + 2.0 * A * W_deriv_v * W_deriv_v / W) / (W * W);
             return (result_uu, result_uv, result_vv);
         }
+
+        /// <summary>
+        /// (en) Evaluates the tangent vectors and normal vector on the NURBS surface at the specified parameters u and v.
+        /// (ja) 指定したパラメータ u と v でNURBSサーフェス上の接線ベクトルと法線ベクトルを評価します。
+        /// </summary>
+        /// <param name="surface"></param>
+        /// <param name="u"></param>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public static (Vector3Double tangentU,Vector3Double tangentV, Vector3Double normal) EvaluatTangentNormal(NurbsSurface surface, double u, double v)
+        {
+            if (surface == null)
+                throw new ArgumentNullException(nameof(surface));
+
+            (Vector3Double dU, Vector3Double dV) = EvaluateFirstDerivative(surface, u, v);
+
+            //tangent 
+            Vector3Double tangentU = dU.normalized;
+            Vector3Double tangentV = dV.normalized;
+
+            // normal = dU x dV
+            Vector3Double normal = Vector3Double.Cross(dU, dV).normalized;
+
+            return (tangentU, tangentV, normal);
+        }
+
+        /// <summary>
+        /// (en) Evaluates the normal vector on the NURBS surface at the specified parameters u and v.
+        /// (ja) 指定したパラメータ u と v でNURBSサーフェス上の法線ベクトルを評価します。
+        /// </summary>
+        /// <param name="surface"></param>
+        /// <param name="u"></param>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        public static Vector3Double EvaluateNormal(NurbsSurface surface, double u, double v)
+        {
+           return EvaluatTangentNormal(surface, u, v).normal;
+        }
+
+        /// <summary>
+        /// (en) Evaluates the tangent vectors on the NURBS surface at the specified parameters u and v.
+        /// (ja) 指定したパラメータ u と v でNURBSサーフェス上の接線ベクトルを評価します。
+        /// </summary>
+        /// <param name="surface"></param>
+        /// <param name="u"></param>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        public static (Vector3Double tangentU, Vector3Double tangentV) EvaluateTangents(NurbsSurface surface, double u, double v)
+        {
+            var res = EvaluatTangentNormal(surface, u, v);
+            return (res.tangentU,res.tangentV);
+        }
+
     }
 
 }

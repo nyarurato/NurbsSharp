@@ -129,6 +129,31 @@ namespace NurbsSharp.Geometry
         }
 
         /// <summary>
+        /// (en) Get tangent vector at the specified parameter (u,v)
+        /// (ja) 指定したパラメータ(u,v)での接線ベクトルを取得する
+        /// </summary>
+        /// <param name="u"></param>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        public (Vector3Double tangentU,Vector3Double tangentV) GetTangent(double u, double v)
+        {
+            return SurfaceEvaluator.EvaluateTangents(this, u, v);
+        }
+
+        /// <summary>
+        /// (en) Get normal vector at the specified parameter (u,v)
+        /// (ja) 指定したパラメータ(u,v)での法線ベクトルを取得する
+        /// </summary>
+        /// <param name="u"></param>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        public Vector3Double GetNormal(double u, double v)
+        {
+            return SurfaceEvaluator.EvaluateNormal(this, u, v);
+        }
+
+
+        /// <summary>
         /// Returns a string that represents the current NURBS surface.
         /// </summary>
         /// <returns></returns>

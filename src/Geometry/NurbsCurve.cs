@@ -136,14 +136,14 @@ namespace NurbsSharp.Geometry
         }
 
         /// <summary>
-        /// (en) Returns the binormal vector of the NURBS curve at the specified parameter u
-        /// (ja) 指定したパラメータ u でのNURBS曲線の従法線ベクトルを返します
+        /// (en) Returns tangent, normal of the NURBS curve at the specified parameter u
+        /// (ja) 指定したパラメータ u でのNURBS曲線の接線、法線を返します
         /// </summary>
         /// <param name="u"></param>
         /// <returns></returns>
-        public Vector3Double GetBinormal(double u)
+        public (Vector3Double tangent, Vector3Double normal) GetFrenetFrame(double u)
         {
-            return CurveEvaluator.EvaluateBinormal(this, u);
+            return CurveEvaluator.EvaluatTangentNormal(this, u);
         }
 
         /// <summary>

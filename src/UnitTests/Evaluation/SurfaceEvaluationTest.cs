@@ -630,7 +630,7 @@ namespace UnitTests.Evaluation
             //Cylinder surface
             int degreeU = 1;
             int degreeV = 2;
-            double[] knotsU = { 0, 0, 0.5 ,1, 1 };
+            double[] knotsU = { 0, 0, 0.5, 1, 1 };
             double[] knotsV = { 0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1 };
             ControlPoint[][] controlPoints = new ControlPoint[3][];
             controlPoints[0] = new ControlPoint[] {
@@ -682,7 +682,7 @@ namespace UnitTests.Evaluation
             {
                 var deriv2Val = SurfaceEvaluator.EvaluateSecondDerivative(surface, u, v);
                 var derivVal = SurfaceEvaluator.EvaluateFirstDerivative(surface, u, v);
-                var curvature = Vector3Double.Cross(derivVal.v_deriv,deriv2Val.vv_deriv).magnitude / Math.Pow(derivVal.v_deriv.magnitude,3);
+                var curvature = Vector3Double.Cross(derivVal.v_deriv, deriv2Val.vv_deriv).magnitude / Math.Pow(derivVal.v_deriv.magnitude, 3);
                 //For a cylinder, all second derivatives should be zero except vv_deriv.Z
                 Assert.That(deriv2Val.uu_deriv.X, Is.EqualTo(0.0).Within(0.0001));
                 Assert.That(deriv2Val.uu_deriv.Y, Is.EqualTo(0.0).Within(0.0001));
@@ -696,8 +696,259 @@ namespace UnitTests.Evaluation
                 Assert.That(deriv2Val.vv_deriv.X, !Is.EqualTo(0.0).Within(0.0001));
 
 
-                Assert.That(curvature, Is.EqualTo(1/R).Within(0.0001));
+                Assert.That(curvature, Is.EqualTo(1 / R).Within(0.0001));
 
+            }
+        }
+
+        [Test]
+        public void SurfaceNormalTestA()
+        {
+            //Plane surface
+            int degreeU = 1;
+            int degreeV = 1;
+            double[] knotsU = { 0, 0, 1, 1 };
+            double[] knotsV = { 0, 0, 1, 1 };
+            ControlPoint[][] controlPoints = new ControlPoint[2][];
+            controlPoints[0] = new ControlPoint[] {
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(1.0, 0.0, 0.0, 1)
+            };
+            controlPoints[1] = new ControlPoint[] {
+                new ControlPoint(0.0, 1.0, 0.0, 1),
+                new ControlPoint(1.0, 1.0, 0.0, 1)
+            };
+            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU, degreeU), new KnotVector(knotsV, degreeV), controlPoints);
+            var samples = new (double u, double v)[] {
+                (0.0, 0.0),
+                (0.99, 0.0),
+                (0.0, 0.99),
+                (0.99, 0.99),
+                (0.5, 0.5),
+                (0.7, 0.7),
+                (0.1, 0.4)
+            };
+            foreach (var (u, v) in samples)
+            {
+                var normal = SurfaceEvaluator.EvaluateNormal(surface, u, v);
+                var expected = new Vector3Double(0.0, 0.0, 1.0);
+                Assert.That(expected.X, Is.EqualTo(Math.Abs(normal.X)).Within(0.000001));
+                Assert.That(expected.Y, Is.EqualTo(Math.Abs(normal.Y)).Within(0.000001));
+                Assert.That(expected.Z, Is.EqualTo(Math.Abs(normal.Z)).Within(0.000001));
+            }
+        }
+
+        [Test]
+        public void SurfaceNormalTestB()
+        {
+            //Slanted plane surface
+            int degreeU = 1;
+            int degreeV = 1;
+            double[] knotsU = { 0, 0, 1, 1 };
+            double[] knotsV = { 0, 0, 1, 1 };
+            ControlPoint[][] controlPoints = new ControlPoint[2][];
+            controlPoints[0] = new ControlPoint[] {
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(1.0, 0.0, 1.0, 1)
+            };
+            controlPoints[1] = new ControlPoint[] {
+                new ControlPoint(0.0, 1.0, 0.0, 1),
+                new ControlPoint(1.0, 1.0, 1.0, 1)
+            };
+            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU, degreeU), new KnotVector(knotsV, degreeV), controlPoints);
+            var samples = new (double u, double v)[] {
+                (0.0, 0.0),
+                (0.99, 0.0),
+                (0.0, 0.99),
+                (0.99, 0.99),
+                (0.5, 0.5),
+                (0.7, 0.7),
+                (0.1, 0.4)
+            };
+            var expected = new Vector3Double(-1, 0, 1).normalized;
+            foreach (var (u, v) in samples)
+            {
+                var normal = SurfaceEvaluator.EvaluateNormal(surface, u, v);
+                Assert.That(normal.magnitude, Is.EqualTo(expected.magnitude));
+                Assert.That(Math.Abs(expected.X), Is.EqualTo(Math.Abs(normal.X)).Within(0.000001));
+                Assert.That(Math.Abs(expected.Y), Is.EqualTo(Math.Abs(normal.Y)).Within(0.000001));
+                Assert.That(Math.Abs(expected.Z), Is.EqualTo(Math.Abs(normal.Z)).Within(0.000001));
+            }
+        }
+
+        [Test]
+        public void SurfaceNormalTestC()
+        {
+            //Cylinder surface
+            int degreeU = 1;
+            int degreeV = 2;
+            double[] knotsU = { 0, 0, 0.5, 1, 1 };
+            double[] knotsV = { 0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1 };
+            ControlPoint[][] controlPoints = new ControlPoint[3][];
+            controlPoints[0] = new ControlPoint[] {
+                new ControlPoint(1 ,  0, 0, 1),
+                new ControlPoint(1 ,  1, 0, 0.70710678),
+                new ControlPoint(0 ,  1, 0, 1),
+                new ControlPoint(-1,  1, 0, 0.70710678),
+                new ControlPoint(-1,  0, 0, 1),
+                new ControlPoint(-1, -1, 0, 0.70710678),
+                new ControlPoint(0 , -1, 0, 1),
+                new ControlPoint(1 , -1, 0, 0.70710678),
+                new ControlPoint(1 ,  0, 0, 1)
+            };
+            controlPoints[1] = new ControlPoint[] {
+                new ControlPoint(1 ,  0, 1, 1),
+                new ControlPoint(1 ,  1, 1, 0.70710678),
+                new ControlPoint(0 ,  1, 1, 1),
+                new ControlPoint(-1,  1, 1, 0.70710678),
+                new ControlPoint(-1,  0, 1, 1),
+                new ControlPoint(-1, -1, 1, 0.70710678),
+                new ControlPoint(0 , -1, 1, 1),
+                new ControlPoint(1 , -1, 1, 0.70710678),
+                new ControlPoint(1 ,  0, 1, 1)
+            };
+            controlPoints[2] = new ControlPoint[] {
+                new ControlPoint(1 ,  0, 2, 1),
+                new ControlPoint(1 ,  1, 2, 0.70710678),
+                new ControlPoint(0 ,  1, 2, 1),
+                new ControlPoint(-1,  1, 2, 0.70710678),
+                new ControlPoint(-1,  0, 2, 1),
+                new ControlPoint(-1, -1, 2, 0.70710678),
+                new ControlPoint(0 , -1, 2, 1),
+                new ControlPoint(1 , -1, 2, 0.70710678),
+                new ControlPoint(1 ,  0, 2, 1)
+            };
+            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU, degreeU), new KnotVector(knotsV, degreeV), controlPoints);
+
+            var samples = new (double u, double v)[] {
+                (0.0, 0.0),
+                (0.99, 0.0),
+                (0.0, 0.99),
+                (0.99, 0.99),
+                (0.5, 0.5),
+                (0.7, 0.7),
+                (0.1, 0.4)
+            };
+            foreach (var (u, v) in samples)
+            {
+                var normal = SurfaceEvaluator.EvaluateNormal(surface, u, v);
+
+                var evalpt = SurfaceEvaluator.Evaluate(surface, u, v);
+                var expected = new Vector3Double(evalpt.X, evalpt.Y, 0).normalized;
+                Assert.That(normal.magnitude, Is.EqualTo(expected.magnitude).Within(0.0001));
+                Assert.That(Math.Abs(expected.X), Is.EqualTo(Math.Abs(normal.X)).Within(0.0001));
+                Assert.That(Math.Abs(expected.Y), Is.EqualTo(Math.Abs(normal.Y)).Within(0.0001));
+                Assert.That(Math.Abs(expected.Z), Is.EqualTo(Math.Abs(normal.Z)).Within(0.0001));
+
+
+            }
+        }
+        [Test]
+        public void SurfaceTangentTestA()
+        {
+            //Plane surface
+            int degreeU = 1;
+            int degreeV = 1;
+            double[] knotsU = { 0, 0, 1, 1 };
+            double[] knotsV = { 0, 0, 1, 1 };
+            ControlPoint[][] controlPoints = new ControlPoint[2][];
+            controlPoints[0] = new ControlPoint[] {
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(1.0, 0.0, 0.0, 1)
+            };
+            controlPoints[1] = new ControlPoint[] {
+                new ControlPoint(0.0, 1.0, 0.0, 1),
+                new ControlPoint(1.0, 1.0, 0.0, 1)
+            };
+            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU, degreeU), new KnotVector(knotsV, degreeV), controlPoints);
+            var samples = new (double u, double v)[] {
+                (0.0, 0.0),
+                (0.99, 0.0),
+                (0.0, 0.99),
+                (0.99, 0.99),
+                (0.5, 0.5),
+                (0.7, 0.7),
+                (0.1, 0.4)
+            };
+            foreach (var (u, v) in samples)
+            {
+                var (tangentU, tangentV) = SurfaceEvaluator.EvaluateTangents(surface, u, v);
+                var expectedTangentU = new Vector3Double(0.0, 1.0, 0.0);
+                var expectedTangentV = new Vector3Double(1.0, 0.0, 0.0);
+                Assert.That(expectedTangentU.X, Is.EqualTo(tangentU.X).Within(0.000001));
+                Assert.That(expectedTangentU.Y, Is.EqualTo(tangentU.Y).Within(0.000001));
+                Assert.That(expectedTangentU.Z, Is.EqualTo(tangentU.Z).Within(0.000001));
+
+            }
+        }
+
+        [Test]
+        public void SurfaceTangentTestB()
+        {
+            //Cylinder surface
+            int degreeU = 1;
+            int degreeV = 2;
+            double[] knotsU = { 0, 0, 0.5, 1, 1 };
+            double[] knotsV = { 0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1 };
+            ControlPoint[][] controlPoints = new ControlPoint[3][];
+            controlPoints[0] = new ControlPoint[] {
+                new ControlPoint(1 ,  0, 0, 1),
+                new ControlPoint(1 ,  1, 0, 0.70710678),
+                new ControlPoint(0 ,  1, 0, 1),
+                new ControlPoint(-1,  1, 0, 0.70710678),
+                new ControlPoint(-1,  0, 0, 1),
+                new ControlPoint(-1, -1, 0, 0.70710678),
+                new ControlPoint(0 , -1, 0, 1),
+                new ControlPoint(1 , -1, 0, 0.70710678),
+                new ControlPoint(1 ,  0, 0, 1)
+            };
+            controlPoints[1] = new ControlPoint[] {
+                new ControlPoint(1 ,  0, 1, 1),
+                new ControlPoint(1 ,  1, 1, 0.70710678),
+                new ControlPoint(0 ,  1, 1, 1),
+                new ControlPoint(-1,  1, 1, 0.70710678),
+                new ControlPoint(-1,  0, 1, 1),
+                new ControlPoint(-1, -1, 1, 0.70710678),
+                new ControlPoint(0 , -1, 1, 1),
+                new ControlPoint(1 , -1, 1, 0.70710678),
+                new ControlPoint(1 ,  0, 1, 1)
+            };
+            controlPoints[2] = new ControlPoint[] {
+                new ControlPoint(1 ,  0, 2, 1),
+                new ControlPoint(1 ,  1, 2, 0.70710678),
+                new ControlPoint(0 ,  1, 2, 1),
+                new ControlPoint(-1,  1, 2, 0.70710678),
+                new ControlPoint(-1,  0, 2, 1),
+                new ControlPoint(-1, -1, 2, 0.70710678),
+                new ControlPoint(0 , -1, 2, 1),
+                new ControlPoint(1 , -1, 2, 0.70710678),
+                new ControlPoint(1 ,  0, 2, 1)
+            };
+            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU, degreeU), new KnotVector(knotsV, degreeV), controlPoints);
+
+            var samples = new (double u, double v)[] {
+                (0.0, 0.0),
+                (0.99, 0.0),
+                (0.0, 0.99),
+                (0.99, 0.99),
+                (0.5, 0.5),
+                (0.7, 0.7),
+                (0.1, 0.4)
+            };
+            foreach (var (u, v) in samples)
+            {
+                var (tangentU, tangentV) = SurfaceEvaluator.EvaluateTangents(surface, u, v);
+                var evalpt = SurfaceEvaluator.Evaluate(surface, u, v);
+                var expectedTangentU = new Vector3Double(0, 0, 1);
+                var expectedTangentV = new Vector3Double(-evalpt.Y, evalpt.X, 0).normalized;// tangent along the circular direction
+                Assert.That(tangentU.magnitude, Is.EqualTo(expectedTangentU.magnitude).Within(0.0001));
+                Assert.That(Math.Abs(expectedTangentU.X), Is.EqualTo(Math.Abs(tangentU.X)).Within(0.0001));
+                Assert.That(Math.Abs(expectedTangentU.Y), Is.EqualTo(Math.Abs(tangentU.Y)).Within(0.0001));
+                Assert.That(Math.Abs(expectedTangentU.Z), Is.EqualTo(Math.Abs(tangentU.Z)).Within(0.0001));
+                Assert.That(tangentV.magnitude, Is.EqualTo(expectedTangentV.magnitude).Within(0.0001));
+                Assert.That(Math.Abs(expectedTangentV.X), Is.EqualTo(Math.Abs(tangentV.X)).Within(0.0001));
+                Assert.That(Math.Abs(expectedTangentV.Y), Is.EqualTo(Math.Abs(tangentV.Y)).Within(0.0001));
+                Assert.That(Math.Abs(expectedTangentV.Z), Is.EqualTo(Math.Abs(tangentV.Z)).Within(0.0001));
             }
         }
     }

@@ -635,7 +635,7 @@ namespace UnitTests.Evaluation
 
             foreach (var u in sampleUs)
             {
-                var (T, N, B) = CurveEvaluator.EvaluateFrenetFrame(curve, u);
+                var (T, N) = CurveEvaluator.EvaluatTangentNormal(curve, u);
 
                 // If tangent is zero then frame is invalid; fail test in that case
                 Assert.That(T.magnitude, Is.GreaterThan(0.0), $"Tangent is zero at u={u}");
@@ -648,30 +648,13 @@ namespace UnitTests.Evaluation
                 Assert.That(Math.Abs(N.Y) - Math.Abs(expectedN.Y), Is.LessThan(tol), $"N.Y incorrect at u={u}");
                 Assert.That(Math.Abs(N.Z) - Math.Abs(expectedN.Z), Is.LessThan(tol), $"N.Z incorrect at u={u}");
 
-                // Binormal should be perpendicular to both and equal to cross(T,N)
-                Assert.That(B.magnitude, Is.GreaterThan(0.0), $"Binormal is zero at u={u}");
-                var dotTN = Math.Abs(Vector3Double.Dot(T, N));// check orthogonality
-                var dotTB = Math.Abs(Vector3Double.Dot(T, B));// check orthogonality
-                var dotNB = Math.Abs(Vector3Double.Dot(N, B));// check orthogonality
-                Assert.That(dotTN, Is.LessThan(1e-6), $"T and N not orthogonal at u={u}");
-                Assert.That(dotTB, Is.LessThan(1e-6), $"T and B not orthogonal at u={u}");
-                Assert.That(dotNB, Is.LessThan(1e-6), $"N and B not orthogonal at u={u}");
-
-                var cross = Vector3Double.Cross(T, N);
-                // cross and B may differ in sign depending on orientation; compare magnitudes and direction
-                var diff = new Vector3Double(cross.X - B.X, cross.Y - B.Y, cross.Z - B.Z);
-                Assert.That(diff.magnitude, Is.LessThan(1e-6), $"B != T x N at u={u}");
-
                 // Ensure helper methods return same vectors
                 var t2 = CurveEvaluator.EvaluateTangent(curve, u);
                 var n2 = CurveEvaluator.EvaluateNormal(curve, u);
-                var b2 = CurveEvaluator.EvaluateBinormal(curve, u);
                 var dt = new Vector3Double(t2.X - T.X, t2.Y - T.Y, t2.Z - T.Z);
                 var dn = new Vector3Double(n2.X - N.X, n2.Y - N.Y, n2.Z - N.Z);
-                var db = new Vector3Double(b2.X - B.X, b2.Y - B.Y, b2.Z - B.Z);
                 Assert.That(dt.magnitude, Is.LessThan(1e-12));
                 Assert.That(dn.magnitude, Is.LessThan(1e-12));
-                Assert.That(db.magnitude, Is.LessThan(1e-12));
             }
         }
 
@@ -694,27 +677,23 @@ namespace UnitTests.Evaluation
 
             foreach (var u in sampleUs)
             {
-                (var t, var n, var b) = CurveEvaluator.EvaluateFrenetFrame(curve, u);
+                (var t, var n) = CurveEvaluator.EvaluatTangentNormal(curve, u);
 
                 // Tangent should match expected normalized direction
                 Assert.That(Math.Abs(t.X - expectedT.X), Is.LessThan(tol));
                 Assert.That(Math.Abs(t.Y - expectedT.Y), Is.LessThan(tol));
                 Assert.That(Math.Abs(t.Z - expectedT.Z), Is.LessThan(tol));
 
-                // For a straight line, second derivative is zero -> normal & binormal should be zero vectors
+                // For a straight line, second derivative is zero -> normal should be zero vectors
                 Assert.That(n.magnitude, Is.EqualTo(0.0).Within(tol));
-                Assert.That(b.magnitude, Is.EqualTo(0.0).Within(tol));
 
                 // Ensure helper methods return same vectors
                 var t2 = CurveEvaluator.EvaluateTangent(curve, u);
                 var n2 = CurveEvaluator.EvaluateNormal(curve, u);
-                var b2 = CurveEvaluator.EvaluateBinormal(curve, u);
                 var dt = new Vector3Double(t2.X - t.X, t2.Y - t.Y, t2.Z - t.Z);
                 var dn = new Vector3Double(n2.X - n.X, n2.Y - n.Y, n2.Z - n.Z);
-                var db = new Vector3Double(b2.X - b.X, b2.Y - b.Y, b2.Z - b.Z);
                 Assert.That(dt.magnitude, Is.LessThan(1e-12));
                 Assert.That(dn.magnitude, Is.LessThan(1e-12));
-                Assert.That(db.magnitude, Is.LessThan(1e-12));
             }
         }
     }
