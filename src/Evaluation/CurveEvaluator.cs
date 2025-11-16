@@ -81,17 +81,19 @@ namespace NurbsSharp.Evaluation
             if (controlPoints.Length < 2)
                 throw new ArgumentException("At least two control points are required", nameof(curve));
 
+            int span = FindSpan(degree, knots, u);
+            int first = Math.Max(0, span - degree);
+            int last = Math.Min(span, controlPoints.Length - 1);
+
             int n = controlPoints.Length - 1;
             double denom = 0.0;
-            Vector3Double weightPosDerivSum, weightPosSum;//ΣwPN' and ΣwPN
+            Vector3Double weightPosDerivSum = new Vector3Double(0.0, 0.0, 0.0); //ΣwPN' 
+            Vector3Double weightPosSum = new Vector3Double(0.0, 0.0, 0.0);//ΣwPN
             double sumWeightBasis=0, sumWeightBasisDeriv=0;//ΣwN and ΣwN'
             double N = 0.0, dN=0;
 
-            weightPosDerivSum = new Vector3Double(0.0, 0.0, 0.0);
-            weightPosSum = new Vector3Double(0.0, 0.0, 0.0);
-
             // Compute the derivative control points
-            for (int i= 0; i <= n; i++)
+            for (int i= first; i <= last; i++)
             {
                 N = BSplineBasisFunction(i, degree, u,knots);
                 dN = DerivativeBSplineBasisFunction(i, degree, u, knots);
@@ -136,12 +138,15 @@ namespace NurbsSharp.Evaluation
                 throw new ArgumentException("At least two control points are required", nameof(curve));
             
             int n = controlPoints.Length - 1;
+            int span = FindSpan(degree, knots, u);
+            int first = Math.Max(0, span - degree);
+            int last = Math.Min(span, controlPoints.Length - 1);
 
             Vector3Double A = new(), A_deriv = new(), A_deriv2 = new();
             double W = 0.0, W_deriv= 0.0, W_deriv2 = 0.0;
 
             // Compute the derivative control points
-            for (int i = 0; i <= n; i++) { 
+            for (int i = first; i <= last; i++) { 
                 var N = BSplineBasisFunction(i, degree, u, knots);
                 var dN = DerivativeBSplineBasisFunction(i, degree, u, knots);
                 var d2N = DerivativeBSplineBasisFunction(i, degree, u, knots, 2);
