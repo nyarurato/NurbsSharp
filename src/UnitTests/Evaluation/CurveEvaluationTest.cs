@@ -554,5 +554,168 @@ namespace UnitTests.Evaluation
             }
 
         }
+
+        [Test]
+        public void NurbsCurveCurvatureA()
+        {
+            // Circle R=3
+            int degree = 2;
+            double[] knots = { 0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1 };
+            ControlPoint[] controlPoints = {
+                new ControlPoint(3 ,  0, 0, 1),
+                new ControlPoint(3 ,  3, 0, 0.70710678),
+                new ControlPoint(0 ,  3, 0, 1),
+                new ControlPoint(-3,  3, 0, 0.70710678),
+                new ControlPoint(-3,  0, 0, 1),
+                new ControlPoint(-3, -3, 0, 0.70710678),
+                new ControlPoint(0 , -3, 0, 1),
+                new ControlPoint(3 , -3, 0, 0.70710678),
+                new ControlPoint(3 ,  0, 0, 1),
+            };
+            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
+            var samplePoints = new double[] { 0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99 };//u=1.0 case is unstable
+            double R = 3.0;
+            foreach (var u in samplePoints)
+            {
+                var curvature = CurveEvaluator.EvaluateCurvature(curve, u);
+                //Cirle is special case where curvature can be computed exactly
+                Assert.That(curvature, Is.EqualTo(1 / R).Within(0.01));
+            }
+        }
+
+        [Test]
+        public void NurbsCurveCurvatureB()
+        {
+            int degree = 3;
+            double[] knots = { 0, 0, 0, 0, 0.5, 0.7, 1, 1, 1, 1 };
+            ControlPoint[] controlPoints = {
+            new ControlPoint(0.0, 0.0, 0.0, 1),
+            new ControlPoint(1.0, 2.0, 0.0, 1),
+            new ControlPoint(2.0, 2.0, 0.0, 1),
+            new ControlPoint(3.0, 0.0, 0.0, 1),
+            new ControlPoint(4.0, 2.0, 0.0, 1),
+            new ControlPoint(5.0, 0.0, 0.0, 1)
+            };
+            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
+            var samplePoints = new double[] { 0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 0.999 };// u=1.0 case is unstable
+            foreach (var u in samplePoints)
+            {
+
+                const double eps = 1e-8;
+                
+                double u0 = Math.Clamp(u, eps, 1 - eps);
+                var p = CurveEvaluator.Evaluate(curve, u0);
+                var d1 = CurveEvaluator.EvaluateFirstDerivative(curve, u0);
+                var d2 = CurveEvaluator.EvaluateSecondDerivative(curve, u0);
+                var k = CurveEvaluator.EvaluateCurvature(curve, u0);
+                Console.WriteLine($"u={u} (eval at {u0}): p={p}, r'={d1}, r''={d2}, curvature={k}");
+            }
+        }
+        [Test]
+        public void FrenetFrame_Circle_OrthogonalityAndNormalization()
+        {
+            // Circle R=3
+            int degree = 2;
+            double[] knots = { 0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1 };
+            ControlPoint[] controlPoints = {
+                new ControlPoint(3 ,  0, 0, 1),
+                new ControlPoint(3 ,  3, 0, 0.70710678),
+                new ControlPoint(0 ,  3, 0, 1),
+                new ControlPoint(-3,  3, 0, 0.70710678),
+                new ControlPoint(-3,  0, 0, 1),
+                new ControlPoint(-3, -3, 0, 0.70710678),
+                new ControlPoint(0 , -3, 0, 1),
+                new ControlPoint(3 , -3, 0, 0.70710678),
+                new ControlPoint(3 ,  0, 0, 1),
+            };
+            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
+
+            double[] sampleUs = { 0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99 };//u=1.0 case is unstable
+            const double tol = 1e-8;
+
+            foreach (var u in sampleUs)
+            {
+                var (T, N, B) = CurveEvaluator.EvaluateFrenetFrame(curve, u);
+
+                // If tangent is zero then frame is invalid; fail test in that case
+                Assert.That(T.magnitude, Is.GreaterThan(0.0), $"Tangent is zero at u={u}");
+                Assert.That(Math.Abs(T.magnitude - 1.0), Is.LessThan(tol), $"T not normalized at u={u}");
+
+                // circle Normal is origin to point vector
+                var pt = CurveEvaluator.Evaluate(curve, u);
+                var expectedN = new Vector3Double(pt.X, pt.Y, pt.Z).normalized;
+                Assert.That(Math.Abs(N.X) - Math.Abs(expectedN.X), Is.LessThan(tol), $"N.X incorrect at u={u}");
+                Assert.That(Math.Abs(N.Y) - Math.Abs(expectedN.Y), Is.LessThan(tol), $"N.Y incorrect at u={u}");
+                Assert.That(Math.Abs(N.Z) - Math.Abs(expectedN.Z), Is.LessThan(tol), $"N.Z incorrect at u={u}");
+
+                // Binormal should be perpendicular to both and equal to cross(T,N)
+                Assert.That(B.magnitude, Is.GreaterThan(0.0), $"Binormal is zero at u={u}");
+                var dotTN = Math.Abs(Vector3Double.Dot(T, N));// check orthogonality
+                var dotTB = Math.Abs(Vector3Double.Dot(T, B));// check orthogonality
+                var dotNB = Math.Abs(Vector3Double.Dot(N, B));// check orthogonality
+                Assert.That(dotTN, Is.LessThan(1e-6), $"T and N not orthogonal at u={u}");
+                Assert.That(dotTB, Is.LessThan(1e-6), $"T and B not orthogonal at u={u}");
+                Assert.That(dotNB, Is.LessThan(1e-6), $"N and B not orthogonal at u={u}");
+
+                var cross = Vector3Double.Cross(T, N);
+                // cross and B may differ in sign depending on orientation; compare magnitudes and direction
+                var diff = new Vector3Double(cross.X - B.X, cross.Y - B.Y, cross.Z - B.Z);
+                Assert.That(diff.magnitude, Is.LessThan(1e-6), $"B != T x N at u={u}");
+
+                // Ensure helper methods return same vectors
+                var t2 = CurveEvaluator.EvaluateTangent(curve, u);
+                var n2 = CurveEvaluator.EvaluateNormal(curve, u);
+                var b2 = CurveEvaluator.EvaluateBinormal(curve, u);
+                var dt = new Vector3Double(t2.X - T.X, t2.Y - T.Y, t2.Z - T.Z);
+                var dn = new Vector3Double(n2.X - N.X, n2.Y - N.Y, n2.Z - N.Z);
+                var db = new Vector3Double(b2.X - B.X, b2.Y - B.Y, b2.Z - B.Z);
+                Assert.That(dt.magnitude, Is.LessThan(1e-12));
+                Assert.That(dn.magnitude, Is.LessThan(1e-12));
+                Assert.That(db.magnitude, Is.LessThan(1e-12));
+            }
+        }
+
+        [Test]
+        public void FrenetFrame_Line_NormalAndBinormalAreZero_TangentMatches()
+        {
+            // Straight line from (0,0,0) to (6,8,0)
+            int degree = 2;
+            double[] knots = { 0, 0, 0, 1, 1, 1 };
+            ControlPoint[] controlPoints = {
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(3.0, 4.0, 0.0, 1),
+                new ControlPoint(6.0, 8.0, 0.0, 1)
+            };
+            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
+
+            double[] sampleUs = { 0.0, 0.25, 0.5, 0.75, 0.999999 };//u=1.0 case is unstable
+            const double tol = 1e-8;
+            var expectedT = new Vector3Double(3.0 / 5.0, 4.0 / 5.0, 0.0); // normalized (6,8,0)
+
+            foreach (var u in sampleUs)
+            {
+                (var t, var n, var b) = CurveEvaluator.EvaluateFrenetFrame(curve, u);
+
+                // Tangent should match expected normalized direction
+                Assert.That(Math.Abs(t.X - expectedT.X), Is.LessThan(tol));
+                Assert.That(Math.Abs(t.Y - expectedT.Y), Is.LessThan(tol));
+                Assert.That(Math.Abs(t.Z - expectedT.Z), Is.LessThan(tol));
+
+                // For a straight line, second derivative is zero -> normal & binormal should be zero vectors
+                Assert.That(n.magnitude, Is.EqualTo(0.0).Within(tol));
+                Assert.That(b.magnitude, Is.EqualTo(0.0).Within(tol));
+
+                // Ensure helper methods return same vectors
+                var t2 = CurveEvaluator.EvaluateTangent(curve, u);
+                var n2 = CurveEvaluator.EvaluateNormal(curve, u);
+                var b2 = CurveEvaluator.EvaluateBinormal(curve, u);
+                var dt = new Vector3Double(t2.X - t.X, t2.Y - t.Y, t2.Z - t.Z);
+                var dn = new Vector3Double(n2.X - n.X, n2.Y - n.Y, n2.Z - n.Z);
+                var db = new Vector3Double(b2.X - b.X, b2.Y - b.Y, b2.Z - b.Z);
+                Assert.That(dt.magnitude, Is.LessThan(1e-12));
+                Assert.That(dn.magnitude, Is.LessThan(1e-12));
+                Assert.That(db.magnitude, Is.LessThan(1e-12));
+            }
+        }
     }
 }

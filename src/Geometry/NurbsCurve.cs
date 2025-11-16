@@ -103,6 +103,50 @@ namespace NurbsSharp.Geometry
         }
 
         /// <summary>
+        /// (en) Returns the curvature of the NURBS curve at the specified parameter u
+        /// (ja) 指定したパラメータ u でのNURBS曲線の曲率を返します
+        /// </summary>
+        /// <param name="u"></param>
+        /// <returns></returns>
+        public double GetCurvature(double u)
+        {
+            return CurveEvaluator.EvaluateCurvature(this, u);
+        }
+
+        /// <summary>
+        /// (en) Returns the tangent vector of the NURBS curve at the specified parameter u
+        /// (ja) 指定したパラメータ u でのNURBS曲線の接線ベクトルを返します
+        /// </summary>
+        /// <param name="u"></param>
+        /// <returns></returns>
+        public Vector3Double GetTangent(double u)
+        {
+            return CurveEvaluator.EvaluateTangent(this,u);
+        }
+
+        /// <summary>
+        /// (en) Returns the normal vector of the NURBS curve at the specified parameter u
+        /// (ja) 指定したパラメータ u でのNURBS曲線の法線ベクトルを返します
+        /// </summary>
+        /// <param name="u"></param>
+        /// <returns></returns>
+        public Vector3Double GetNormal(double u)
+        {
+            return CurveEvaluator.EvaluateNormal(this, u);
+        }
+
+        /// <summary>
+        /// (en) Returns the binormal vector of the NURBS curve at the specified parameter u
+        /// (ja) 指定したパラメータ u でのNURBS曲線の従法線ベクトルを返します
+        /// </summary>
+        /// <param name="u"></param>
+        /// <returns></returns>
+        public Vector3Double GetBinormal(double u)
+        {
+            return CurveEvaluator.EvaluateBinormal(this, u);
+        }
+
+        /// <summary>
         /// Returns a string that represents the current object.
         /// </summary>
         /// <returns></returns>

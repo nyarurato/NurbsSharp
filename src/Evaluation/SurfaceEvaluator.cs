@@ -186,7 +186,7 @@ namespace NurbsSharp.Evaluation
             double[] U = surface.KnotVectorU.Knots;
             double[] V = surface.KnotVectorV.Knots;
 
-            // 1) パラメータを有効ドメインにクランプ（最終ノットは半開区間対策で 1ULP 手前へ）
+            // Clamp u and v to the valid range
             double umin = U[p];
             double umax = U[U.Length - p - 1];
             double vmin = V[q];
@@ -197,14 +197,13 @@ namespace NurbsSharp.Evaluation
             if (v < vmin) v = vmin;
             if (v > vmax) v = LinAlg.BitDecrement(vmax);
 
-            // 2) スパンを取得
             int spanU = FindSpan(p, U, u);
             int spanV = FindSpan(q, V, v);
 
             int iu0 = spanU - p;
             int iv0 = spanV - q;
 
-            // 3) 局所基底とその1階微分のみを計算
+            // Calculate basis functions and their derivatives
             double[] Nu = new double[p + 1];
             double[] Nu_d = new double[p + 1];
             for (int k = 0; k <= p; k++)
@@ -223,7 +222,7 @@ namespace NurbsSharp.Evaluation
                 Nv_d[l] = DerivativeBSplineBasisFunction(j, q, v, V);
             }
 
-            // 4) 重み付き和
+            // Calculate S_u and S_v
             Vector3Double A  = Vector3Double.Zero;
             Vector3Double Au = Vector3Double.Zero;
             Vector3Double Av = Vector3Double.Zero;
@@ -265,6 +264,17 @@ namespace NurbsSharp.Evaluation
             return (resultU,resultV);
         }
 
+        /// <summary>
+        /// (en) Evaluates the second derivatives of the NURBS surface at the specified parameters u and v.
+        /// (ja) 指定したパラメータ u と v でNURBSサーフェスの2階微分を評価します。
+        /// </summary>
+        /// <param name="surface"></param>
+        /// <param name="u"></param>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="DivideByZeroException"></exception>
         public static (Vector3Double uu_deriv, Vector3Double uv_deriv, Vector3Double vv_deriv) EvaluateSecondDerivative(NurbsSurface surface, double u, double v)
         {
             if (surface == null)
@@ -298,7 +308,6 @@ namespace NurbsSharp.Evaluation
             int iu0 = spanU - p;
             int iv0 = spanV - q;
 
-            // 3) 局所基底とその1階微分のみを計算
             double[] Nu = new double[p + 1];
             double[] Nu_d = new double[p + 1];
             double[] Nu_d2 = new double[p + 1];
