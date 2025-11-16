@@ -66,25 +66,25 @@ namespace NurbsSharp.Geometry
 
             if(nU == 0 || nV == 0)
             {
-                throw new InvalidOperationException("Invalid NURBS surface: Control points grid is empty.");
+                throw new InvalidOperationException($"Invalid NURBS surface: Control points grid is empty. Cp_u:{nU}, Cp_v:{nV}");
             }
 
             if(nU < DegreeU + 1)
             {
-                throw new InvalidOperationException("Invalid NURBS surface: Not enough control points in U direction for the given degree.");
+                throw new InvalidOperationException($"Invalid NURBS surface: Not enough control points in U direction for the given degree. Knot:{mU} !=  Cp:{nU} + p:{DegreeU} + 1");
             }
             if(nV < DegreeV + 1)
             {
-                throw new InvalidOperationException("Invalid NURBS surface: Not enough control points in V direction for the given degree.");
+                throw new InvalidOperationException($"Invalid NURBS surface: Not enough control points in V direction for the given degree. Knot:{mV} !=  Cp:{nV} + p:{DegreeV} + 1");
             }
 
             if (mU != nU + DegreeU + 1)
             {
-                throw new InvalidOperationException("Invalid NURBS surface: U knot vector length does not match control points and degree.");
+                throw new InvalidOperationException($"Invalid NURBS surface: U knot vector length does not match control points and degree. Knot:{mU} !=  Cp:{nU} + p:{DegreeU} + 1");
             }
             if (mV != nV + DegreeV + 1)
             {
-                throw new InvalidOperationException("Invalid NURBS surface: V knot vector length does not match control points and degree.");
+                throw new InvalidOperationException($"Invalid NURBS surface: V knot vector length does not match control points and degree. Knot:{mV} !=  Cp:{nV} + p:{DegreeV} + 1");
             }
         }
 

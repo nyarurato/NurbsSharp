@@ -5,6 +5,7 @@ using NurbsSharp.Geometry;
 using NurbsSharp.Tesselation;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -219,7 +220,7 @@ namespace UnitTests.Evaluation
                 new ControlPoint(0.0, 2.0, 1.5, 1),
                 new ControlPoint(4.0, 6.0, 5, 1)
             };
-            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU,degreeU), new KnotVector(knotsV,degreeV), controlPoints);
+            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU, degreeU), new KnotVector(knotsV, degreeV), controlPoints);
 
             double area = SurfaceEvaluator.SurfaceArea(surface, 0, 1, 0, 1);
             Assert.That(area, Is.EqualTo(10.05).Within(0.01));
@@ -261,14 +262,14 @@ namespace UnitTests.Evaluation
             };
             double[] knotsU = { 0, 0, 0, 0, 1, 1, 1, 1 };
             double[] knotsV = { 0, 0, 0, 0, 1, 1, 1, 1 };
-            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU,degreeU), new KnotVector(knotsV,degreeV), controlPoints);
+            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU, degreeU), new KnotVector(knotsV, degreeV), controlPoints);
 
             double area = SurfaceEvaluator.SurfaceArea(surface, 0, 1, 0, 1);
             Assert.That(area, Is.EqualTo(9.0).Within(0.000001));
             area = SurfaceEvaluator.SurfaceArea(surface, 0, 0.5, 0, 0.5);
-            Assert.That(area, Is.EqualTo(9.0/4).Within(0.000001));
+            Assert.That(area, Is.EqualTo(9.0 / 4).Within(0.000001));
             area = SurfaceEvaluator.SurfaceArea(surface, 0.5, 1, 0.5, 1);
-            Assert.That(area, Is.EqualTo(9.0/4).Within(0.000001));
+            Assert.That(area, Is.EqualTo(9.0 / 4).Within(0.000001));
         }
 
         [Test]
@@ -302,8 +303,8 @@ namespace UnitTests.Evaluation
                 new ControlPoint(2.0, 3.0, 0.0, 1),
                 new ControlPoint(3.0, 3.0, 0.0, 1)
             };
-            double[] knotsU = { 0, 0, 0,0,1,1, 1, 1 };
-            double[] knotsV = { 0, 0, 0, 0,1, 1, 1, 1 };
+            double[] knotsU = { 0, 0, 0, 0, 1, 1, 1, 1 };
+            double[] knotsV = { 0, 0, 0, 0, 1, 1, 1, 1 };
 
             var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU, degreeU), new KnotVector(knotsV, degreeV), controlPoints);
 
@@ -352,7 +353,7 @@ namespace UnitTests.Evaluation
                 new ControlPoint(3.0, 2.0, 7.0, 1)
 
             };
-            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU,degreeU), new KnotVector(knotsV,degreeV), controlPoints);
+            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU, degreeU), new KnotVector(knotsV, degreeV), controlPoints);
 
             var samples = new (double u, double v)[] {
                 (0.0, 0.0),
@@ -402,7 +403,7 @@ namespace UnitTests.Evaluation
             int degreeV = 3;
 
             double[] knotsU = { 0, 0, 0, 0.5, 1, 1, 1 };
-            double[] knotsV = { 0, 0, 0, 0, 1, 1, 1, 1 }; 
+            double[] knotsV = { 0, 0, 0, 0, 1, 1, 1, 1 };
 
             ControlPoint[][] controlPoints = new ControlPoint[4][];
             controlPoints[0] = new ControlPoint[] {
@@ -433,7 +434,7 @@ namespace UnitTests.Evaluation
                 new ControlPoint(4.0, 2.0, 7.0, 1)
 
             };
-            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU,degreeU), new KnotVector(knotsV,degreeV), controlPoints);
+            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU, degreeU), new KnotVector(knotsV, degreeV), controlPoints);
 
             var samples = new (double u, double v)[] {
                 (0.0, 0.0),
@@ -476,6 +477,227 @@ namespace UnitTests.Evaluation
                 Assert.That(derivVal.v_deriv.X, Is.EqualTo(evalDeriv2PtV.X).Within(0.01));
                 Assert.That(derivVal.v_deriv.Y, Is.EqualTo(evalDeriv2PtV.Y).Within(0.01));
                 Assert.That(derivVal.v_deriv.Z, Is.EqualTo(evalDeriv2PtV.Z).Within(0.01));
+            }
+        }
+
+        [Test]
+        public void SurfaceSecondDerivativeTestA()
+        {
+            int degreeU = 3;
+            int degreeV = 3;
+            double[] knotsU = { 0, 0, 0, 0, 1, 1, 1, 1 };
+            double[] knotsV = { 0, 0, 0, 0, 1, 1, 1, 1 };
+            ControlPoint[][] controlPoints = new ControlPoint[4][];
+            controlPoints[0] = new ControlPoint[] {
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(1.0, 0.0, 1.0, 1),
+                new ControlPoint(2.0, 0.0, 3.0, 1),
+                new ControlPoint(3.0, 0.0, 3.0, 1)
+            };
+            controlPoints[1] = new ControlPoint[] {
+                new ControlPoint(0.0, 1.0, 0.5, 1),
+                new ControlPoint(1.0, 1.0, 1.5, 1),
+                new ControlPoint(2.0, 1.0, 4.0, 1),
+                new ControlPoint(3.0, 1.0, 3.0, 1)
+            };
+            controlPoints[2] = new ControlPoint[] {
+                new ControlPoint(3.0, 1.0, 0.5, 1),
+                new ControlPoint(3.0, 1.0, 1.5, 1),
+                new ControlPoint(3.0, 1.0, 5.0, 1),
+                new ControlPoint(3.0, 1.0, 6.0, 1)
+            };
+            controlPoints[3] = new ControlPoint[] {
+                new ControlPoint(3.0, 2.0, 0.5, 1),
+                new ControlPoint(3.0, 2.0, 1.5, 1),
+                new ControlPoint(3.0, 2.0, 5.0, 1),
+                new ControlPoint(3.0, 2.0, 7.0, 1)
+            };
+
+            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU, degreeU), new KnotVector(knotsV, degreeV), controlPoints);
+            var samples = new (double u, double v)[] {
+                (0.0, 0.0),
+                (0.99, 0.0),
+                (0.0, 0.99),
+                (0.99, 0.99),
+                (0.5, 0.5),
+                (0.7, 0.7),
+                (0.1, 0.4)
+            };
+            const double h = 1e-6;
+            foreach (var (u, v) in samples)
+            {
+                var derivVal = SurfaceEvaluator.EvaluateSecondDerivative(surface, u, v);
+                //finite difference approximation
+                var evalpt = SurfaceEvaluator.EvaluateFirstDerivative(surface, u, v);
+                var evalpt_du = SurfaceEvaluator.EvaluateFirstDerivative(surface, u + h, v);
+                var evalpt_dv = SurfaceEvaluator.EvaluateFirstDerivative(surface, u, v + h);
+                var evalpt_duv = SurfaceEvaluator.EvaluateFirstDerivative(surface, u + h, v + h);
+                var evalDeriv2PtUU = new Vector3Double(
+                    (evalpt_du.u_deriv.X - evalpt.u_deriv.X) / h,
+                    (evalpt_du.u_deriv.Y - evalpt.u_deriv.Y) / h,
+                    (evalpt_du.u_deriv.Z - evalpt.u_deriv.Z) / h
+                );
+                var evalDeriv2PtVV = new Vector3Double(
+                    (evalpt_dv.v_deriv.X - evalpt.v_deriv.X) / h,
+                    (evalpt_dv.v_deriv.Y - evalpt.v_deriv.Y) / h,
+                    (evalpt_dv.v_deriv.Z - evalpt.v_deriv.Z) / h
+                );
+                var evalDeriv2PtUV_from_du = new Vector3Double(
+                    (evalpt_du.v_deriv.X - evalpt.v_deriv.X) / h,
+                    (evalpt_du.v_deriv.Y - evalpt.v_deriv.Y) / h,
+                    (evalpt_du.v_deriv.Z - evalpt.v_deriv.Z) / h
+                );
+                // option2: ∂/∂v (u-deriv) ≈ (u_deriv(u,v+h) - u_deriv(u,v)) / h
+                var evalDeriv2PtUV_from_dv = new Vector3Double(
+                    (evalpt_dv.u_deriv.X - evalpt.u_deriv.X) / h,
+                    (evalpt_dv.u_deriv.Y - evalpt.u_deriv.Y) / h,
+                    (evalpt_dv.u_deriv.Z - evalpt.u_deriv.Z) / h
+                );
+                // average the two finite-difference estimates to reduce asymmetry
+                var evalDeriv2PtUV = new Vector3Double(
+                    0.5 * (evalDeriv2PtUV_from_du.X + evalDeriv2PtUV_from_dv.X),
+                    0.5 * (evalDeriv2PtUV_from_du.Y + evalDeriv2PtUV_from_dv.Y),
+                    0.5 * (evalDeriv2PtUV_from_du.Z + evalDeriv2PtUV_from_dv.Z)
+                );
+
+
+                Assert.That(derivVal.uu_deriv.X, Is.EqualTo(evalDeriv2PtUU.X).Within(0.1));
+                Assert.That(derivVal.uu_deriv.Y, Is.EqualTo(evalDeriv2PtUU.Y).Within(0.1));
+                Assert.That(derivVal.uu_deriv.Z, Is.EqualTo(evalDeriv2PtUU.Z).Within(0.1));
+                Assert.That(derivVal.vv_deriv.X, Is.EqualTo(evalDeriv2PtVV.X).Within(0.1));
+                Assert.That(derivVal.vv_deriv.Y, Is.EqualTo(evalDeriv2PtVV.Y).Within(0.1));
+                Assert.That(derivVal.vv_deriv.Z, Is.EqualTo(evalDeriv2PtVV.Z).Within(0.1));
+
+                Assert.That(derivVal.uv_deriv.X, Is.EqualTo(evalDeriv2PtUV.X).Within(0.1));
+                Assert.That(derivVal.uv_deriv.Y, Is.EqualTo(evalDeriv2PtUV.Y).Within(0.1));
+                Assert.That(derivVal.uv_deriv.Z, Is.EqualTo(evalDeriv2PtUV.Z).Within(0.1));
+            }
+        }
+
+        [Test]
+        public void SurfaceSecondDerivativeTestB()
+        {
+            //Plane surface
+            int degreeU = 2;
+            int degreeV = 2;
+            double[] knotsU = { 0, 0, 0, 1, 1, 1 };
+            double[] knotsV = { 0, 0, 0, 1, 1, 1 };
+            ControlPoint[][] controlPoints = new ControlPoint[3][];
+            controlPoints[0] = new ControlPoint[] {
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(1.0, 0.0, 0.0, 1),
+                new ControlPoint(2.0, 0.0, 0.0, 1)
+            };
+            controlPoints[1] = new ControlPoint[] {
+                new ControlPoint(0.0, 1.0, 0.0, 1),
+                new ControlPoint(1.0, 1.0, 0.0, 1),
+                new ControlPoint(2.0, 1.0, 0.0, 1)
+            };
+            controlPoints[2] = new ControlPoint[] {
+                new ControlPoint(0.0, 2.0, 0.0, 1),
+                new ControlPoint(1.0, 2.0, 0.0, 1),
+                new ControlPoint(2.0, 2.0, 0.0, 1)
+            };
+            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU, degreeU), new KnotVector(knotsV, degreeV), controlPoints);
+
+            var samples = new (double u, double v)[] {
+                (0.0, 0.0),
+                (0.99, 0.0),
+                (0.0, 0.99),
+                (0.99, 0.99),
+                (0.5, 0.5),
+                (0.7, 0.7),
+                (0.1, 0.4)
+            };
+            foreach (var (u, v) in samples)
+            {
+                var derivVal = SurfaceEvaluator.EvaluateSecondDerivative(surface, u, v);
+                Assert.That(derivVal.uu_deriv.X, Is.EqualTo(0.0).Within(0.000001));
+                Assert.That(derivVal.uu_deriv.Y, Is.EqualTo(0.0).Within(0.000001));
+                Assert.That(derivVal.uu_deriv.Z, Is.EqualTo(0.0).Within(0.000001));
+                Assert.That(derivVal.vv_deriv.X, Is.EqualTo(0.0).Within(0.000001));
+                Assert.That(derivVal.vv_deriv.Y, Is.EqualTo(0.0).Within(0.000001));
+                Assert.That(derivVal.vv_deriv.Z, Is.EqualTo(0.0).Within(0.000001));
+                Assert.That(derivVal.uv_deriv.X, Is.EqualTo(0.0).Within(0.000001));
+                Assert.That(derivVal.uv_deriv.Y, Is.EqualTo(0.0).Within(0.000001));
+                Assert.That(derivVal.uv_deriv.Z, Is.EqualTo(0.0).Within(0.000001));
+            }
+        }
+
+        [Test]
+        public void SurfaceSecondDerivativeTestC()
+        {
+            //Cylinder surface
+            int degreeU = 1;
+            int degreeV = 2;
+            double[] knotsU = { 0, 0, 0.5 ,1, 1 };
+            double[] knotsV = { 0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1 };
+            ControlPoint[][] controlPoints = new ControlPoint[3][];
+            controlPoints[0] = new ControlPoint[] {
+                new ControlPoint(1 ,  0, 0, 1),
+                new ControlPoint(1 ,  1, 0, 0.70710678),
+                new ControlPoint(0 ,  1, 0, 1),
+                new ControlPoint(-1,  1, 0, 0.70710678),
+                new ControlPoint(-1,  0, 0, 1),
+                new ControlPoint(-1, -1, 0, 0.70710678),
+                new ControlPoint(0 , -1, 0, 1),
+                new ControlPoint(1 , -1, 0, 0.70710678),
+                new ControlPoint(1 ,  0, 0, 1)
+            };
+            controlPoints[1] = new ControlPoint[] {
+                new ControlPoint(1 ,  0, 1, 1),
+                new ControlPoint(1 ,  1, 1, 0.70710678),
+                new ControlPoint(0 ,  1, 1, 1),
+                new ControlPoint(-1,  1, 1, 0.70710678),
+                new ControlPoint(-1,  0, 1, 1),
+                new ControlPoint(-1, -1, 1, 0.70710678),
+                new ControlPoint(0 , -1, 1, 1),
+                new ControlPoint(1 , -1, 1, 0.70710678),
+                new ControlPoint(1 ,  0, 1, 1)
+            };
+            controlPoints[2] = new ControlPoint[] {
+                new ControlPoint(1 ,  0, 2, 1),
+                new ControlPoint(1 ,  1, 2, 0.70710678),
+                new ControlPoint(0 ,  1, 2, 1),
+                new ControlPoint(-1,  1, 2, 0.70710678),
+                new ControlPoint(-1,  0, 2, 1),
+                new ControlPoint(-1, -1, 2, 0.70710678),
+                new ControlPoint(0 , -1, 2, 1),
+                new ControlPoint(1 , -1, 2, 0.70710678),
+                new ControlPoint(1 ,  0, 2, 1)
+            };
+            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU, degreeU), new KnotVector(knotsV, degreeV), controlPoints);
+
+            var samples = new (double u, double v)[] {
+                (0.0, 0.0),
+                (0.99, 0.0),
+                (0.0, 0.99),
+                (0.99, 0.99),
+                (0.5, 0.5),
+                (0.7, 0.7),
+                (0.1, 0.4)
+            };
+            var R = 1.0;
+            foreach (var (u, v) in samples)
+            {
+                var deriv2Val = SurfaceEvaluator.EvaluateSecondDerivative(surface, u, v);
+                var derivVal = SurfaceEvaluator.EvaluateFirstDerivative(surface, u, v);
+                var curvature = Vector3Double.Cross(derivVal.v_deriv,deriv2Val.vv_deriv).magnitude / Math.Pow(derivVal.v_deriv.magnitude,3);
+                //For a cylinder, all second derivatives should be zero except vv_deriv.Z
+                Assert.That(deriv2Val.uu_deriv.X, Is.EqualTo(0.0).Within(0.0001));
+                Assert.That(deriv2Val.uu_deriv.Y, Is.EqualTo(0.0).Within(0.0001));
+                Assert.That(deriv2Val.uu_deriv.Z, Is.EqualTo(0.0).Within(0.0001));
+                Assert.That(deriv2Val.uv_deriv.X, Is.EqualTo(0.0).Within(0.0001));
+                Assert.That(deriv2Val.uv_deriv.Y, Is.EqualTo(0.0).Within(0.0001));
+                Assert.That(deriv2Val.vv_deriv.X, Is.Not.EqualTo(0.0).Within(0.0001));
+                Assert.That(deriv2Val.vv_deriv.Y, Is.Not.EqualTo(0.0).Within(0.0001));
+                Assert.That(deriv2Val.vv_deriv.Z, Is.EqualTo(0.0).Within(0.0001));// cylinder axis direction
+
+                Assert.That(deriv2Val.vv_deriv.X, !Is.EqualTo(0.0).Within(0.0001));
+
+
+                Assert.That(curvature, Is.EqualTo(1/R).Within(0.0001));
+
             }
         }
     }

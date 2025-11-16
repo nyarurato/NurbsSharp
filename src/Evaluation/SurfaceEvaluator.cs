@@ -257,13 +257,115 @@ namespace NurbsSharp.Evaluation
 
             if (W == 0.0)
                 throw new DivideByZeroException("The weight function evaluated to zero.");
-                //return (Vector3Double.Zero,Vector3Double.Zero);
 
             var resultU = (Au * W - A * Wu) / (W * W);
             
             var resultV = (Av * W - A * Wv) / (W * W);
 
             return (resultU,resultV);
+        }
+
+        public static (Vector3Double uu_deriv, Vector3Double uv_deriv, Vector3Double vv_deriv) EvaluateSecondDerivative(NurbsSurface surface, double u, double v)
+        {
+            if (surface == null)
+                throw new ArgumentNullException(nameof(surface));
+
+            int p = surface.DegreeU;
+            int q = surface.DegreeV;
+            if (p < 0 || q < 0)
+                throw new ArgumentException("Surface degrees must be non-negative.", nameof(surface));
+
+            var cps = surface.ControlPoints;
+            int nu = cps.Length;           // #CP in U
+            int nv = cps[0].Length;        // #CP in V
+
+            double[] U = surface.KnotVectorU.Knots;
+            double[] V = surface.KnotVectorV.Knots;
+
+            double umin = U[p];
+            double umax = U[U.Length - p - 1];
+            double vmin = V[q];
+            double vmax = V[V.Length - q - 1];
+
+            if (u < umin) u = umin;
+            if (u > umax) u = LinAlg.BitDecrement(umax);
+            if (v < vmin) v = vmin;
+            if (v > vmax) v = LinAlg.BitDecrement(vmax);
+
+            int spanU = FindSpan(p, U, u);
+            int spanV = FindSpan(q, V, v);
+
+            int iu0 = spanU - p;
+            int iv0 = spanV - q;
+
+            // 3) 局所基底とその1階微分のみを計算
+            double[] Nu = new double[p + 1];
+            double[] Nu_d = new double[p + 1];
+            double[] Nu_d2 = new double[p + 1];
+            for (int k = 0; k <= p; k++)
+            {
+                int i = iu0 + k;
+                Nu[k] = BSplineBasisFunction(i, p, u, U);
+                Nu_d[k] = DerivativeBSplineBasisFunction(i, p, u, U);
+                Nu_d2[k] = DerivativeBSplineBasisFunction(i, p, u, U,2);
+            }
+
+            double[] Nv = new double[q + 1];
+            double[] Nv_d = new double[q + 1];
+            double[] Nv_d2 = new double[q + 1];
+            for (int l = 0; l <= q; l++)
+            {
+                int j = iv0 + l;
+                Nv[l] = BSplineBasisFunction(j, q, v, V);
+                Nv_d[l] = DerivativeBSplineBasisFunction(j, q, v, V);
+                Nv_d2[l] = DerivativeBSplineBasisFunction(j, q, v, V,2);
+            }
+
+            Vector3Double A = new();
+            Vector3Double A_deriv_u = new(), A_deriv_v = new();
+            Vector3Double A_deriv_uu = new(), A_deriv_uv = new(), A_deriv_vv=new();
+            double W = 0.0;
+            double W_deriv_u = 0.0, W_deriv_v = 0.0;
+            double W_deriv_uu = 0.0, W_deriv_uv = 0.0, W_deriv_vv = 0.0;
+
+            for (int k = 0; k <= p; k++)
+            {
+                int i = iu0 + k;
+                for (int l = 0; l <= q; l++)
+                {
+                    int j = iv0 + l;
+
+                    ControlPoint cp = cps[i][j];
+                    double w = cp.Weight;
+                    Vector3Double Pw = cp.Position * w;
+
+                    A += Pw * Nu[k] * Nv[l];
+                    W += w * Nu[k] * Nv[l];
+
+                    A_deriv_u += Pw * Nu_d[k] * Nv[l];
+                    W_deriv_u += w * Nu_d[k] * Nv[l];
+                    A_deriv_v += Pw * Nu[k] * Nv_d[l];
+                    W_deriv_v += w * Nu[k] * Nv_d[l];
+
+                    A_deriv_uu += Pw * Nu_d2[k] * Nv[l];
+                    W_deriv_uu += w * Nu_d2[k] * Nv[l];
+                    A_deriv_uv += Pw * Nu_d[k] * Nv_d[l];
+                    W_deriv_uv += w * Nu_d[k] * Nv_d[l];
+                    A_deriv_vv += Pw * Nu[k] * Nv_d2[l];
+                    W_deriv_vv += w * Nu[k] * Nv_d2[l];
+                }
+            }
+
+            if(W == 0.0)
+                throw new DivideByZeroException("The weight function evaluated to zero.");
+
+            // Suu = (A_uu * W - 2 A_u * W_u - A * W_uu + 2 A * (W_u)^2 / W) / (W^2)
+            var result_uu = (A_deriv_uu * W - 2.0 * A_deriv_u * W_deriv_u - A * W_deriv_uu + 2.0 * A * W_deriv_u * W_deriv_u / W) / (W * W);
+            // Suv = (A_uv * W - A_u * W_v - A_v * W_u - A * W_uv + 2 A * W_u * W_v / W) / (W^2)
+            var result_uv = (A_deriv_uv * W - A_deriv_u * W_deriv_v - A_deriv_v * W_deriv_u - A * W_deriv_uv + 2.0 * A * W_deriv_u * W_deriv_v / W) / (W * W);
+            // Svv = (A_vv * W - 2 A_v * W_v - A * W_vv + 2 A * (W_v)^2 / W) / (W^2)
+            var result_vv = (A_deriv_vv * W - 2.0 * A_deriv_v * W_deriv_v - A * W_deriv_vv + 2.0 * A * W_deriv_v * W_deriv_v / W) / (W * W);
+            return (result_uu, result_uv, result_vv);
         }
     }
 
