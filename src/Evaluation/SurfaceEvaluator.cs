@@ -75,7 +75,6 @@ namespace NurbsSharp.Evaluation
         /// <param name="end_u"></param>
         /// <param name="start_v"></param>
         /// <param name="end_v"></param>
-        /// <param name="epsilon"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
         public static double SurfaceArea(NurbsSurface surface, double start_u, double end_u, double start_v, double end_v)
@@ -130,7 +129,6 @@ namespace NurbsSharp.Evaluation
                         continue;
                     double half_v = 0.5 * (b_v - a_v);
                     double center_v = 0.5 * (a_v + b_v);
-                    double spanSumV = 0.0;
                     // double Gauss loop: u-nodes and v-nodes
                     for (int iu = 0; iu < GaussNode5.Length; iu++)
                     {
