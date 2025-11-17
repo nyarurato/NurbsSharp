@@ -430,6 +430,89 @@ namespace NurbsSharp.Evaluation
             return (res.tangentU,res.tangentV);
         }
 
+        /// <summary>
+        /// (en) Evaluates the principal curvatures on the NURBS surface at the specified parameters u and v.
+        /// (ja) 指定したパラメータ u と v でNURBSサーフェス上の主曲率を評価します。
+        /// </summary>
+        /// <param name="surface"></param>
+        /// <param name="u"></param>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public static (double k1, double k2) EvaluatePrincipalCurvatures(NurbsSurface surface, double u, double v)
+        {
+            // Principal curvatures k1 , k2 => det(II - k * I) = 0
+
+            // Get first derivatives
+            (Vector3Double Su, Vector3Double Sv) = EvaluateFirstDerivative(surface, u, v);
+            // Get second derivatives
+            (Vector3Double Suu, Vector3Double Suv, Vector3Double Svv) = EvaluateSecondDerivative(surface, u, v);
+            // Normal vector
+            Vector3Double Normal = Vector3Double.Cross(Su, Sv).normalized;
+            // First fundamental form coefficients
+            double E = Vector3Double.Dot(Su, Su);
+            double F = Vector3Double.Dot(Su, Sv);
+            double G = Vector3Double.Dot(Sv, Sv);
+            // Second fundamental form coefficients
+            double L = Vector3Double.Dot(Suu, Normal);
+            double M = Vector3Double.Dot(Suv, Normal);
+            double N = Vector3Double.Dot(Svv, Normal);
+
+            double a = (E * G - F * F);
+            double b = (E * N - 2 * F * M + G * L);
+            double c = (L * N - M * M);
+
+            double discriminant = b * b - 4 * a * c; //sqrt(b^2 - 4ac)
+            if (discriminant < 0)
+            {
+                throw new InvalidOperationException("The principal curvatures are complex.");
+            }
+            // Compute the principal curvatures
+            double sqrtDiscriminant = Math.Sqrt(discriminant);
+            double k1 = (b + sqrtDiscriminant) / (2 * a);
+            double k2 = (b - sqrtDiscriminant) / (2 * a);
+            return (k1, k2);
+        }
+
+        /// <summary>
+        /// (en) Evaluates the mean curvature and Gaussian curvature on the NURBS surface at the specified parameters u and v.
+        /// (ja) 指定したパラメータ u と v でNURBSサーフェス上の平均曲率とガウス曲率を評価します。
+        /// </summary>
+        /// <param name="surface"></param>
+        /// <param name="u"></param>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        /// <exception cref="DivideByZeroException"></exception>
+        public static (double meanCurvature, double gaussianCurvature) EvaluateMeanAndGaussianCurvatures(NurbsSurface surface, double u, double v)
+        {
+            // Gaussian curvature K = det(II) / det(I) = (L*N - M^2) / (E*G - F^2)
+            // Mean curvature H = trace(II * I^-1) / 2 = (E*N - 2*F*M + G*L) / (2*(E*G - F^2))
+
+            // Get first derivatives
+            (Vector3Double Su, Vector3Double Sv) = EvaluateFirstDerivative(surface, u, v);
+            // Get second derivatives
+            (Vector3Double Suu, Vector3Double Suv, Vector3Double Svv) = EvaluateSecondDerivative(surface, u, v);
+            // Normal vector
+            Vector3Double Normal = Vector3Double.Cross(Su, Sv).normalized;
+            // First fundamental form coefficients
+            double E = Vector3Double.Dot(Su, Su);
+            double F = Vector3Double.Dot(Su, Sv);
+            double G = Vector3Double.Dot(Sv, Sv);
+            // Second fundamental form coefficients
+            double L = Vector3Double.Dot(Suu, Normal);
+            double M = Vector3Double.Dot(Suv, Normal);
+            double N = Vector3Double.Dot(Svv, Normal);
+            // Compute mean curvature H and Gaussian curvature K
+            double denominator = E * G - F * F;
+            if (denominator == 0)
+            {
+                throw new DivideByZeroException("Denominator in curvature calculation is zero.");
+            }
+            double meanCurvature = (E * N - 2 * F * M + G * L) / (2 * denominator); 
+            double gaussianCurvature = (L * N - M * M) / denominator;
+            return (meanCurvature, gaussianCurvature);
+        }
+
     }
 
 }

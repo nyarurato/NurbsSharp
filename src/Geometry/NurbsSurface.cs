@@ -152,6 +152,53 @@ namespace NurbsSharp.Geometry
             return SurfaceEvaluator.EvaluateNormal(this, u, v);
         }
 
+        /// <summary>
+        /// (en) Get mean curvature and Gaussian curvature at the specified parameter (u,v)
+        /// (ja) 指定したパラメータ(u,v)での平均曲率とガウス曲率を取得する
+        /// </summary>
+        /// <param name="u"></param>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        public (double meanCurvature, double gaussianCurvature) GetMeanAndGaussianCurvatures(double u, double v)
+        {
+            return SurfaceEvaluator.EvaluateMeanAndGaussianCurvatures(this, u, v);
+        }
+
+        /// <summary>
+        /// (en) Get mean curvature at the specified parameter (u,v)
+        /// (ja) 指定したパラメータ(u,v)での平均曲率を取得する
+        /// </summary>
+        /// <param name="u"></param>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        public double GetMeanCurvature(double u, double v)
+        {
+            return SurfaceEvaluator.EvaluateMeanAndGaussianCurvatures(this,u,v).meanCurvature;
+        }
+
+        /// <summary>
+        /// (en) Get Gaussian curvature at the specified parameter (u,v)
+        /// (ja) 指定したパラメータ(u,v)でのガウス曲率を取得する
+        /// </summary>
+        /// <param name="u"></param>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        public double GetGaussianCurvature(double u, double v)
+        {
+            return SurfaceEvaluator.EvaluateMeanAndGaussianCurvatures(this, u, v).gaussianCurvature;
+        }
+
+        /// <summary>
+        /// (en) Get principal curvatures at the specified parameter (u,v)
+        /// (ja) 指定したパラメータ(u,v)での主曲率を取得する
+        /// </summary>
+        /// <param name="u"></param>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        public (double k1, double k2) GetPrincipalCurvatures(double u, double v)
+        {
+            return SurfaceEvaluator.EvaluatePrincipalCurvatures(this, u, v);
+        }
 
         /// <summary>
         /// Returns a string that represents the current NURBS surface.

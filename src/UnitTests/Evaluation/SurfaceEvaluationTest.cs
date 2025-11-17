@@ -951,5 +951,131 @@ namespace UnitTests.Evaluation
                 Assert.That(Math.Abs(expectedTangentV.Z), Is.EqualTo(Math.Abs(tangentV.Z)).Within(0.0001));
             }
         }
+
+        [Test]
+        public void SurfaceCurvatureTestA()
+        {
+            var R = 3.0;
+            //Cylinder surface
+            int degreeU = 1;
+            int degreeV = 2;
+            double[] knotsU = { 0, 0, 0.5, 1, 1 };
+            double[] knotsV = { 0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1 };
+            ControlPoint[][] controlPoints = new ControlPoint[3][];
+            controlPoints[0] = new ControlPoint[] {
+                new ControlPoint(R ,  0, 0, 1),
+                new ControlPoint(R ,  R, 0, 0.70710678),
+                new ControlPoint(0 ,  R, 0, 1),
+                new ControlPoint(-R,  R, 0, 0.70710678),
+                new ControlPoint(-R,  0, 0, 1),
+                new ControlPoint(-R, -R, 0, 0.70710678),
+                new ControlPoint(0 , -R, 0, 1),
+                new ControlPoint(R , -R, 0, 0.70710678),
+                new ControlPoint(R ,  0, 0, 1)
+            };
+            controlPoints[1] = new ControlPoint[] {
+                new ControlPoint(R ,  0, 1, 1),
+                new ControlPoint(R ,  R, 1, 0.70710678),
+                new ControlPoint(0 ,  R, 1, 1),
+                new ControlPoint(-R,  R, 1, 0.70710678),
+                new ControlPoint(-R,  0, 1, 1),
+                new ControlPoint(-R, -R, 1, 0.70710678),
+                new ControlPoint(0 , -R, 1, 1),
+                new ControlPoint(R , -R, 1, 0.70710678),
+                new ControlPoint(R ,  0, 1, 1)
+            };
+            controlPoints[2] = new ControlPoint[] {
+                new ControlPoint(R ,  0, 2, 1),
+                new ControlPoint(R ,  R, 2, 0.70710678),
+                new ControlPoint(0 ,  R, 2, 1),
+                new ControlPoint(-R,  R, 2, 0.70710678),
+                new ControlPoint(-R,  0, 2, 1),
+                new ControlPoint(-R, -R, 2, 0.70710678),
+                new ControlPoint(0 , -R, 2, 1),
+                new ControlPoint(R , -R, 2, 0.70710678),
+                new ControlPoint(R ,  0, 2, 1)
+            };
+            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU, degreeU), new KnotVector(knotsV, degreeV), controlPoints);
+
+            var samples = new (double u, double v)[] {
+                (0.0, 0.0),
+                (0.99, 0.0),
+                (0.0, 0.99),
+                (0.99, 0.99),
+                (0.15, 0.5),
+                (0.0001, 0.0001),
+                (0.5, 0.00001),
+                (0.5, 0.5),
+                (0.7, 0.7),
+                (0.1, 0.4)
+            };
+
+
+            foreach (var (u, v) in samples)
+            {
+                (double k1, double k2) = SurfaceEvaluator.EvaluatePrincipalCurvatures(surface, u, v);
+                (double H, double K) = SurfaceEvaluator.EvaluateMeanAndGaussianCurvatures(surface, u, v);
+                //For a cylinder, one principal curvature should be 0, the other should be 1/R
+                Assert.That(k1, Is.EqualTo(0.0).Within(0.0001).Or.EqualTo(1 / R).Within(0.0001));
+                Assert.That(k2, Is.EqualTo(0.0).Within(0.0001).Or.EqualTo(1 / R).Within(0.0001));
+                Assert.That(Math.Abs(k1), Is.Not.EqualTo(Math.Abs(k2)).Within(0.0001));
+                //Mean curvature H = (k1 + k2) / 2
+                Assert.That(H, Is.EqualTo((0 + 1 / R) / 2).Within(0.0001));
+                //Gaussian curvature K = k1 * k2
+                Assert.That(K, Is.EqualTo(0.0).Within(0.0001));
+            }
+        }
+
+        [Test]
+        public void SurfaceCurvatureTestB()
+        {
+            //Plane surface
+            int degreeU = 2;
+            int degreeV = 2;
+            double[] knotsU = { 0, 0, 0, 1, 1, 1 };
+            double[] knotsV = { 0, 0, 0, 1, 1, 1 };
+            ControlPoint[][] controlPoints = new ControlPoint[3][];
+            controlPoints[0] = new ControlPoint[] {
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(1.0, 0.0, 0.0, 1),
+                new ControlPoint(2.0, 0.0, 0.0, 1)
+            };
+            controlPoints[1] = new ControlPoint[] {
+                new ControlPoint(0.0, 1.0, 0.0, 1),
+                new ControlPoint(1.0, 1.0, 0.0, 1),
+                new ControlPoint(2.0, 1.0, 0.0, 1)
+            };
+            controlPoints[2] = new ControlPoint[] {
+                new ControlPoint(0.0, 2.0, 0.0, 1),
+                new ControlPoint(1.0, 2.0, 0.0, 1),
+                new ControlPoint(2.0, 2.0, 0.0, 1)
+            };
+            var surface = new NurbsSurface(degreeU, degreeV, new KnotVector(knotsU, degreeU), new KnotVector(knotsV, degreeV), controlPoints);
+            var samples = new (double u, double v)[] {
+                (0.0, 0.0),
+                (0.99, 0.0),
+                (0.0, 0.99),
+                (0.99, 0.99),
+                (0.15, 0.5),
+                (0.0001, 0.0001),
+                (0.5, 0.00001),
+                (0.5, 0.5),
+                (0.7, 0.7),
+                (0.1, 0.4)
+            };
+            foreach (var (u, v) in samples)
+            {
+                (double k1, double k2) = SurfaceEvaluator.EvaluatePrincipalCurvatures(surface, u, v);
+                (double H, double K) = SurfaceEvaluator.EvaluateMeanAndGaussianCurvatures(surface, u, v);
+                //For a plane, both principal curvatures should be 0
+                Assert.That(k1, Is.EqualTo(0.0).Within(0.000001));
+                Assert.That(k2, Is.EqualTo(0.0).Within(0.000001));
+                //Mean curvature H = (k1 + k2) / 2
+                Assert.That(H, Is.EqualTo(0.0).Within(0.000001));
+                //Gaussian curvature K = k1 * k2
+                Assert.That(K, Is.EqualTo(0.0).Within(0.000001));
+
+            }
+        } 
     }
 }
