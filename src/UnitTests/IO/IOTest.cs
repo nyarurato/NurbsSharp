@@ -362,5 +362,31 @@ namespace UnitTests.IO
             Assert.That(File.Exists("test_outputB.igs"), Is.True);
 
         }
+
+        [Test]
+        public async Task IgesExportCurveTest()
+        {
+            // Create a simple NURBS curve
+            int degree = 3;
+            double[] knots = { 0, 0, 0, 0, 1, 1, 1, 1 };
+            KnotVector knotVector = new KnotVector(knots, degree);
+
+            ControlPoint[] controlPoints = new ControlPoint[]
+            {
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(1.0, 2.0, 1.0, 1),
+                new ControlPoint(3.0, 3.0, 0.0, 1),
+                new ControlPoint(4.0, 1.0, 0.0, 1)
+            };
+
+            NurbsCurve curve = new NurbsCurve(degree, knotVector, controlPoints);
+
+            using (FileStream fs = new FileStream("test_curve.igs", FileMode.Create, FileAccess.Write))
+            {
+                await IGESExporter.ExportAsync(curve, fs);
+            }
+            Console.WriteLine($"IGES curve file 'test_curve.igs' has been created. At Current :{Directory.GetCurrentDirectory()}");
+            Assert.That(File.Exists("test_curve.igs"), Is.True);
+        }
     }
 }

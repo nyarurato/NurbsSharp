@@ -46,19 +46,82 @@ namespace NurbsSharp.IO.IGES
         /// <returns></returns>
         public string[] GenerateParameterData()
         {
-            // IGES 126 (Rational B-spline curve) の主要フィールド（簡易）
-            // 実装方針: JAMA-IS で必要なパラメータのみ列挙
-            // フォーマット（簡易）: degree, m, n, knotList..., weights..., controlPoints...
-            int p = _curve.Degree;
-            int n = _curve.ControlPoints.Length - 1; // n = controlPointCount -1
-            var knots = _curve.KnotVector.Knots;
-            string knotsStr = string.Join(",", knots.Select(k => k.ToString("G17")));
-            string weights = string.Join(",", _curve.ControlPoints.Select(cp => cp.Weight.ToString("G17")));
-            string cps = string.Join(",", _curve.ControlPoints.Select(cp => $"{cp.Position.X:G17},{cp.Position.Y:G17},{cp.Position.Z:G17}"));
-            // 最低限の情報を返す
-            ParameterData = new[] { $"{p},{n},{knotsStr},{weights},{cps}" };
-            return ParameterData;
+            // IGES 126 (Rational B-spline curve) format:
+            // K,M,PROP1,PROP2,PROP3,PROP4,N+1 knots,N+1 weights,N+1 control points (X,Y,Z),V0,V1
+            // K = Upper index of sum (number of control points - 1)
+            // M = Degree of basis functions
+            // PROP1 = 0: non-planar, 1: planar
+            // PROP2 = 0: not closed, 1: closed
+            // PROP3 = 0: not periodic, 1: periodic
+            // PROP4 = 0: rational, 1: polynomial (non-rational)
+            int D_pointer = 1; // Directory Entry pointer
+            string D_pointer_str = D_pointer.ToString().PadLeft(8, ' ');
 
+            int K = _curve.ControlPoints.Length - 1;
+            int M = _curve.Degree;
+            int PROP1 = 0; // non-planar
+            int PROP2 = 0; // not closed
+            int PROP3 = 0; // not periodic
+            int PROP4 = 0; // rational
+
+            StringBuilder sb = new StringBuilder();
+            sb.Append($"{EntityType},{K},{M},{PROP1},{PROP2},{PROP3},{PROP4},");
+
+            const int paramater_max_per_line = 63;
+            int line_counter = 40; // approximate starting position
+
+            // Knot vector (K+M+2 values)
+            foreach (var knot in _curve.KnotVector.Knots)
+            {
+                var knotStr = $"{knot:F10}".TrimEnd('0').TrimEnd('.');
+                if (line_counter + knotStr.Length + 1 > paramater_max_per_line)
+                {
+                    sb.AppendLine();
+                    line_counter = 0;
+                }
+                sb.Append($"{knotStr},");
+                line_counter += knotStr.Length + 1;
+            }
+
+            // Weights (K+1 values)
+            foreach (var cp in _curve.ControlPoints)
+            {
+                var weightStr = $"{cp.Weight:F10}".TrimEnd('0').TrimEnd('.');
+                if (line_counter + weightStr.Length + 1 > paramater_max_per_line)
+                {
+                    sb.AppendLine();
+                    line_counter = 0;
+                }
+                sb.Append($"{weightStr},");
+                line_counter += weightStr.Length + 1;
+            }
+
+            // Control points (K+1 triplets of X,Y,Z)
+            foreach (var cp in _curve.ControlPoints)
+            {
+                foreach (var coord in new[] { cp.Position.X, cp.Position.Y, cp.Position.Z })
+                {
+                    var coordStr = $"{coord:F10}".TrimEnd('0').TrimEnd('.');
+                    if (line_counter + coordStr.Length + 1 > paramater_max_per_line)
+                    {
+                        sb.AppendLine();
+                        line_counter = 0;
+                    }
+                    sb.Append($"{coordStr},");
+                    line_counter += coordStr.Length + 1;
+                }
+            }
+
+            // Parameter range V(0) and V(1)
+            double V0 = _curve.KnotVector.Knots[0];
+            double V1 = _curve.KnotVector.Knots[_curve.KnotVector.Length - 1];
+            sb.Append($"{V0:F10},{V1:F10};");
+
+            ParameterData = sb.ToString()
+                              .Split(Environment.NewLine)
+                              .Select(s => s.PadRight(64, ' ') + D_pointer_str)
+                              .ToArray();
+            return ParameterData;
         }
 
         /// <summary>
@@ -82,8 +145,10 @@ namespace NurbsSharp.IO.IGES
 
             string status = "01010000"; // placeholder
             string zerostr = "       0";
-            string s1 = $"     {EntityType}{parameterPointer.ToString().PadLeft(7, ' ')}{zerostr}{zerostr}{zerostr}                        {status}D";
-            string s2 = $"     {EntityType}{zerostr}{zerostr}{parameterLineCount.ToString().PadLeft(7, ' ')}{zerostr}                               0D";
+            string nonestr = "        ";
+            
+            string s1 = $"     {EntityType}{parameterPointer.ToString().PadLeft(8, ' ')}{zerostr}{zerostr}{zerostr}{nonestr}{nonestr}{nonestr}{status}";
+            string s2 = $"     {EntityType}{zerostr}{zerostr}{parameterLineCount.ToString().PadLeft(8, ' ')}{zerostr}{nonestr}{nonestr}{nonestr}{zerostr}";
             return new[] { s1, s2 };
         }
     }

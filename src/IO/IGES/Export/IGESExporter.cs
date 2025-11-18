@@ -100,6 +100,12 @@ namespace NurbsSharp.IO.IGES
                 new IgesRationalBSplineCurve(curve)
             };
 
+            //Prepare Directory / Parameter Section
+            foreach (var e in entities)
+            {
+                e.GenerateParameterData();
+            }
+
             countD = await WriteDirectorySection(iges, entities);
             countP = await WriteParameterSectionAsync(iges, entities);
 
