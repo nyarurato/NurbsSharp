@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace NurbsSharp.IO.IGES
 {
-    interface IIgesEntity
+    /// <summary>
+    /// Interface for IGES entities
+    /// </summary>
+    internal interface IIgesEntity
     {
         int EntityType { get; }
 

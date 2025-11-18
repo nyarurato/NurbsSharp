@@ -5,7 +5,7 @@
 		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<VersionPrefix>0.0.1</VersionPrefix>
-		<VersionSuffix>beta3</VersionSuffix>
+		<VersionSuffix>beta4</VersionSuffix>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
@@ -53,7 +53,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="src\IO\IGES\Import\" />
 	  <Folder Include="src\Intersection\" />
     <None Include="README.md" Pack="true" PackagePath="" />
 	</ItemGroup>

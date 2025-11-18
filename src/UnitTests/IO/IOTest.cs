@@ -301,7 +301,7 @@ namespace UnitTests.IO
             {
                 await IGESExporter.ExportAsync(nurbsSurface, fs);
             }
-            Console.WriteLine($"STL file 'test_output.igs' has been created. At Current :{Directory.GetCurrentDirectory()}");
+            Console.WriteLine($"IGES file 'test_output.igs' has been created. At Current :{Directory.GetCurrentDirectory()}");
             Assert.That(File.Exists("test_output.igs"), Is.True);
         }
     
@@ -358,7 +358,7 @@ namespace UnitTests.IO
             {
                 await IGESExporter.ExportAsync(nurbsSurface, fs);
             }
-            Console.WriteLine($"STL file 'test_outputB.igs' has been created. At Current :{Directory.GetCurrentDirectory()}");
+            Console.WriteLine($"IGES file 'test_outputB.igs' has been created. At Current :{Directory.GetCurrentDirectory()}");
             Assert.That(File.Exists("test_outputB.igs"), Is.True);
 
         }
@@ -387,6 +387,49 @@ namespace UnitTests.IO
             }
             Console.WriteLine($"IGES curve file 'test_curve.igs' has been created. At Current :{Directory.GetCurrentDirectory()}");
             Assert.That(File.Exists("test_curve.igs"), Is.True);
+        }
+
+        [Test]
+        public async Task IgesReadTestA()
+        {
+            string resourcePath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "IO", "resources");
+            string[] igesfile = ["test_output.igs", "test_outputB.igs"];
+            (int degree_u,int degree_v,int cp_u,int cp_v,int k_u,int k_v)[] expect = [(3, 3, 4, 4, 8, 8),(3,3,5,5,9,9)];
+            foreach (var file in igesfile)
+            {
+                string filepath = Path.Combine(resourcePath, file);
+                Assert.That(File.Exists(filepath), Is.True, $"Required IGES file '{file}' does not exist in resources folder.");
+                StreamReader reader = new StreamReader(filepath, Encoding.ASCII);
+                var res = await IGESImporter.ImportAsync(reader);
+                var surface = res.OfType<NurbsSurface>().FirstOrDefault();
+                int index = igesfile.ToList().IndexOf(file);
+                Assert.That(surface, Is.Not.Null, $"No NURBS surface found in IGES file '{file}'.");
+                Assert.That(surface.DegreeU, Is.EqualTo(expect[index].degree_u));
+                Assert.That(surface.DegreeV, Is.EqualTo(expect[index].degree_v));
+                Assert.That(surface.ControlPoints.Length, Is.EqualTo(expect[index].cp_u));
+                Assert.That(surface.ControlPoints[0].Length, Is.EqualTo(expect[index].cp_v));
+                Assert.That(surface.KnotVectorU.Knots.Length, Is.EqualTo(expect[index].k_u));
+                Assert.That(surface.KnotVectorV.Knots.Length, Is.EqualTo(expect[index].k_v));
+            }
+        }
+
+        [Test]
+        public async Task IgesReadCurveTestA()
+        {
+            string resourcePath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "IO", "resources");
+            string igesfile = "test_curve.igs";
+            int expect_degree = 3;
+            int expect_cp = 4;
+            int expect_knot = 8;
+            string filepath = Path.Combine(resourcePath, igesfile);
+            Assert.That(File.Exists(filepath), Is.True, $"Required IGES file '{igesfile}' does not exist in resources folder.");
+            StreamReader reader = new StreamReader(filepath, Encoding.ASCII);
+            var res = await IGESImporter.ImportAsync(reader);
+            var curve = res.OfType<NurbsCurve>().FirstOrDefault();
+            Assert.That(curve, Is.Not.Null, $"No NURBS curve found in IGES file '{igesfile}'.");
+            Assert.That(curve.Degree, Is.EqualTo(expect_degree));
+            Assert.That(curve.ControlPoints.Length, Is.EqualTo(expect_cp));
+            Assert.That(curve.KnotVector.Knots.Length, Is.EqualTo(expect_knot));
         }
     }
 }

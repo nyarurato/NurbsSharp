@@ -11,14 +11,12 @@ using System.Threading.Tasks;
 namespace NurbsSharp.IO.IGES
 {
     //reference: https://wiki.eclipse.org/IGES_file_Specification
+    //TODO; Support Mesh Export
 
     /// <summary>
-    /// IGESエクスポーター
-    /// - 現状: NURBS（Rational B-spline curve: 126 / surface: 128）のエクスポートに限定
-    /// - 将来: Mesh エクスポートを追加予定（現状は未対応）
-    ///  TODO: 見直し Export用Object (D,P) のデータが不明瞭（どこまでのデータか）
+    /// IGES Exporter
+    /// Only supports NURBS Curve and Surface export
     /// </summary>
-
     public class IGESExporter
     {
         /// <summary>
