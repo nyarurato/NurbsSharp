@@ -68,5 +68,27 @@ namespace NurbsSharp.Core
             return BitConverter.Int64BitsToDouble(bits);
 #endif
         }
+
+        /// <summary>
+        /// (en) Calculate the binomial coefficient "nCk"
+        /// (ja) 二項係数 "nCk" を計算します
+        /// </summary>
+        /// <param name="n"></param>
+        /// <param name="k"></param>
+        /// <returns></returns>
+        public static double BinomialCoefficient(int n, int k)
+        {
+            if (k < 0 || k > n)
+                return 0;
+            if (k == 0 || k == n)
+                return 1;
+            k = Math.Min(k, n - k); // Take advantage of symmetry
+            double c = 1;
+            for (int i = 0; i < k; i++)
+            {
+                c = c * (n - i) / (i + 1);
+            }
+            return c;
+        }
     }
 }

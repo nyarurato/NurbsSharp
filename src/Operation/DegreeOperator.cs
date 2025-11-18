@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NurbsSharp.Core;
+using NurbsSharp.Geometry;
+using NurbsSharp.Evaluation;
 
 namespace NurbsSharp.Operation
 {
@@ -12,7 +15,14 @@ namespace NurbsSharp.Operation
     /// </summary>
     public class DegreeOperator
     {
-        //TODO: Degree Elevation method
-        //TODO: Degree Reduction method
+        public static NurbsCurve ElevateDegree(NurbsCurve curve, int t)
+        {
+            throw new NotImplementedException();
+        }
+        public static NurbsCurve ReduceDegree(NurbsCurve curve, int t, double tolerance)
+        {
+            throw new NotImplementedException();
+        }
+        
     }
 }

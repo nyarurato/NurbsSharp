@@ -137,5 +137,71 @@ namespace UnitTests.Operation
                
             }
         }
+
+
+        [Test]
+        [Ignore("not implemented yet")]
+
+        public void DegreeOperator_ElevateDegree_TestB()
+        {
+            // Quadratic curve
+            int degree = 2;
+            double[] knots = { 0, 0, 0, 1, 1, 1 };
+            ControlPoint[] controlPoints = {
+                new ControlPoint(0, 0, 0, 1),
+                new ControlPoint(5, 10, 0, 1),
+                new ControlPoint(10, 0, 0, 1),
+            };
+            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
+            double[] samplePoints = { 0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0 };
+
+            // Elevate degree once
+            var elevatedCurve = DegreeOperator.ElevateDegree(curve, 1);
+            Assert.That(elevatedCurve.Degree, Is.EqualTo(3));
+
+            foreach (var u in samplePoints)
+            {
+                var pos_original = curve.GetPos(u);
+                var pos_elevated = elevatedCurve.GetPos(u);
+                Assert.That(pos_elevated.X, Is.EqualTo(pos_original.X).Within(0.00000001));
+                Assert.That(pos_elevated.Y, Is.EqualTo(pos_original.Y).Within(0.00000001));
+                Assert.That(pos_elevated.Z, Is.EqualTo(pos_original.Z).Within(0.00000001));
+            }
+        }
+
+        [Test]
+        [Ignore("not implemented yet")]
+        public void DegreeOperator_ReduceDegree_TestA()
+        {
+            
+            // Start with a line (degree 1), elevate it, then reduce it back
+            int degree = 1;
+            double[] knots = { 0, 0, 1, 1 };
+            ControlPoint[] controlPoints = {
+                new ControlPoint(0, 0, 0, 1),
+                new ControlPoint(10, 0, 0, 1),
+            };
+            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
+            double[] samplePoints = { 0, 0.1, 0.2, 0.5, 0.7, 0.9, 1.0 };
+
+            // Elevate degree
+            var elevatedCurve = DegreeOperator.ElevateDegree(curve, 1);
+            Assert.That(elevatedCurve.Degree, Is.EqualTo(2));
+
+            // Reduce degree back
+            var reducedCurve = DegreeOperator.ReduceDegree(elevatedCurve, 1, 1e-3);
+            Assert.That(reducedCurve, Is.Not.Null);
+            Assert.That(reducedCurve.Degree, Is.EqualTo(1));
+
+            // Check that the reduced curve approximates the original
+            foreach (var u in samplePoints)
+            {
+                var pos_original = curve.GetPos(u);
+                var pos_reduced = reducedCurve.GetPos(u);
+                Assert.That(pos_reduced.X, Is.EqualTo(pos_original.X).Within(0.1));
+                Assert.That(pos_reduced.Y, Is.EqualTo(pos_original.Y).Within(0.1));
+                Assert.That(pos_reduced.Z, Is.EqualTo(pos_original.Z).Within(0.1));
+            }
+        }
     }
 }
