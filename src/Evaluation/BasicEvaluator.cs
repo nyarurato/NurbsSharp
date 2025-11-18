@@ -44,12 +44,15 @@ namespace NurbsSharp.Evaluation
         /// <param name="u"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
-        protected static int FindSpan(int degree, double[] knots, double u)
+        /// <exception cref="InvalidOperationException"></exception>"
+        public static int FindSpan(int degree, double[] knots, double u)
         {
             // n: last control point index
             int n = knots.Length - degree - 2;
             if (n < 0)
                 throw new ArgumentOutOfRangeException(nameof(knots), "Invalid knot vector or degree.");
+            if (degree < 0)
+                throw new ArgumentOutOfRangeException(nameof(degree), "Degree must be non-negative.");
 
             // Clamp to valid domain [U[p], U[n+1]] with robust end handling
             if (u <= knots[degree]) return degree;
@@ -58,9 +61,14 @@ namespace NurbsSharp.Evaluation
             int low = degree;
             int high = n + 1; // invariant: knots[low] <= u < knots[high]
             int mid = (low + high) / 2;
+            int iter = 0;
+            int maxIter = (int)Math.Ceiling(Math.Log(high - low + 1, 2)) + 2; //Bad Situation: log2 N +1
 
             while (u < knots[mid] || u >= knots[mid + 1])
             {
+                if(iter++ > maxIter)
+                    throw new InvalidOperationException("FindSpan: Exceeded maximum iterations, possible infinite loop.");
+
                 if (u < knots[mid])
                     high = mid;
                 else

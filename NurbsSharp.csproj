@@ -54,7 +54,7 @@
 
 	<ItemGroup>
 	  <Folder Include="src\IO\IGES\Import\" />
-	  <Folder Include="src\Operation\" />
+	  <Folder Include="src\Intersection\" />
     <None Include="README.md" Pack="true" PackagePath="" />
 	</ItemGroup>
 </Project>
