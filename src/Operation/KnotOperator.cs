@@ -102,5 +102,22 @@ namespace NurbsSharp.Operation
             }
             return (currentKnots, currentControlPoints);
         }
+
+        /// <summary>
+        /// (en) Inserts a knot into the NURBS curve multiple times while preserving the shape
+        /// (ja) 形状を保つようにNURBS曲線に複数回ノットを挿入します
+        /// </summary>
+        /// <param name="curve"></param>
+        /// <param name="u"></param>
+        /// <param name="times"></param>
+        /// <returns></returns>
+        public static NurbsCurve InsertKnot(NurbsCurve curve, double u, int times)
+        {
+            var (newKnots, newControlPoints) = InsertKnot(curve.Degree, curve.KnotVector.Knots, curve.ControlPoints, u, times);
+            return new NurbsCurve(curve.Degree, new KnotVector(newKnots, curve.Degree), newControlPoints);
+        }
+
+        //TODO: RemoveKnot method
+        //TODO: RefineKnot method
     }
 }

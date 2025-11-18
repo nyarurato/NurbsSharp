@@ -73,5 +73,7 @@ namespace NurbsSharp.Operation
             var rightCurve = new NurbsCurve(degree, new KnotVector(rightKnots, degree), rightControlPoints);
             return (leftCurve, rightCurve);
         }
+
+        //TODO: SplitSurface method
     }
 }

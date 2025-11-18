@@ -12,5 +12,7 @@ namespace NurbsSharp.Operation
     /// </summary>
     public class DegreeOperator
     {
+        //TODO: Degree Elevation method
+        //TODO: Degree Reduction method
     }
 }

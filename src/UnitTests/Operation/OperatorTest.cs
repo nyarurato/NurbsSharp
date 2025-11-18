@@ -59,6 +59,41 @@ namespace UnitTests.Operation
         }
 
         [Test]
+        public void KnotOperator_Insert_TestB()
+        {
+            // Line
+            int degree = 1;
+            double[] knots = { 0, 0, 1, 1 };
+            ControlPoint[] controlPoints = {
+                new ControlPoint(0 ,  0, 0, 1),
+                new ControlPoint(10 , 0, 0, 1),
+            };
+            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
+            double[] samplePoints = { 0, 0.1, 0.2, 0.3, 0.5, 0.55, 0.7, 0.9, 0.9999, 1 };
+            double[] insert_u = { 0.5, 0.3, 0.8, 0.111, 0.2, 0.9999 };
+            double[] new_knots = knots;
+            ControlPoint[] new_cps = controlPoints;
+            int insert_count = 0;
+            foreach (var u in insert_u)
+            {
+                (new_knots, new_cps) = KnotOperator.InsertKnot(degree, new_knots, new_cps, u, 1);
+                var new_curve = new NurbsCurve(degree, new KnotVector(new_knots, degree), new_cps);
+                Assert.That(new_knots.Length, Is.EqualTo(knots.Length + insert_count + 1));
+                Assert.That(new_cps.Length, Is.EqualTo(controlPoints.Length + insert_count + 1));
+                foreach (var s in samplePoints)
+                {
+                    var pos_original = curve.GetPos(s);
+                    var pos_new = new_curve.GetPos(s);
+                    Assert.That(pos_new.X, Is.EqualTo(pos_original.X).Within(0.00000001));
+                    Assert.That(pos_new.Y, Is.EqualTo(pos_original.Y).Within(0.00000001));
+                    Assert.That(pos_new.Z, Is.EqualTo(pos_original.Z).Within(0.00000001));
+                }
+                insert_count++;
+            }
+        }
+
+
+        [Test]
         public void SplitOperator_SplitCurve_TestA()
         {
             // Circle
@@ -83,7 +118,7 @@ namespace UnitTests.Operation
             foreach (var u in split_us)
             {
                 var (leftCurve, rightCurve) = SplitOperator.SplitCurve(curve, u);
-                Console.WriteLine($"Split at u={u},Leftknot:{leftCurve.KnotVector},Right:{rightCurve.KnotVector}");
+                
                 // Verify continuity at split point
                 foreach (var s in sample_points)
                 {

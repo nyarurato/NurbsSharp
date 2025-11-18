@@ -56,7 +56,7 @@ namespace NurbsSharp.IO.IGES
             if (parameterLineCount <= 0)
                 throw new ArgumentOutOfRangeException(nameof(parameterLineCount));
 
-            string status = "01010000";
+            string status = "00010000";//Visible:00,Physically Dependent:00,Geometry:00, GlobalTopDown:00
             string zerostr = "       0";
             string nonestr = "        ";
 
