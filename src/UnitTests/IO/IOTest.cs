@@ -299,7 +299,7 @@ namespace UnitTests.IO
 
             using (FileStream fs = new FileStream("test_output.igs", FileMode.Create, FileAccess.Write))
             {
-                await IGESExporter.ExportAsync(nurbsSurface, fs);
+                await IGESExporter.ExportAsync([nurbsSurface], fs);
             }
             Console.WriteLine($"IGES file 'test_output.igs' has been created. At Current :{Directory.GetCurrentDirectory()}");
             Assert.That(File.Exists("test_output.igs"), Is.True);
@@ -356,7 +356,7 @@ namespace UnitTests.IO
             NurbsSurface nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
             using (FileStream fs = new FileStream("test_outputB.igs", FileMode.Create, FileAccess.Write))
             {
-                await IGESExporter.ExportAsync(nurbsSurface, fs);
+                await IGESExporter.ExportAsync([nurbsSurface], fs);
             }
             Console.WriteLine($"IGES file 'test_outputB.igs' has been created. At Current :{Directory.GetCurrentDirectory()}");
             Assert.That(File.Exists("test_outputB.igs"), Is.True);
@@ -404,12 +404,16 @@ namespace UnitTests.IO
                 var surface = res.OfType<NurbsSurface>().FirstOrDefault();
                 int index = igesfile.ToList().IndexOf(file);
                 Assert.That(surface, Is.Not.Null, $"No NURBS surface found in IGES file '{file}'.");
-                Assert.That(surface.DegreeU, Is.EqualTo(expect[index].degree_u));
-                Assert.That(surface.DegreeV, Is.EqualTo(expect[index].degree_v));
-                Assert.That(surface.ControlPoints.Length, Is.EqualTo(expect[index].cp_u));
-                Assert.That(surface.ControlPoints[0].Length, Is.EqualTo(expect[index].cp_v));
-                Assert.That(surface.KnotVectorU.Knots.Length, Is.EqualTo(expect[index].k_u));
-                Assert.That(surface.KnotVectorV.Knots.Length, Is.EqualTo(expect[index].k_v));
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(surface.DegreeU, Is.EqualTo(expect[index].degree_u));
+                    Assert.That(surface.DegreeV, Is.EqualTo(expect[index].degree_v));
+                    Assert.That(surface.ControlPoints, Has.Length.EqualTo(expect[index].cp_u));
+                
+                    Assert.That(surface.ControlPoints[0], Has.Length.EqualTo(expect[index].cp_v));
+                    Assert.That(surface.KnotVectorU.Knots, Has.Length.EqualTo(expect[index].k_u));
+                    Assert.That(surface.KnotVectorV.Knots, Has.Length.EqualTo(expect[index].k_v));
+                }
             }
         }
 
@@ -427,9 +431,12 @@ namespace UnitTests.IO
             var res = await IGESImporter.ImportAsync(reader);
             var curve = res.OfType<NurbsCurve>().FirstOrDefault();
             Assert.That(curve, Is.Not.Null, $"No NURBS curve found in IGES file '{igesfile}'.");
-            Assert.That(curve.Degree, Is.EqualTo(expect_degree));
-            Assert.That(curve.ControlPoints.Length, Is.EqualTo(expect_cp));
-            Assert.That(curve.KnotVector.Knots.Length, Is.EqualTo(expect_knot));
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(curve.Degree, Is.EqualTo(expect_degree));
+                Assert.That(curve.ControlPoints, Has.Length.EqualTo(expect_cp));
+                Assert.That(curve.KnotVector.Knots, Has.Length.EqualTo(expect_knot));
+            }
         }
     }
 }

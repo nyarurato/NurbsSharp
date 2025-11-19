@@ -44,15 +44,21 @@ namespace UnitTests.Operation
                 (new_knots, new_cps) = KnotOperator.InsertKnot(degree, new_knots, new_cps, u, 1);
 
                 var new_curve = new NurbsCurve(degree, new KnotVector(new_knots, degree), new_cps);
-                Assert.That(new_knots.Length, Is.EqualTo(knots.Length + insert_count + 1));
-                Assert.That(new_cps.Length, Is.EqualTo(controlPoints.Length + insert_count + 1));
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(new_knots, Has.Length.EqualTo(knots.Length + insert_count + 1));
+                    Assert.That(new_cps, Has.Length.EqualTo(controlPoints.Length + insert_count + 1));
+                }
                 foreach (var s in samplePoints)
                 {
                     var pos_original = curve.GetPos(s);
                     var pos_new = new_curve.GetPos(s);
-                    Assert.That(pos_new.X, Is.EqualTo(pos_original.X).Within(0.00000001));
-                    Assert.That(pos_new.Y, Is.EqualTo(pos_original.Y).Within(0.00000001));
-                    Assert.That(pos_new.Z, Is.EqualTo(pos_original.Z).Within(0.00000001));
+                    using (Assert.EnterMultipleScope())
+                    {
+                        Assert.That(pos_new.X, Is.EqualTo(pos_original.X).Within(0.00000001));
+                        Assert.That(pos_new.Y, Is.EqualTo(pos_original.Y).Within(0.00000001));
+                        Assert.That(pos_new.Z, Is.EqualTo(pos_original.Z).Within(0.00000001));
+                    }
                 }
                 insert_count++;
             }
@@ -78,15 +84,21 @@ namespace UnitTests.Operation
             {
                 (new_knots, new_cps) = KnotOperator.InsertKnot(degree, new_knots, new_cps, u, 1);
                 var new_curve = new NurbsCurve(degree, new KnotVector(new_knots, degree), new_cps);
-                Assert.That(new_knots.Length, Is.EqualTo(knots.Length + insert_count + 1));
-                Assert.That(new_cps.Length, Is.EqualTo(controlPoints.Length + insert_count + 1));
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(new_knots, Has.Length.EqualTo(knots.Length + insert_count + 1));
+                    Assert.That(new_cps, Has.Length.EqualTo(controlPoints.Length + insert_count + 1));
+                }
                 foreach (var s in samplePoints)
                 {
                     var pos_original = curve.GetPos(s);
                     var pos_new = new_curve.GetPos(s);
-                    Assert.That(pos_new.X, Is.EqualTo(pos_original.X).Within(0.00000001));
-                    Assert.That(pos_new.Y, Is.EqualTo(pos_original.Y).Within(0.00000001));
-                    Assert.That(pos_new.Z, Is.EqualTo(pos_original.Z).Within(0.00000001));
+                    using (Assert.EnterMultipleScope())
+                    {
+                        Assert.That(pos_new.X, Is.EqualTo(pos_original.X).Within(0.00000001));
+                        Assert.That(pos_new.Y, Is.EqualTo(pos_original.Y).Within(0.00000001));
+                        Assert.That(pos_new.Z, Is.EqualTo(pos_original.Z).Within(0.00000001));
+                    }
                 }
                 insert_count++;
             }
@@ -140,7 +152,7 @@ namespace UnitTests.Operation
 
 
         [Test]
-        [Ignore("not implemented yet")]
+        
 
         public void DegreeOperator_ElevateDegree_TestB()
         {
@@ -163,14 +175,17 @@ namespace UnitTests.Operation
             {
                 var pos_original = curve.GetPos(u);
                 var pos_elevated = elevatedCurve.GetPos(u);
-                Assert.That(pos_elevated.X, Is.EqualTo(pos_original.X).Within(0.00000001));
-                Assert.That(pos_elevated.Y, Is.EqualTo(pos_original.Y).Within(0.00000001));
-                Assert.That(pos_elevated.Z, Is.EqualTo(pos_original.Z).Within(0.00000001));
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(pos_elevated.X, Is.EqualTo(pos_original.X).Within(0.00000001));
+                    Assert.That(pos_elevated.Y, Is.EqualTo(pos_original.Y).Within(0.00000001));
+                    Assert.That(pos_elevated.Z, Is.EqualTo(pos_original.Z).Within(0.00000001));
+                }
             }
         }
 
         [Test]
-        [Ignore("not implemented yet")]
+        
         public void DegreeOperator_ReduceDegree_TestA()
         {
             
@@ -198,9 +213,87 @@ namespace UnitTests.Operation
             {
                 var pos_original = curve.GetPos(u);
                 var pos_reduced = reducedCurve.GetPos(u);
-                Assert.That(pos_reduced.X, Is.EqualTo(pos_original.X).Within(0.1));
-                Assert.That(pos_reduced.Y, Is.EqualTo(pos_original.Y).Within(0.1));
-                Assert.That(pos_reduced.Z, Is.EqualTo(pos_original.Z).Within(0.1));
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(pos_reduced.X, Is.EqualTo(pos_original.X).Within(0.1));
+                    Assert.That(pos_reduced.Y, Is.EqualTo(pos_original.Y).Within(0.1));
+                    Assert.That(pos_reduced.Z, Is.EqualTo(pos_original.Z).Within(0.1));
+                }
+            }
+        }
+
+        private NurbsCurve CreateStraightLineCurve(int degree, int numControlPoints, double[]? weights = null)
+        {
+            var cps = new ControlPoint[numControlPoints];
+            for (int i = 0; i < numControlPoints; i++)
+            {
+                double x = i; // simple x-axis line
+                const double y_factor = 2.0;
+                double w = (weights != null && i < weights.Length) ? weights[i] : 1.0;
+                cps[i] = new ControlPoint(x, 0, 0.0, w);
+            }
+            var kv = KnotVector.GetClampedKnot(degree, numControlPoints);
+            return new NurbsCurve(degree, kv, cps);
+        }
+
+        [Test]
+        public void ElevateDegree_NonRational_PreservesShape()
+        {
+            var curve = CreateStraightLineCurve(2, 5); // degree 2, 5 control points
+            var elevated = DegreeOperator.ElevateDegree(curve, 1); // to degree 3
+
+            double umin = elevated.KnotVector.Knots[elevated.Degree];
+            double umax = elevated.KnotVector.Knots[elevated.KnotVector.Length - elevated.Degree - 1];
+            int samples = 30;
+            for (int i = 0; i < samples; i++)
+            {
+                double u = umin + (umax - umin) * i / (samples - 1);
+                var pOrig = CurveEvaluator.Evaluate(curve, u);
+                var pElev = CurveEvaluator.Evaluate(elevated, u);
+                // allow small numerical approximation error from least-squares fitting
+                Assert.That(pOrig.DistanceTo(pElev), Is.LessThanOrEqualTo(2e-2));
+            }
+        }
+
+        [Test]
+        public void ElevateDegree_Rational_ColinearPreservesShape()
+        {
+            // weights vary but control points colinear, so projected curve is still a line
+            double[] weights = new double[] {1.0, 2.0, 1.0, 1.5};
+            var curve = CreateStraightLineCurve(2, 4, weights);
+            var elevated = DegreeOperator.ElevateDegree(curve, 2); // raise degree by 2
+
+            double umin = elevated.KnotVector.Knots[elevated.Degree];
+            double umax = elevated.KnotVector.Knots[elevated.KnotVector.Length - elevated.Degree - 1];
+            int samples = 30;
+            for (int i = 0; i < samples; i++)
+            {
+                double u = umin + (umax - umin) * i / (samples - 1);
+                var pOrig = CurveEvaluator.Evaluate(curve, u);
+                var pElev = CurveEvaluator.Evaluate(elevated, u);
+                // rational case may have larger numerical differences; allow looser tolerance
+                Assert.That(pOrig.DistanceTo(pElev), Is.LessThanOrEqualTo(3e-2));
+            }
+        }
+
+        [Test]
+        public void ReduceDegree_StraightLineWithinTolerance()
+        {
+            var curve = CreateStraightLineCurve(4, 8); // degree 4
+            // reduce degree by 2 to degree 2
+            // allow a modest tolerance because reduction is done by least-squares in homogeneous coords
+            var reduced = DegreeOperator.ReduceDegree(curve, 2, 1e-1);
+
+            double umin = reduced.KnotVector.Knots[reduced.Degree];
+            double umax = reduced.KnotVector.Knots[reduced.KnotVector.Length - reduced.Degree - 1];
+            int samples = 50;
+            for (int i = 0; i < samples; i++)
+            {
+                double u = umin + (umax - umin) * i / (samples - 1);
+                var pOrig = CurveEvaluator.Evaluate(curve, u);
+                var pRed = CurveEvaluator.Evaluate(reduced, u);
+                // match the tolerance used when calling ReduceDegree
+                Assert.That(pOrig.DistanceTo(pRed), Is.LessThanOrEqualTo(1e-1));
             }
         }
     }
