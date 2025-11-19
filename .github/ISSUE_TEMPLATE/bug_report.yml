@@ -1,0 +1,106 @@
+name: Bug Report
+description: Report a bug or unexpected behavior in NurbsSharp
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+        
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of what the bug is.
+      placeholder: What happened?
+    validations:
+      required: true
+      
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Create a NurbsCurve with '...'
+        2. Call method '...'
+        3. See error
+    validations:
+      required: true
+      
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: Describe the expected behavior
+    validations:
+      required: true
+      
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+      placeholder: Describe the actual behavior (include error messages, stack traces, etc.)
+    validations:
+      required: true
+      
+  - type: textarea
+    id: code
+    attributes:
+      label: Code Sample
+      description: If applicable, add a minimal code sample to reproduce the issue
+      placeholder: |
+        ```csharp
+        var curve = new NurbsCurve(...);
+        var point = curve.Evaluate(0.5); // throws exception
+        ```
+      render: csharp
+    validations:
+      required: false
+      
+  - type: dropdown
+    id: dotnet-version
+    attributes:
+      label: .NET Version
+      description: Which .NET version are you using?
+      options:
+        - .NET 8.0
+        - .NET 7.0
+        - .NET 6.0
+        - .NET Standard 2.1
+        - Other
+    validations:
+      required: true
+      
+  - type: input
+    id: library-version
+    attributes:
+      label: NurbsSharp Version
+      description: Which version of NurbsSharp are you using?
+      placeholder: e.g., 0.0.1
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      description: Which operating system are you using?
+      options:
+        - Windows
+        - Linux
+        - macOS
+        - Other
+    validations:
+      required: true
+      
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here (screenshots, related issues, etc.)
+    validations:
+      required: false

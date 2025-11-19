@@ -1,0 +1,61 @@
+name: Feature Request
+description: Suggest a new feature or enhancement for NurbsSharp
+title: "[Feature]: suggest the feature here"
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a feature for NurbsSharp!
+        Please provide as much detail as possible to help us understand your request.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the feature you are requesting.
+      placeholder: "I would like to have..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: implementation_ideas
+    attributes:
+      label: Implementation Ideas
+      description: If you have any ideas on how this feature could be implemented, please share them.
+      placeholder: "This could be done by..."
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Feature Area
+      description: Which area of NurbsSharp does this feature relate to?
+      multiple: true
+      options:
+        - Core (KnotVector, ControlPoint, etc.)
+        - Geometry (NurbsCurve, NurbsSurface, Mesh)
+        - Evaluation (Curve/Surface/Volume evaluators)
+        - Operations (Join, Split, Degree, Knot)
+        - Tessellation
+        - I/O (OBJ, STL, IGES, etc.)
+        - Documentation
+        - Performance
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Add any other context, code examples, or screenshots about the feature request.
+      placeholder: |
+        Example usage:
+        ```csharp
+        var curve = new NurbsCurve(...);
+        curve.NewFeature();
+        ```
+    validations:
+      required: false
