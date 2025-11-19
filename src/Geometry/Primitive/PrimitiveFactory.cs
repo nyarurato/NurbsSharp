@@ -66,8 +66,16 @@ namespace NurbsSharp.Geometry.Primitive
             return new NurbsCurve(degree, kv, cps);
         }
 
-    
-        
+
+        /// <summary>
+        /// (en) Create a NURBS surface representing a cylinder aligned along the Z axis
+        /// (ja) Z軸に沿った円柱を表すNURBSサーフェスを作成する
+        /// </summary>
+        /// <param name="radius"></param>
+        /// <param name="height"></param>
+        /// <param name="isGenerateTopBottom"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
         public static List<NurbsSurface> CreateCylinder(double radius, double height,bool isGenerateTopBottom=false)
         {
             Guard.ThrowIfNegativeOrZero(radius, nameof(radius));
@@ -96,15 +104,70 @@ namespace NurbsSharp.Geometry.Primitive
             surfaces.Add( new NurbsSurface(degreeU, degreeV, kvU, kvV, cps));
 
             if(isGenerateTopBottom){
-                // not implemented yet
-                // trimed NURBS surface creation for top and bottom faces
-                throw new NotImplementedException("Top and bottom face generation not implemented yet.");
+                var topSurface = CreateCircleSurface(radius);
+                topSurface.Translate(0.0, 0.0, height / 2.0);
+                surfaces.Add(topSurface);
+                var bottomSurface = CreateCircleSurface(radius);
+                bottomSurface.Translate(0.0, 0.0, -height / 2.0);
+                surfaces.Add(bottomSurface);
             }
 
             return surfaces;
         }
 
-        public static NurbsSurface CreateHalfSphere(double radius)
+        /// <summary>
+        /// (en) Create a NURBS surface representing a circle surface (a disk) on the XY plane
+        /// (ja) XY平面に円形サーフェス（円盤）を表すNURBSサーフェスを作成する
+        /// </summary>
+        /// <param name="radius"></param>
+        /// <returns></returns>
+        public static NurbsSurface CreateCircleSurface(double radius)
+        {
+            //TDOO: It is not certain whether this implementation is correct.
+
+            Guard.ThrowIfNegativeOrZero(radius, nameof(radius));
+
+            // outline circle on XY plane
+            var circle = CreateCircle(radius);
+
+            int degreeU = 1; // center to outline direction
+            int degreeV = circle.Degree; // around direction
+            int nU = 2; // center to outline
+            int nV = circle.ControlPoints.Length;
+
+            var kvU = KnotVector.GetClampedKnot(degreeU, nU);
+            var kvV = circle.KnotVector;
+
+            ControlPoint[][] cps = new ControlPoint[nU][];
+            for (int iu = 0; iu < nU; iu++)
+            {
+                cps[iu] = new ControlPoint[nV];
+                for (int iv = 0; iv < nV; iv++)
+                {
+                    if (iu == 0)
+                    {
+                        // center point
+                        cps[iu][iv] = new ControlPoint(0.0, 0.0, 0.0, 1.0);
+                    }
+                    else
+                    {
+                        // outline circle points
+                        var cp = circle.ControlPoints[iv];
+                        cps[iu][iv] = new ControlPoint(cp.Position.X, cp.Position.Y, cp.Position.Z, cp.Weight);
+                    }
+                }
+            }
+
+            return new NurbsSurface(degreeU, degreeV, kvU, kvV, cps);
+        }
+
+        /// <summary>
+        /// (en) Create a NURBS surface representing a sphere centered at the origin
+        /// (ja) 原点を中心とした球体を表すNURBSサーフェスを作成する
+        /// </summary>
+        /// <param name="radius"></param>
+        /// <returns></returns>
+        public static NurbsSurface CreateSphere(double radius)
         {
             Guard.ThrowIfNegativeOrZero(radius, nameof(radius));
             int degreeU = 3;
@@ -115,7 +178,15 @@ namespace NurbsSharp.Geometry.Primitive
             return null; // TODO: implement this
         }
 
-        
+        /// <summary>
+        /// (en) Create a degree-1 2x2 NURBS surface (a single face) defined by four corner points
+        /// (ja) 4つのコーナーポイントで定義される1次2x2のNURBSサーフェス（単一の面）を作成する
+        /// </summary>
+        /// <param name="p00"></param>
+        /// <param name="p01"></param>
+        /// <param name="p10"></param>
+        /// <param name="p11"></param>
+        /// <returns></returns>
         public static NurbsSurface CreateFace(Vector3Double p00, Vector3Double p01, Vector3Double p10, Vector3Double p11)
         {
             var kv = KnotVector.GetClampedKnot(1, 2); // degree1, 2 control points per direction

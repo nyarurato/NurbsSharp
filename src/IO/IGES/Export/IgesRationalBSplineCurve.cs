@@ -14,7 +14,7 @@ namespace NurbsSharp.IO.IGES
     /// (en)IGES exporter for Rational B-spline curve (Entity Type 126)
     /// (ja)Rational B-spline 曲線（エンティティタイプ 126）のIGESエクスポーター
     /// </summary>
-    public class IgesRationalBSplineCurve : IIgesExportEntity
+    internal class IgesRationalBSplineCurve : IIgesExportEntity
     {
         private readonly NurbsCurve _curve;
         /// <summary>
@@ -158,6 +158,12 @@ namespace NurbsSharp.IO.IGES
             return [s1, s2];
         }
 
+        /// <summary>
+        /// (en) Sets the directory pointer in the parameter data.
+        /// (ja) パラメータデータ内のディレクトリポインタを設定します。
+        /// </summary>
+        /// <param name="pointer"></param>
+        /// <returns></returns>
         public bool SetDirectoryPointerToParameterString(int pointer)
         {
             if (ParameterData.Length == 0)

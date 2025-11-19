@@ -1,3 +1,5 @@
+using System;
+
 namespace NurbsSharp.Core
 {
     /// <summary>
@@ -71,6 +73,34 @@ namespace NurbsSharp.Core
                     Position.Z * Weight,
                     Weight);
             }
+        }
+
+        /// <summary>
+        /// (en) Translate this control point by delta (in-place).
+        /// (ja) この制御点を並進移動する（破壊的に Position を更新する）。
+        /// </summary>
+        /// <param name="delta">translation vector</param>
+        /// <exception cref="ArgumentNullException"></exception>"
+        public void Translate(Vector3Double delta)
+        {
+            Guard.ThrowIfNull(delta, nameof(delta));
+            // Position を新しいインスタンスに置き換えることで共有参照による副作用を避ける
+            Position = new Vector3Double(
+                Position.X + delta.X,
+                Position.Y + delta.Y,
+                Position.Z + delta.Z);
+        }
+
+        /// <summary>
+        /// (en) Translate by components (in-place).
+        /// (ja) 成分指定で並進移動する（破壊的）。
+        /// </summary>
+        public void Translate(double dx, double dy, double dz)
+        {
+            Position = new Vector3Double(
+                Position.X + dx,
+                Position.Y + dy,
+                Position.Z + dz);
         }
     }
 }

@@ -13,7 +13,7 @@ namespace NurbsSharp.IO.IGES
     /// (en)IGES exporter for Rational B-spline surface (Entity Type 128)
     /// (ja)Rational B-spline サーフェス（エンティティタイプ 128）のIGESエクスポーター
     /// </summary>
-    public class IgesRationalBSplineSurface : IIgesExportEntity
+    internal class IgesRationalBSplineSurface : IIgesExportEntity
     {
         private readonly NurbsSurface _surf;
         /// <summary>

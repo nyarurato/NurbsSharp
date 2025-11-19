@@ -23,7 +23,7 @@ namespace NurbsSharp.IO.IGES
         /// (en) Export NURBS surface to IGES format
         /// (ja) NURBSサーフェスをIGES形式でエクスポートする
         /// </summary>
-        /// <param name="surface"></param>
+        /// <param name="surfaces"></param>
         /// <param name="stream"></param>
         /// <param name="fileName"></param>
         /// <param name="author"></param>
@@ -124,6 +124,7 @@ namespace NurbsSharp.IO.IGES
         [Obsolete("IGES export:Export Mesh not support yet")]
         public static Task<bool> ExportAsync(Mesh mesh, Stream stream)
         {
+            //TODO : Implement Mesh Export
             throw new NotSupportedException("IGES export:Export Mesh not support yet");
         }
 

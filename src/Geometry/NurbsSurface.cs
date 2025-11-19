@@ -201,6 +201,39 @@ namespace NurbsSharp.Geometry
         }
 
         /// <summary>
+        /// (en) Translate the whole surface by delta (in-place).
+        /// (ja) サーフェスの全制御点を並進移動する（破壊的）。
+        /// </summary>
+        /// <param name="delta"></param>
+        /// <exception cref="ArgumentNullException"></exception>"
+        public void Translate(Vector3Double delta)
+        {
+            Guard.ThrowIfNull(delta, nameof(delta));
+            foreach (var row in ControlPoints)
+            {
+                foreach(var cp in row)
+                {
+                    cp.Translate(delta);
+                }
+            }
+        }
+
+        /// <summary>
+        /// (en) Translate by components (in-place).
+        /// (ja) 成分指定でサーフェスを並進移動する（破壊的）。
+        /// </summary>
+        public void Translate(double dx, double dy, double dz)
+        {
+            foreach (var row in ControlPoints)
+            {
+                foreach (var cp in row)
+                {
+                    cp.Translate(dx,dy,dz);
+                }
+            }
+        }
+
+        /// <summary>
         /// Returns a string that represents the current NURBS surface.
         /// </summary>
         /// <returns></returns>

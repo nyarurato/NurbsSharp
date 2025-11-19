@@ -105,6 +105,25 @@ namespace UnitTests.Core
                 Assert.That(hp.Z, Is.EqualTo(12.0));
                 Assert.That(hp.W, Is.EqualTo(4.0));
             }
+
+            //translate by vector
+            cp.Translate(new Vector3Double(1.0, 1.0, 1.0));
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(cp.Position.X, Is.EqualTo(2.0));
+                Assert.That(cp.Position.Y, Is.EqualTo(3.0));
+                Assert.That(cp.Position.Z, Is.EqualTo(4.0));
+                Assert.That(cp.Weight, Is.EqualTo(4.0));
+            }
+            cp = new ControlPoint(1.0, 2.0, 3.0, 4.0);
+            cp.Translate(2, 2, 2);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(cp.Position.X, Is.EqualTo(3.0));
+                Assert.That(cp.Position.Y, Is.EqualTo(4.0));
+                Assert.That(cp.Position.Z, Is.EqualTo(5.0));
+                Assert.That(cp.Weight, Is.EqualTo(4.0));
+            }
         }
 
         /*
