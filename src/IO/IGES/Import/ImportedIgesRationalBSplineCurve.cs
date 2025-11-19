@@ -52,8 +52,11 @@ namespace NurbsSharp.IO.IGES
                 idx++; // entity type
                 int K = int.Parse(rawTokens[idx++], CultureInfo.InvariantCulture);
                 int M = int.Parse(rawTokens[idx++], CultureInfo.InvariantCulture);
-                // read and ignore props
-                idx += 4;
+                // read props (ignored for now)
+                int prop1 = int.Parse(rawTokens[idx++], CultureInfo.InvariantCulture);
+                int prop2 = int.Parse(rawTokens[idx++], CultureInfo.InvariantCulture);
+                int prop3 = int.Parse(rawTokens[idx++], CultureInfo.InvariantCulture);
+                int prop4 = int.Parse(rawTokens[idx++], CultureInfo.InvariantCulture);
 
                 int knotCount = K + M + 2;
                 if (idx + knotCount > rawTokens.Length)

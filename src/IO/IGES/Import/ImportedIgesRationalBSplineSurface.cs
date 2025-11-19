@@ -51,8 +51,12 @@ namespace NurbsSharp.IO.IGES
                 int k2 = int.Parse(rawTokens[idx++], CultureInfo.InvariantCulture);
                 int m1 = int.Parse(rawTokens[idx++], CultureInfo.InvariantCulture);
                 int m2 = int.Parse(rawTokens[idx++], CultureInfo.InvariantCulture);
-                // p1..p5
-                idx += 5;
+                // p1..p5 (ignore now)
+                int prop1 = int.Parse(rawTokens[idx++], CultureInfo.InvariantCulture);
+                int prop2 = int.Parse(rawTokens[idx++], CultureInfo.InvariantCulture);
+                int prop3 = int.Parse(rawTokens[idx++], CultureInfo.InvariantCulture);
+                int prop4 = int.Parse(rawTokens[idx++], CultureInfo.InvariantCulture);
+                int prop5 = int.Parse(rawTokens[idx++], CultureInfo.InvariantCulture);
 
                 int knotUCount = k1 + m1 + 2;
                 int knotVCount = k2 + m2 + 2;

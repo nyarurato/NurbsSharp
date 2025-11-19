@@ -465,9 +465,6 @@ namespace UnitTests.Evaluation
                     (evalpt_dv.Y - evalpt.Y) / h,
                     (evalpt_dv.Z - evalpt.Z) / h
                 );
-                //Console.WriteLine($"{evalpt_du},{evalpt_dv}");
-                Console.WriteLine($"uv=({u},{v}), eval={evalpt}, fdu={evalDeriv2PtU}, fdv={evalDeriv2PtV}");
-                Console.WriteLine($"cal du={derivVal.u_deriv}, cal v={derivVal.v_deriv}");
 
 
                 Assert.That(derivVal.u_deriv.X, Is.EqualTo(evalDeriv2PtU.X).Within(0.01));

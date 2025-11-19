@@ -608,7 +608,6 @@ namespace UnitTests.Evaluation
                 var d1 = CurveEvaluator.EvaluateFirstDerivative(curve, u0);
                 var d2 = CurveEvaluator.EvaluateSecondDerivative(curve, u0);
                 var k = CurveEvaluator.EvaluateCurvature(curve, u0);
-                Console.WriteLine($"u={u} (eval at {u0}): p={p}, r'={d1}, r''={d2}, curvature={k}");
             }
         }
         [Test]
