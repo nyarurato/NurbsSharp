@@ -29,6 +29,7 @@ namespace NurbsSharp.IO.IGES
         /// Parameter Line Count
         /// </summary>
         public int ParameterLineCount => ParameterData.Length;
+        public int DirectoryPointer { get; set; } = 1;
 
         /// <summary>
         /// Constructor
@@ -54,8 +55,8 @@ namespace NurbsSharp.IO.IGES
             // PROP2 = 0: not closed, 1: closed
             // PROP3 = 0: not periodic, 1: periodic
             // PROP4 = 0: rational, 1: polynomial (non-rational)
-            int D_pointer = 1; // Directory Entry pointer
-            string D_pointer_str = D_pointer.ToString().PadLeft(8, ' ');
+            //int D_pointer = DirectoryPointer; // Directory Entry pointer
+            string D_pointer_str = "{XXXXXX}";//D_pointer.ToString().PadLeft(8, ' ');
 
             int K = _curve.ControlPoints.Length - 1;
             int M = _curve.Degree;
@@ -65,15 +66,15 @@ namespace NurbsSharp.IO.IGES
             int PROP4 = 0; // rational
 
             StringBuilder sb = new();
-            sb.Append($"{EntityType},{K},{M},{PROP1},{PROP2},{PROP3},{PROP4},");
+            sb.AppendLine($"{EntityType},{K},{M},{PROP1},{PROP2},{PROP3},{PROP4},");
 
             const int paramater_max_per_line = 63;
-            int line_counter = 40; // approximate starting position
+            int line_counter = 0;
 
             // Knot vector (K+M+2 values)
             foreach (var knot in _curve.KnotVector.Knots)
             {
-                var knotStr = $"{knot:F10}".TrimEnd('0').TrimEnd('.');
+                var knotStr = $"{knot:F10}".TrimEnd('0');
                 if (line_counter + knotStr.Length + 1 > paramater_max_per_line)
                 {
                     sb.AppendLine();
@@ -82,11 +83,13 @@ namespace NurbsSharp.IO.IGES
                 sb.Append($"{knotStr},");
                 line_counter += knotStr.Length + 1;
             }
+            sb.AppendLine();
+            line_counter = 0;
 
             // Weights (K+1 values)
             foreach (var cp in _curve.ControlPoints)
             {
-                var weightStr = $"{cp.Weight:F10}".TrimEnd('0').TrimEnd('.');
+                var weightStr = $"{cp.Weight:F10}".TrimEnd('0');
                 if (line_counter + weightStr.Length + 1 > paramater_max_per_line)
                 {
                     sb.AppendLine();
@@ -95,13 +98,15 @@ namespace NurbsSharp.IO.IGES
                 sb.Append($"{weightStr},");
                 line_counter += weightStr.Length + 1;
             }
+            sb.AppendLine();
+            line_counter = 0;
 
             // Control points (K+1 triplets of X,Y,Z)
             foreach (var cp in _curve.ControlPoints)
             {
                 foreach (var coord in new[] { cp.Position.X, cp.Position.Y, cp.Position.Z })
                 {
-                    var coordStr = $"{coord:F10}".TrimEnd('0').TrimEnd('.');
+                    var coordStr = $"{coord:F10}".TrimEnd('0');
                     if (line_counter + coordStr.Length + 1 > paramater_max_per_line)
                     {
                         sb.AppendLine();
@@ -111,11 +116,14 @@ namespace NurbsSharp.IO.IGES
                     line_counter += coordStr.Length + 1;
                 }
             }
+            sb.AppendLine();
+            line_counter = 0;
 
             // Parameter range V(0) and V(1)
             double V0 = _curve.KnotVector.Knots[0];
             double V1 = _curve.KnotVector.Knots[_curve.KnotVector.Length - 1];
-            sb.Append($"{V0:F10},{V1:F10};");
+            
+            sb.Append($"{V0:F10},{V1:F10},0,0,0;");// last3 is XYZNORM(Unit normal) if curve is planar 
 
             ParameterData = sb.ToString()
                               .Split(Environment.NewLine)
@@ -148,6 +156,20 @@ namespace NurbsSharp.IO.IGES
             string s1 = $"     {EntityType}{parameterPointer.ToString().PadLeft(8, ' ')}{zerostr}{zerostr}{zerostr}{nonestr}{nonestr}{nonestr}{status}";
             string s2 = $"     {EntityType}{zerostr}{zerostr}{parameterLineCount.ToString().PadLeft(8, ' ')}{zerostr}{nonestr}{nonestr}{nonestr}{zerostr}";
             return [s1, s2];
+        }
+
+        public bool SetDirectoryPointerToParameterString(int pointer)
+        {
+            if (ParameterData.Length == 0)
+                return false;
+            Guard.ThrowIfNegativeOrZero(pointer, nameof(pointer));
+            string pointerStr = pointer.ToString().PadLeft(8, ' ');
+
+            ParameterData = ParameterData
+                .Select(line => line.Replace("{XXXXXX}", pointerStr))
+                .ToArray();
+
+            return true;
         }
     }
 }

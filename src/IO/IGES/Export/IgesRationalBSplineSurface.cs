@@ -71,8 +71,8 @@ namespace NurbsSharp.IO.IGES
         /// <returns></returns>
         public string[] GenerateParameterData()
         {
-            int D_pointer = 1; // placeholder
-            string D_pointer_str = D_pointer.ToString().PadLeft(8, ' ');
+            
+            string D_pointer_str = "{XXXXXX}";//D_pointer.ToString().PadLeft(8, ' ');
 
             StringBuilder stringBuilder = new();
             // IGES 128 (Rational B-spline surface) の主要フィールド（簡易）
@@ -173,6 +173,20 @@ namespace NurbsSharp.IO.IGES
                                 .Select(s => s.PadRight(64, ' ') + D_pointer_str)
                                 .ToArray();
             return ParameterData;
+        }
+
+        public bool SetDirectoryPointerToParameterString(int pointer)
+        {
+            if (ParameterData.Length == 0)
+                return false;
+            Guard.ThrowIfNegativeOrZero(pointer, nameof(pointer));
+            string pointerStr = pointer.ToString().PadLeft(8, ' ');
+            
+            ParameterData = ParameterData
+                .Select(line => line.Replace("{XXXXXX}", pointerStr))
+                .ToArray();
+
+            return true;
         }
     }
 }

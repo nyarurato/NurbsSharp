@@ -29,9 +29,9 @@ namespace NurbsSharp.IO.IGES
         /// <param name="author"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
-        public static async Task<bool> ExportAsync(NurbsSurface surface, Stream stream, string fileName = "model.igs", string author = "NurbsSharp")
+        public static async Task<bool> ExportAsync(List<NurbsSurface> surfaces, Stream stream, string fileName = "model.igs", string author = "NurbsSharp")
         {
-            Guard.ThrowIfNull(surface, nameof(surface));
+            Guard.ThrowIfNull(surfaces, nameof(surfaces));
             Guard.ThrowIfNull(stream, nameof(stream));
 
             using var writer = new StreamWriter(stream, Encoding.ASCII, 1024, leaveOpen: true);
@@ -46,10 +46,11 @@ namespace NurbsSharp.IO.IGES
             countG = await WriteGlobalSection(iges);
 
             // 3) Create Export Entities
-            var entities = new List<IIgesExportEntity>
+            List<IIgesExportEntity> entities = [];
+            foreach (var surface in surfaces)
             {
-                new IgesRationalBSplineSurface(surface)
-            };
+                entities.Add(new IgesRationalBSplineSurface(surface));
+            }
 
             //3.5 ) Prepare Directory / Parameter Section
             foreach (var e in entities)
@@ -59,7 +60,6 @@ namespace NurbsSharp.IO.IGES
 
             // 4) Directory Section
             countD = await WriteDirectorySection(iges, entities);
-
             // 5) Parameter Section
             countP = await WriteParameterSectionAsync(iges, entities);
 
@@ -98,13 +98,18 @@ namespace NurbsSharp.IO.IGES
                 new IgesRationalBSplineCurve(curve)
             };
 
-            //Prepare Directory / Parameter Section
+            //Prepare Directory / Parameter Section (Estimate Parameter Line Count)
             foreach (var e in entities)
             {
                 e.GenerateParameterData();
             }
 
             countD = await WriteDirectorySection(iges, entities);
+            
+            foreach (var e in entities)
+            {
+                e.GenerateParameterData();// Regenerate Parameter Data for Directory Pointer update
+            }
             countP = await WriteParameterSectionAsync(iges, entities);
 
             WriteTerminateSection(iges, countS, countG, countD, countP);
@@ -146,7 +151,8 @@ namespace NurbsSharp.IO.IGES
             int paramPointerIndex = 1;
             foreach (var e in entities)
             {
-                foreach(var d in e.GenerateDirectoryEntry(idx,e.ParameterLineCount))
+                e.SetDirectoryPointerToParameterString(idx);
+                foreach (var d in e.GenerateDirectoryEntry(paramPointerIndex, e.ParameterLineCount))
                 {
                     
                     await w.WriteRecordForDAsync(d, idx);
@@ -166,7 +172,6 @@ namespace NurbsSharp.IO.IGES
             {
                 foreach (var paramData in e.ParameterData)
                 {
-                    
                     await w.WriteRecordForPAsync(paramData, 'P');
                     idx++;
                 }

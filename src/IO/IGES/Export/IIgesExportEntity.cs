@@ -18,5 +18,7 @@ namespace NurbsSharp.IO.IGES
 
         string[] ParameterData { get; }
         int ParameterLineCount { get; }
+        bool SetDirectoryPointerToParameterString(int pointer);
+        //TODO: define DirectoryPointer const string anywhere
     }
 }
