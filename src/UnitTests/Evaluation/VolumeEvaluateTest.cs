@@ -24,28 +24,28 @@ namespace UnitTests.Evaluation
             int degreeV = 1;
             int degreeW = 1;
 
-            double[] knotsU = { 0, 0, 1, 1 };
-            double[] knotsV = { 0, 0, 1, 1 };
-            double[] knotsW = { 0, 0, 1, 1 };
+            double[] knotsU = [0, 0, 1, 1];
+            double[] knotsV = [0, 0, 1, 1];
+            double[] knotsW = [0, 0, 1, 1];
             ControlPoint[][][] controlPoints = new ControlPoint[2][][];
             controlPoints[0] = new ControlPoint[2][];
-            controlPoints[0][0] = new ControlPoint[] {
+            controlPoints[0][0] = [
                 new ControlPoint(0.0, 0.0, 0.0, 1),
                 new ControlPoint(1.0, 0.0, 1.0, 1)
-            };
-            controlPoints[0][1] = new ControlPoint[] {
+            ];
+            controlPoints[0][1] = [
                 new ControlPoint(0.0, 1.0, 0.5, 1),
                 new ControlPoint(1.0, 1.0, 1.5, 1)
-            };
+            ];
             controlPoints[1] = new ControlPoint[2][];
-            controlPoints[1][0] = new ControlPoint[] {
+            controlPoints[1][0] = [
                 new ControlPoint(0.0, 0.0, 1.0, 1),
                 new ControlPoint(1.0, 0.0, 2.0, 1)
-            };
-            controlPoints[1][1] = new ControlPoint[] {
+            ];
+            controlPoints[1][1] = [
                 new ControlPoint(0.0, 1.0, 1.5, 1),
                 new ControlPoint(1.0, 1.0, 2.5, 1)
-            };
+            ];
             var volume = new NurbsVolume(degreeU, degreeV, degreeW, new KnotVector(knotsU,degreeU), new KnotVector(knotsV,degreeV), new KnotVector(knotsW,degreeW), controlPoints);
 
             var samples = new (double u, double v, double w, Vector3Double expected)[] {

@@ -26,7 +26,7 @@ namespace UnitTests.Core
         [Test]
         public void KnotVectorCheck()
         {
-            double[] knots = { 0.0, 0.0, 0.0, 1.0, 1.0, 1.0 };
+            double[] knots = [0.0, 0.0, 0.0, 1.0, 1.0, 1.0];
             KnotVector kv = new KnotVector(knots,2);
             Assert.That(kv.Knots, Has.Length.EqualTo(6));
             using (Assert.EnterMultipleScope())
@@ -41,7 +41,7 @@ namespace UnitTests.Core
             Assert.That(uniformKv.Knots, Is.EqualTo(actual));
 
             //normalize test
-            double[] knots2 = { 1.0, 2.0, 3.0, 3.5, 4.0, 5.0 };
+            double[] knots2 = [1.0, 2.0, 3.0, 3.5, 4.0, 5.0];
             KnotVector kv2 = new KnotVector(knots2,0);
             actual = [0, 0.25, 0.5, 0.625, 0.75, 1.0];
             kv2.Normalize();
@@ -49,7 +49,7 @@ namespace UnitTests.Core
             Assert.That(kv2.Knots, Is.EqualTo(actual));
 
             // Validate test
-            double[] invalidKnots = { 0.0, 0.5, 0.3, 1.0 };            
+            double[] invalidKnots = [0.0, 0.5, 0.3, 1.0];            
             Assert.Throws<ArgumentException>(() => new KnotVector(invalidKnots,1));
 
             // Clamped vector test

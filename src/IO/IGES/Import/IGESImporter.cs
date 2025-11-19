@@ -37,8 +37,8 @@ namespace NurbsSharp.IO.IGES
         /// <exception cref="FormatException"></exception>
         public static async Task<List<IGeometry>> ImportAsync(StreamReader stream)
         {
-            List<IGESROW> Directory = new List<IGESROW>();
-            List<IGESROW> Parameter = new List<IGESROW>();
+            List<IGESROW> Directory = [];
+            List<IGESROW> Parameter = [];
 
 
             while (!stream.EndOfStream)
@@ -69,7 +69,7 @@ namespace NurbsSharp.IO.IGES
                 }
             }
 
-            List<IGeometry> imported_geometry = new List<IGeometry>();
+            List<IGeometry> imported_geometry = [];
 
             for (int i = 0; i < Directory.Count; i += 2)
             {
