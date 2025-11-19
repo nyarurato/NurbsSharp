@@ -10,6 +10,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using NurbsSharp.IO.IGES;
+using NurbsSharp.IO;
+using NurbsSharp.Tesselation;
 
 namespace UnitTests.Geometry
 {
@@ -219,10 +221,26 @@ namespace UnitTests.Geometry
         }
 
         [Test]
-        [Ignore("Not implemented yet")]
         public void PrimitiveTestSphere()
         {
+            double radius = 7.5;
+            var sphere = PrimitiveFactory.CreateSphere(radius);
             
+            for (int i = 0; i <= 1; i++)//poles
+            {
+                double u = i;
+                for (int j = 0; j <= 100; j++)
+                {
+                    double v = j / 100.0;
+                    var pt = sphere.GetPos(u, v);
+                    double dist = Math.Sqrt(pt.X * pt.X + pt.Y * pt.Y + pt.Z * pt.Z);
+                    Assert.That(dist, Is.EqualTo(radius).Within(1e-6));
+                }
+            }
+            double surfaceArea = sphere.GetSurfaceArea();
+            double expectedArea = 4 * Math.PI * radius * radius;
+            Assert.That(surfaceArea, Is.EqualTo(expectedArea).Within(1e-2));
+                        
         }
 
         private void TestOutputIGES(List<NurbsSurface> surface, string filePath= "PrimitiveTestFace.igs")
@@ -230,6 +248,11 @@ namespace UnitTests.Geometry
             using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
             var success = IGESExporter.ExportAsync(surface, stream);
             
+        }
+        private void TestOutputSTL(Mesh mesh, string filePath = "GeometryTestMesh.stl")
+        {
+            using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
+            var success = STLExporter.ExportAsync(mesh, stream);
         }
     }
 }

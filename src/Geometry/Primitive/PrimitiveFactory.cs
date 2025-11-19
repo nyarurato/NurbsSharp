@@ -40,14 +40,14 @@ namespace NurbsSharp.Geometry.Primitive
             controlPoints[6] = new ControlPoint(0.0, -radius, 0.0, 1.0);
             controlPoints[7] = new ControlPoint(radius, -radius, 0.0, weight);
             controlPoints[8] = new ControlPoint(radius, 0.0, 0.0, 1.0);
-            double[] knots = new double[]
-            {
+            double[] knots =
+            [
                 0.0, 0.0, 0.0,
                 1.0/4.0, 1.0/4.0,
                 1.0/2.0, 1.0/2.0,
                 3.0/4.0, 3.0/4.0,
                 1.0, 1.0, 1.0
-            };
+            ];
             var knotVector = new KnotVector(knots,degree);
             var circleCurve = new NurbsCurve(degree, knotVector, controlPoints);
             return circleCurve;
@@ -170,12 +170,84 @@ namespace NurbsSharp.Geometry.Primitive
         public static NurbsSurface CreateSphere(double radius)
         {
             Guard.ThrowIfNegativeOrZero(radius, nameof(radius));
-            int degreeU = 3;
-            int degreeV = 3;
-            int cpU = 4;
-            int cpV = 11;
-
-            return null; // TODO: implement this
+            
+            // Create a sphere by spinning a semi-circle
+            // U direction: meridian (half circle from south to north pole)
+            // V direction: around the axis (full circle)
+            
+            int degreeU = 2; // quadratic for meridian
+            int degreeV = 2; // quadratic for rotation
+            
+            // Meridian: 5 control points from south to north (quarter circle approach)
+            int nU = 5;
+            // Around: 9 control points (same as circle)
+            int nV = 9;
+            
+            // Knot vector for meridian (U direction)
+            double[] knotsU = [ 0.0, 0.0, 0.0, 0.5, 0.5, 1.0, 1.0, 1.0 ];
+            
+            // Knot vector for rotation (V direction) - same as circle
+            double[] knotsV =
+            [
+                0.0, 0.0, 0.0,
+                1.0/4.0, 1.0/4.0,
+                1.0/2.0, 1.0/2.0,
+                3.0/4.0, 3.0/4.0,
+                1.0, 1.0, 1.0
+            ];
+            
+            var kvU = new KnotVector(knotsU, degreeU);
+            var kvV = new KnotVector(knotsV, degreeV);
+            
+            double w = Math.Sqrt(2) / 2.0;
+            
+            // Create meridian control points (in XZ plane, then rotate around Z axis)
+            // These points form a semi-circle from south pole to north pole
+            Vector3Double[] meridianPoints = new Vector3Double[nU];
+            double[] meridianWeights = new double[nU];
+            
+            // Similar to nurbcircle in Blender
+            meridianPoints[0] = new Vector3Double(0.0, 0.0, -radius);  // South pole
+            meridianWeights[0] = 1.0;
+            
+            meridianPoints[1] = new Vector3Double(radius, 0.0, -radius); // Diagonal
+            meridianWeights[1] = w;
+            
+            meridianPoints[2] = new Vector3Double(radius, 0.0, 0.0);     // Equator
+            meridianWeights[2] = 1.0;
+            
+            meridianPoints[3] = new Vector3Double(radius, 0.0, radius);  // Diagonal
+            meridianWeights[3] = w;
+            
+            meridianPoints[4] = new Vector3Double(0.0, 0.0, radius);     // North pole
+            meridianWeights[4] = 1.0;
+            
+            // Spin the meridian around Z axis to create the sphere
+            ControlPoint[][] cps = new ControlPoint[nU][];
+            
+            for (int iu = 0; iu < nU; iu++)
+            {
+                cps[iu] = new ControlPoint[nV];
+                var basePt = meridianPoints[iu];
+                var baseWeight = meridianWeights[iu];
+                
+                // Circle pattern for rotation around Z axis
+                // 0: +X, 45°, 90°: +Y, 135°, 180°: -X, 225°, 270°: -Y, 315°, 360°: +X
+                double r = Math.Sqrt(basePt.X * basePt.X + basePt.Y * basePt.Y); // radius in XY plane
+                double z = basePt.Z;
+                
+                cps[iu][0] = new ControlPoint(r, 0.0, z, baseWeight);
+                cps[iu][1] = new ControlPoint(r, r, z, baseWeight * w);
+                cps[iu][2] = new ControlPoint(0.0, r, z, baseWeight);
+                cps[iu][3] = new ControlPoint(-r, r, z, baseWeight * w);
+                cps[iu][4] = new ControlPoint(-r, 0.0, z, baseWeight);
+                cps[iu][5] = new ControlPoint(-r, -r, z, baseWeight * w);
+                cps[iu][6] = new ControlPoint(0.0, -r, z, baseWeight);
+                cps[iu][7] = new ControlPoint(r, -r, z, baseWeight * w);
+                cps[iu][8] = new ControlPoint(r, 0.0, z, baseWeight);
+            }
+            
+            return new NurbsSurface(degreeU, degreeV, kvU, kvV, cps);
         }
 
         /// <summary>
