@@ -22,6 +22,8 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>NURBS;B-Spline;CAD;CAM;Geometry;3D;Modeling</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-Minimum</AnalysisLevel>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">

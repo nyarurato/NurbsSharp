@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using NurbsSharp.Geometry;
+using NurbsSharp.Core;
 
 namespace NurbsSharp.IO.IGES
 {
@@ -22,7 +23,7 @@ namespace NurbsSharp.IO.IGES
         /// <summary>
         /// Parameter Entity Data
         /// </summary>
-        public string[] ParameterData { get; private set; }
+        public string[] ParameterData { get; private set; } = [];
         /// <summary>
         /// Parameter Line Count
         /// </summary>
@@ -35,7 +36,7 @@ namespace NurbsSharp.IO.IGES
         public IgesRationalBSplineSurface(NurbsSurface surf)
         {
             _surf = surf;
-            ParameterData = Array.Empty<string>();
+            ParameterData = [];
         }
 
         /// <summary>
@@ -51,10 +52,8 @@ namespace NurbsSharp.IO.IGES
         {
             if (ParameterData.Length == 0)
                 throw new InvalidOperationException("ParameterData is not generated yet.");
-            if (parameterPointer <= 0)
-                throw new ArgumentOutOfRangeException(nameof(parameterPointer));
-            if (parameterLineCount <= 0)
-                throw new ArgumentOutOfRangeException(nameof(parameterLineCount));
+            Guard.ThrowIfNegativeOrZero(parameterPointer, nameof(parameterPointer));
+            Guard.ThrowIfNegativeOrZero(parameterLineCount, nameof(parameterLineCount));
 
             string status = "00010000";//Visible:00,Physically Dependent:00,Geometry:00, GlobalTopDown:00
             string zerostr = "       0";
@@ -62,7 +61,7 @@ namespace NurbsSharp.IO.IGES
 
             string s1 = $"     {EntityType}{parameterPointer.ToString().PadLeft(8, ' ')}{zerostr}{zerostr}{zerostr}{nonestr}{nonestr}{nonestr}{status}";
             string s2 = $"     {EntityType}{zerostr}{zerostr}{parameterLineCount.ToString().PadLeft(8, ' ')}{zerostr}{nonestr}{nonestr}{nonestr}{zerostr}";
-            return new[] { s1, s2 };
+            return [s1, s2];
         }
 
         /// <summary>
@@ -75,7 +74,7 @@ namespace NurbsSharp.IO.IGES
             int D_pointer = 1; // placeholder
             string D_pointer_str = D_pointer.ToString().PadLeft(8, ' ');
 
-            StringBuilder stringBuilder = new StringBuilder();
+            StringBuilder stringBuilder = new();
             // IGES 128 (Rational B-spline surface) の主要フィールド（簡易）
             //K1,K2,M1, M2, P1, P2, P3, P4, P5,
             int k1 = _surf.ControlPoints.Length - 1;//basis func sigma 0 to k1 (u)

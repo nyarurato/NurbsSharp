@@ -26,8 +26,8 @@ namespace NurbsSharp.Evaluation
         /// <exception cref="ArgumentException"></exception>
         public static Vector3Double Evaluate(NurbsCurve curve, double u)
         {
-            if (curve == null)
-                throw new ArgumentNullException(nameof(curve));
+            Guard.ThrowIfNull(curve, nameof(curve));
+
             if (curve.KnotVector.Knots[0] > u || curve.KnotVector.Knots[curve.KnotVector.Length - 1] < u)
                 throw new ArgumentOutOfRangeException(nameof(u), "Parameter 'u' must be in the range [0, 1].");
             if (curve.Degree < 1)
@@ -69,8 +69,7 @@ namespace NurbsSharp.Evaluation
         public static Vector3Double EvaluateFirstDerivative(NurbsCurve curve,double u)
         {
             //TODO: Optimize Deboor-based derivative evaluation
-            if (curve == null)
-                throw new ArgumentNullException(nameof(curve));
+            Guard.ThrowIfNull(curve, nameof(curve));
 
             int degree = curve.Degree;
             if (degree < 1)
@@ -87,8 +86,8 @@ namespace NurbsSharp.Evaluation
 
             int n = controlPoints.Length - 1;
             double denom = 0.0;
-            Vector3Double weightPosDerivSum = new Vector3Double(0.0, 0.0, 0.0); //ΣwPN' 
-            Vector3Double weightPosSum = new Vector3Double(0.0, 0.0, 0.0);//ΣwPN
+            Vector3Double weightPosDerivSum = new (0.0, 0.0, 0.0); //ΣwPN' 
+            Vector3Double weightPosSum = new (0.0, 0.0, 0.0);//ΣwPN
             double sumWeightBasis=0, sumWeightBasisDeriv=0;//ΣwN and ΣwN'
             double N = 0.0, dN=0;
 
@@ -126,8 +125,7 @@ namespace NurbsSharp.Evaluation
         /// <exception cref="ArgumentException"></exception>
         public static Vector3Double EvaluateSecondDerivative(NurbsCurve curve, double u)
         {
-            if (curve == null)
-                throw new ArgumentNullException(nameof(curve));
+            Guard.ThrowIfNull(curve, nameof(curve));
             int degree = curve.Degree;
             if (degree < 2)
                 throw new ArgumentException("Curve degree must be at least 2 for second derivative", nameof(curve));
@@ -176,9 +174,8 @@ namespace NurbsSharp.Evaluation
         /// <exception cref="ArgumentNullException"></exception>
         public static double CurveLength(NurbsCurve curve, double start_u, double end_u)
         {
-            if(curve == null)
-                throw new ArgumentNullException(nameof(curve));
-            if(start_u> end_u)
+            Guard.ThrowIfNull(curve, nameof(curve));
+            if (start_u> end_u)
                 throw new ArgumentOutOfRangeException(nameof(start_u), "start_u must be less than or equal to end_u.");
             if (start_u < curve.KnotVector.Knots[0])
                 throw new ArgumentOutOfRangeException(nameof(start_u), "start_u is out of the knot vector range.");

@@ -31,7 +31,7 @@ namespace NurbsSharp.IO.IGES
                 foreach (var row in entity_str)
                 {
                     if (row.Length >= 64)
-                        paramData.Append(row.Substring(0, 64));
+                        paramData.Append(row.AsSpan(0, 64));
                     else
                         paramData.Append(row);
                 }
@@ -39,7 +39,7 @@ namespace NurbsSharp.IO.IGES
                 // tokens separated by comma, terminated by semicolon
                 var joined = paramData.ToString();
                 joined = joined.Replace(";", ",");
-                var rawTokens = joined.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                var rawTokens = joined.Split([','], StringSplitOptions.RemoveEmptyEntries)
                                        .Select(s => s.Trim())
                                        .ToArray();
 

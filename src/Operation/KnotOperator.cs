@@ -29,10 +29,8 @@ namespace NurbsSharp.Operation
         {
             if (times <= 0)
                 return (knots, controlPoints);
-            if(knots == null)
-                throw new ArgumentNullException(nameof(knots));
-            if(controlPoints == null)
-                throw new ArgumentNullException(nameof(controlPoints));
+            Guard.ThrowIfNull(knots, nameof(knots));
+            Guard.ThrowIfNull(controlPoints, nameof(controlPoints));
             if(degree < 1)
                 throw new ArgumentException("Degree must be at least 1.", nameof(degree));
             if(u < knots[0] || u > knots[knots.Length - 1])

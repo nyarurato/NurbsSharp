@@ -36,7 +36,7 @@ namespace NurbsSharp.Core
         /// </summary>
         public KnotVector()
         {
-            Knots = new double[] { };
+            Knots = [];
         }
 
         /// <summary>

@@ -25,11 +25,10 @@ namespace NurbsSharp.Tesselation
         /// <exception cref="ArgumentOutOfRangeException"></exception>
         public static List<Vector3Double> Tessellate(NurbsCurve curve, int numPoints)
         {
-            if (curve == null)
-                throw new ArgumentNullException(nameof(curve));
+            Guard.ThrowIfNull(curve, nameof(curve));
             if (numPoints < 2)
                 throw new ArgumentOutOfRangeException(nameof(numPoints), "Number of points must be at least 2.");
-            List<Vector3Double> points = new List<Vector3Double>();
+            List<Vector3Double> points = [];
             double uStart = curve.KnotVector.Knots[curve.Degree];
             double uEnd = curve.KnotVector.Knots[curve.KnotVector.Knots.Length - curve.Degree - 1];
             for (int i = 0; i < numPoints; i++)

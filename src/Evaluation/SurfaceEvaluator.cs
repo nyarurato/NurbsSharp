@@ -28,8 +28,7 @@ namespace NurbsSharp.Evaluation
         /// <exception cref="ArgumentNullException"></exception>
         public static Vector3Double Evaluate(NurbsSurface surface, double u, double v)
         {
-            if (surface == null)
-                throw new ArgumentNullException(nameof(surface));
+            Guard.ThrowIfNull(surface, nameof(surface));
 
             int degreeU = surface.DegreeU;
             int degreeV = surface.DegreeV;
@@ -79,9 +78,8 @@ namespace NurbsSharp.Evaluation
         /// <exception cref="ArgumentNullException"></exception>
         public static double SurfaceArea(NurbsSurface surface, double start_u, double end_u, double start_v, double end_v)
         {
-            if (surface == null)
-                throw new ArgumentNullException(nameof(surface));
-            if( start_u >= end_u || start_v >= end_v)
+            Guard.ThrowIfNull(surface, nameof(surface));
+            if ( start_u >= end_u || start_v >= end_v)
                 throw new ArgumentException("Invalid parameter range.");
             if(start_u < surface.KnotVectorU.Knots[surface.DegreeU])
                 throw new ArgumentOutOfRangeException(nameof(start_u) ,"Parameter u is out of range.");
@@ -171,8 +169,7 @@ namespace NurbsSharp.Evaluation
         /// <exception cref="DivideByZeroException"></exception>
         public static (Vector3Double u_deriv,Vector3Double v_deriv) EvaluateFirstDerivative(NurbsSurface surface, double u, double v)
         {
-            if (surface == null)
-                throw new ArgumentNullException(nameof(surface));
+            Guard.ThrowIfNull(surface, nameof(surface));
 
             int p = surface.DegreeU;
             int q = surface.DegreeV;
@@ -277,8 +274,7 @@ namespace NurbsSharp.Evaluation
         /// <exception cref="DivideByZeroException"></exception>
         public static (Vector3Double uu_deriv, Vector3Double uv_deriv, Vector3Double vv_deriv) EvaluateSecondDerivative(NurbsSurface surface, double u, double v)
         {
-            if (surface == null)
-                throw new ArgumentNullException(nameof(surface));
+            Guard.ThrowIfNull(surface, nameof(surface));
 
             int p = surface.DegreeU;
             int q = surface.DegreeV;
@@ -388,8 +384,7 @@ namespace NurbsSharp.Evaluation
         /// <exception cref="ArgumentNullException"></exception>
         public static (Vector3Double tangentU,Vector3Double tangentV, Vector3Double normal) EvaluatTangentNormal(NurbsSurface surface, double u, double v)
         {
-            if (surface == null)
-                throw new ArgumentNullException(nameof(surface));
+            Guard.ThrowIfNull(surface, nameof(surface));
 
             (Vector3Double dU, Vector3Double dV) = EvaluateFirstDerivative(surface, u, v);
 
@@ -426,8 +421,8 @@ namespace NurbsSharp.Evaluation
         /// <returns></returns>
         public static (Vector3Double tangentU, Vector3Double tangentV) EvaluateTangents(NurbsSurface surface, double u, double v)
         {
-            var res = EvaluatTangentNormal(surface, u, v);
-            return (res.tangentU,res.tangentV);
+            var (tangentU, tangentV, normal) = EvaluatTangentNormal(surface, u, v);
+            return (tangentU,tangentV);
         }
 
         /// <summary>

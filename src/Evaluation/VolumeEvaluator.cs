@@ -24,8 +24,7 @@ namespace NurbsSharp.Evaluation
         /// <exception cref="ArgumentNullException"></exception>
         public static (double x, double y, double z) Evaluate(NurbsVolume volume, double u, double v, double w)
         {
-            if (volume == null)
-                throw new ArgumentNullException(nameof(volume));
+            Guard.ThrowIfNull(volume, nameof(volume));
             int degreeU = volume.DegreeU;
             int degreeV = volume.DegreeV;
             int degreeW = volume.DegreeW;

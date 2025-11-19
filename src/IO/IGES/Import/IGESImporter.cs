@@ -24,10 +24,8 @@ namespace NurbsSharp.IO.IGES
         /// <returns></returns>
         public static async Task<List<IGeometry>> ImportAsync(string filePath)
         {
-            using (var stream = new StreamReader(filePath, Encoding.ASCII))
-            {
-                return await ImportAsync(stream);
-            }
+            using var stream = new StreamReader(filePath, Encoding.ASCII);
+            return await ImportAsync(stream);
         }
 
         /// <summary>

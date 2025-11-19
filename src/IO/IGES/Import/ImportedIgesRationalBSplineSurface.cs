@@ -30,14 +30,14 @@ namespace NurbsSharp.IO.IGES
                 foreach (var row in entity_str)
                 {
                     if (row.Length >= 64)
-                        paramBuilder.Append(row.Substring(0, 64));
+                        paramBuilder.Append(row.AsSpan(0, 64));
                     else
                         paramBuilder.Append(row);
                 }
 
                 var joined = paramBuilder.ToString();
                 joined = joined.Replace(";", ",");
-                var rawTokens = joined.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                var rawTokens = joined.Split([ ',' ], StringSplitOptions.RemoveEmptyEntries)
                                        .Select(s => s.Trim())
                                        .ToArray();
 

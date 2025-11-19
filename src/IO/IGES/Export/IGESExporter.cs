@@ -31,8 +31,8 @@ namespace NurbsSharp.IO.IGES
         /// <exception cref="ArgumentNullException"></exception>
         public static async Task<bool> ExportAsync(NurbsSurface surface, Stream stream, string fileName = "model.igs", string author = "NurbsSharp")
         {
-            if (surface == null) throw new ArgumentNullException(nameof(surface));
-            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            Guard.ThrowIfNull(surface, nameof(surface));
+            Guard.ThrowIfNull(stream, nameof(stream));
 
             using var writer = new StreamWriter(stream, Encoding.ASCII, 1024, leaveOpen: true);
             var iges = new IgesWriter(writer);
@@ -43,7 +43,7 @@ namespace NurbsSharp.IO.IGES
             countS = await WriteStartSection(iges, fileName, author);
 
             // 2) Global Section
-            countG = await WriteGlobalSection(iges, fileName);
+            countG = await WriteGlobalSection(iges);
 
             // 3) Create Export Entities
             var entities = new List<IIgesExportEntity>
@@ -83,15 +83,15 @@ namespace NurbsSharp.IO.IGES
         /// <exception cref="ArgumentNullException"></exception>
         public static async Task<bool> ExportAsync(NurbsCurve curve, Stream stream, string fileName = "model.igs", string author = "NurbsSharp")
         {
-            if (curve == null) throw new ArgumentNullException(nameof(curve));
-            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            Guard.ThrowIfNull(curve, nameof(curve));
+            Guard.ThrowIfNull(stream, nameof(stream));
 
             using var writer = new StreamWriter(stream, Encoding.ASCII, 1024, leaveOpen: true);
             var iges = new IgesWriter(writer);
             int countS = 0, countG = 0, countD = 0, countP = 0;
 
             countS = await WriteStartSection(iges, fileName, author);
-            countG = await WriteGlobalSection(iges, fileName);
+            countG = await WriteGlobalSection(iges);
 
             var entities = new List<IIgesExportEntity>
             {
@@ -129,7 +129,7 @@ namespace NurbsSharp.IO.IGES
             return await w.WriteRecordForS_G_TAsync("Start section - IGES export by " + author + " - " + fileName, 'S');
         }
 
-        private static async Task<int> WriteGlobalSection(IgesWriter w, string fileName)
+        private static async Task<int> WriteGlobalSection(IgesWriter w)
         {
             int countG = 0;
             // G Section
@@ -215,7 +215,7 @@ namespace NurbsSharp.IO.IGES
 
                 if (string.IsNullOrEmpty(s))
                 {
-                    return new[] { string.Empty };
+                    return [string.Empty];
                 }
 
                 int chunkCount = (s.Length + 71) / 72; //Ceiling

@@ -53,7 +53,7 @@ namespace NurbsSharp.Geometry
             KnotVectorU = new KnotVector();
             KnotVectorV = new KnotVector();
             KnotVectorW = new KnotVector();
-            ControlPoints = new ControlPoint[0][][];
+            ControlPoints = [];
         }
         /// <summary>
         /// Constructor

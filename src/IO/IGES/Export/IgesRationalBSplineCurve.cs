@@ -36,7 +36,7 @@ namespace NurbsSharp.IO.IGES
         /// <param name="curve"></param>
         public IgesRationalBSplineCurve(NurbsCurve curve) { 
             _curve = curve; 
-            ParameterData = Array.Empty<string>();
+            ParameterData = [];
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace NurbsSharp.IO.IGES
             int PROP3 = 0; // not periodic
             int PROP4 = 0; // rational
 
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             sb.Append($"{EntityType},{K},{M},{PROP1},{PROP2},{PROP3},{PROP4},");
 
             const int paramater_max_per_line = 63;
@@ -138,10 +138,8 @@ namespace NurbsSharp.IO.IGES
             if (ParameterData.Length == 0)
                 throw new InvalidOperationException("ParameterData is not generated yet.");
 
-            if (parameterPointer <= 0)
-                throw new ArgumentOutOfRangeException(nameof(parameterPointer));
-            if (parameterLineCount <= 0)
-                throw new ArgumentOutOfRangeException(nameof(parameterLineCount));
+            Guard.ThrowIfNegativeOrZero(parameterPointer, nameof(parameterPointer));
+            Guard.ThrowIfNegativeOrZero(parameterLineCount, nameof(parameterLineCount));
 
             string status = "00010000";//Visible:00,Physically Dependent:00,Geometry:00, GlobalTopDown:00
             string zerostr = "       0";
@@ -149,7 +147,7 @@ namespace NurbsSharp.IO.IGES
             
             string s1 = $"     {EntityType}{parameterPointer.ToString().PadLeft(8, ' ')}{zerostr}{zerostr}{zerostr}{nonestr}{nonestr}{nonestr}{status}";
             string s2 = $"     {EntityType}{zerostr}{zerostr}{parameterLineCount.ToString().PadLeft(8, ' ')}{zerostr}{nonestr}{nonestr}{nonestr}{zerostr}";
-            return new[] { s1, s2 };
+            return [s1, s2];
         }
     }
 }
