@@ -39,9 +39,11 @@ namespace NurbsSharp.Operation
         }
 
         /// <summary>
-        /// Decomposes into Bezier segments and applies Eq.5.36 (geomdl-equivalent, homogeneous coords) to elevate degree by 1.
-        /// Internal knot multiplicities are incremented by +1.
+        /// (en) Elevates the degree of the given NURBS curve by 1 using Bezier decomposition and reassembly.
+        /// (ja) ベジェ分解と再構成により、与えられたNURBS曲線の次数を1だけ昇降します。
         /// </summary>
+        /// <param name="curve"></param>
+        /// <returns></returns>
         private static NurbsCurve ElevateDegreeBezierOnce(NurbsCurve curve)
         {
             int p = curve.Degree;
@@ -149,8 +151,14 @@ namespace NurbsSharp.Operation
         }
 
 
-        // Global degree reduction p->p-1 via LSQ approximation in homogeneous coords.
-        // Stabilized by sample density and pivot point weights.
+        /// <summary>
+        /// (en) Reduces the degree of the given NURBS curve by 1 using global weighted LSQ in homogeneous space.
+        /// (ja) 同次座標での重み付き最小二乗により、与えられたNURBS曲線の次数を1だけ低減します。
+        /// </summary>
+        /// <param name="curve"></param>
+        /// <param name="tolerance"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         private static NurbsCurve ReduceDegreeOnceLSQ(NurbsCurve curve, double tolerance)
         {
             int p = curve.Degree;
@@ -312,7 +320,13 @@ namespace NurbsSharp.Operation
             return result;
         }
 
-        // Equivalent to geomdl's degree_elevation (Eq.5.36) in homogeneous coordinates
+        /// <summary>
+        /// (en) Elevates the degree of a Bezier curve defined by the given control points by 'num'
+        /// (ja) 与えられた制御点で定義されるベジェ曲線の次数を 'num' だけ昇降します
+        /// </summary>
+        /// <param name="ctrlpts"></param>
+        /// <param name="num"></param>
+        /// <returns></returns>
         private static ControlPoint[] ElevateBezierControlPoints(ControlPoint[] ctrlpts, int num)
         {
             int degree = ctrlpts.Length - 1;
@@ -347,6 +361,13 @@ namespace NurbsSharp.Operation
             return result;
         }
 
+        /// <summary>
+        /// (en) Evaluates the homogeneous position of the NURBS curve at parameter u
+        /// (ja) NURBS曲線のパラメーターuにおける同次座標を評価します
+        /// </summary>
+        /// <param name="curve"></param>
+        /// <param name="u"></param>
+        /// <returns></returns>
         private static Vector4Double EvaluateHomogeneous(NurbsCurve curve, double u)
         {
             Guard.ThrowIfNull(curve, nameof(curve));

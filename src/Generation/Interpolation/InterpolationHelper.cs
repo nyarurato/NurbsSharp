@@ -120,5 +120,78 @@ namespace NurbsSharp.Generation.Interpolation
             }
             return N;
         }
+
+        /// <summary>
+        /// (en) Computes parameter values for a 2D surface interpolation grid (NURBS Book Algorithm A9.3)
+        /// (ja) 2次元サーフェス補間グリッドのパラメータ値を計算（NURBS Book Algorithm A9.3）
+        /// </summary>
+        /// <param name="points">Data points grid [U][V]</param>
+        /// <param name="paramType">Parameterization type</param>
+        /// <returns>Tuple of (U parameters, V parameters)</returns>
+        public static (double[] uk, double[] vl) ComputeParametersSurface(Vector3Double[][] points, ParameterizationType paramType)
+        {
+            int size_u = points.Length;
+            int size_v = points[0].Length;
+            int n = size_u - 1;
+            int m = size_v - 1;
+
+            // Compute parameters for each V-column in U direction and average
+            double[] uk = new double[size_u];
+            uk[0] = 0.0;
+            uk[n] = 1.0;
+
+            if (n > 1)
+            {
+                // For each interior uk value
+                for (int k = 1; k < n; k++)
+                {
+                    double sumParams = 0.0;
+                    // Average across all V columns
+                    for (int l = 0; l <= m; l++)
+                    {
+                        // Extract points along U direction for this V column
+                        Vector3Double[] uPoints = new Vector3Double[size_u];
+                        for (int i = 0; i < size_u; i++)
+                        {
+                            uPoints[i] = points[i][l];
+                        }
+                        // Compute parameters for this column
+                        double[] uParams = ComputeParameters(uPoints, paramType);
+                        sumParams += uParams[k];
+                    }
+                    uk[k] = sumParams / (m + 1);
+                }
+            }
+
+            // Compute parameters for each U-row in V direction and average
+            double[] vl = new double[size_v];
+            vl[0] = 0.0;
+            vl[m] = 1.0;
+
+            if (m > 1)
+            {
+                // For each interior vl value
+                for (int l = 1; l < m; l++)
+                {
+                    double sumParams = 0.0;
+                    // Average across all U rows
+                    for (int k = 0; k <= n; k++)
+                    {
+                        // Extract points along V direction for this U row
+                        Vector3Double[] vPoints = new Vector3Double[size_v];
+                        for (int j = 0; j < size_v; j++)
+                        {
+                            vPoints[j] = points[k][j];
+                        }
+                        // Compute parameters for this row
+                        double[] vParams = ComputeParameters(vPoints, paramType);
+                        sumParams += vParams[l];
+                    }
+                    vl[l] = sumParams / (n + 1);
+                }
+            }
+
+            return (uk, vl);
+        }
     }
 }
