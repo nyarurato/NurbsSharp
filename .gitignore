@@ -361,3 +361,9 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# VScode
+.vscode/
+
+# ignore IO/OBJ directories
+!/src/IO/OBJ

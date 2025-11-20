@@ -12,6 +12,9 @@ This module contains the fundamental classes and methods for NURBS representatio
 ### Geometry
 This module provides geometric entities such as control points, curves, and surfaces, along with their properties and methods for manipulation.
 
+### Generation
+This module includes algorithms for generating NURBS curves and surfaces from given control points and knot vectors
+
 ### Tesselation
 This module handles the tessellation of NURBS surfaces into polygonal meshes for rendering and visualization purposes.
 
