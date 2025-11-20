@@ -253,7 +253,6 @@ namespace UnitTests.Operation
                     Assert.That(pos_reduced.Z, Is.EqualTo(pos_original.Z).Within(0.1));
                 }
             }
-            Console.WriteLine($"TestA Max distance error: {maxErrorDist:F6}");
         }
 
         private NurbsCurve CreateStraightLineCurve(int degree, int numControlPoints, double[]? weights = null)
@@ -332,7 +331,6 @@ namespace UnitTests.Operation
                 // match the tolerance used when calling ReduceDegree
                 Assert.That(pOrig.DistanceTo(pRed), Is.LessThanOrEqualTo(1e-1));
             }
-            Console.WriteLine($"ReduceDegree_StraightLine Max distance error: {maxErrorDist:F6}");
         }
 
         [Test]
@@ -381,8 +379,6 @@ namespace UnitTests.Operation
                 }
             }
             
-            // Report actual errors for analysis
-            Console.WriteLine($"Max errors - X: {maxErrorX:F4}, Y: {maxErrorY:F4}, Z: {maxErrorZ:F4}, Distance: {maxErrorDist:F4}");
         }
 
         [Test]
@@ -435,13 +431,7 @@ namespace UnitTests.Operation
                 errorCount++;
             }
             avgErrorDist /= errorCount;
-            
-            // Report comprehensive error metrics
-            Console.WriteLine($"Degree 5->3 Complex Curve:");
-            Console.WriteLine($"  Max errors - X: {maxErrorX:F4}, Y: {maxErrorY:F4}, Z: {maxErrorZ:F4}");
-            Console.WriteLine($"  Max distance: {maxErrorDist:F4}, Avg distance: {avgErrorDist:F4}");
-            Console.WriteLine($"  Control points: {controlPoints.Length} -> {reducedCurve.ControlPoints.Length}");
-            
+                                    
             // Verify errors are within reasonable bounds for 2-step reduction
             // For degree reduction by 2, we expect larger errors than single-step reduction
             foreach (var u in samplePoints)

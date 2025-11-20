@@ -128,7 +128,7 @@ namespace NurbsSharp.Evaluation
         /// <param name="u">parameter u</param>
         /// <param name="knots"></param>
         /// <returns></returns>
-        protected static double BSplineBasisFunction(int i, int p, double u, double[] knots)
+        public static double BSplineBasisFunction(int i, int p, double u, double[] knots)
         {
     
             if (LinAlg.ApproxEqual(u, knots[knots.Length - 1]))

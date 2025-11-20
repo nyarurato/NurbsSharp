@@ -9,7 +9,7 @@ using NurbsSharp.Evaluation;
 using System.Data.Common;
 
 
-namespace NurbsSharp.Geometry.Primitive
+namespace NurbsSharp.Generation
 {
     /// <summary>
     /// (en)Factory class for creating primitive NURBS geometries

@@ -236,7 +236,7 @@ namespace NurbsSharp.Operation
                 A[i] = new double[nNew + 1];
                 for (int j = 0; j <= nNew; j++)
                 {
-                    A[i][j] = ws[i] * BSplineBasisFunction(j, ph, u, newKnotVec.Knots);
+                    A[i][j] = ws[i] * BasicEvaluator.BSplineBasisFunction(j, ph, u, newKnotVec.Knots);
                 }
             }
 
@@ -276,10 +276,10 @@ namespace NurbsSharp.Operation
             for (int i = 0; i <= nNew; i++) ATA[i][i] += lambda;
 
             // Standard LSQ solution (pseudo-constraints via enhanced weights)
-            double[] solXw = SolveLinearSystem(ATA, ATbXw);
-            double[] solYw = SolveLinearSystem(ATA, ATbYw);
-            double[] solZw = SolveLinearSystem(ATA, ATbZw);
-            double[] solW = SolveLinearSystem(ATA, ATbW);
+            double[] solXw = LinAlg.SolveLinearSystem(ATA, ATbXw);
+            double[] solYw = LinAlg.SolveLinearSystem(ATA, ATbYw);
+            double[] solZw = LinAlg.SolveLinearSystem(ATA, ATbZw);
+            double[] solW = LinAlg.SolveLinearSystem(ATA, ATbW);
 
             var newCP = new ControlPoint[nNew + 1];
             for (int i = 0; i <= nNew; i++)
@@ -347,82 +347,7 @@ namespace NurbsSharp.Operation
             return result;
         }
 
-
-        private static double BSplineBasisFunction(int i, int p, double u, double[] knots)
-        {
-            int m = knots.Length;
-            if (p == 0)
-            {
-                if (knots[i] <= u && u < knots[i + 1]) return 1.0;
-                if (LinAlg.ApproxEqual(u, knots[knots.Length - 1]) && i == knots.Length - p - 2) return 1.0;
-                return 0.0;
-            }
-            double denom1 = knots[i + p] - knots[i];
-            double denom2 = knots[i + p + 1] - knots[i + 1];
-            double term1 = 0.0;
-            double term2 = 0.0;
-            if (LinAlg.IsNotZero(denom1))
-                term1 = (u - knots[i]) / denom1 * BSplineBasisFunction(i, p - 1, u, knots);
-            if (LinAlg.IsNotZero(denom2))
-                term2 = (knots[i + p + 1] - u) / denom2 * BSplineBasisFunction(i + 1, p - 1, u, knots);
-            return term1 + term2;
-        }
-
-        private static double[] SolveLinearSystem(double[][] A, double[] b)
-        {
-            int n = b.Length;
-            double[][] M = new double[n][];
-            for (int i = 0; i < n; i++)
-            {
-                M[i] = new double[n + 1];
-                for (int j = 0; j < n; j++)
-                    M[i][j] = A[i][j];
-                M[i][n] = b[i];
-            }
-
-            for (int k = 0; k < n; k++)
-            {
-                int maxRow = k;
-                double maxVal = Math.Abs(M[k][k]);
-                for (int i = k + 1; i < n; i++)
-                {
-                    double val = Math.Abs(M[i][k]);
-                    if (val > maxVal)
-                    {
-                        maxVal = val; maxRow = i;
-                    }
-                }
-                if (LinAlg.ApproxEqual(maxVal, 0.0))
-                    throw new InvalidOperationException("Linear system is singular or ill-conditioned.");
-
-                if (maxRow != k)
-                {
-                    for (int j = k; j < n + 1; j++)
-                    {
-                        (M[maxRow][j], M[k][j]) = (M[k][j], M[maxRow][j]);
-                    }
-                }
-
-                for (int i = k + 1; i < n; i++)
-                {
-                    double f = M[i][k] / M[k][k];
-                    for (int j = k; j < n + 1; j++)
-                        M[i][j] -= f * M[k][j];
-                }
-            }
-
-            double[] x = new double[n];
-            for (int i = n - 1; i >= 0; i--)
-            {
-                double s = M[i][n];
-                for (int j = i + 1; j < n; j++) s -= M[i][j] * x[j];
-                x[i] = s / M[i][i];
-            }
-            return x;
-        }
-
-
-        private static Vector4Double EvaluateHomogeneous(NurbsSharp.Geometry.NurbsCurve curve, double u)
+        private static Vector4Double EvaluateHomogeneous(NurbsCurve curve, double u)
         {
             Guard.ThrowIfNull(curve, nameof(curve));
             int p = curve.Degree;
@@ -435,7 +360,7 @@ namespace NurbsSharp.Operation
             Vector4Double H = new Vector4Double(0, 0, 0, 0);
             for (int i = 0; i < cps.Length; i++)
             {
-                double Ni = BSplineBasisFunction(i, p, u, knots);
+                double Ni = BasicEvaluator.BSplineBasisFunction(i, p, u, knots);
                 var hp = cps[i].HomogeneousPosition;
                 H.X += Ni * hp.X;
                 H.Y += Ni * hp.Y;
@@ -443,6 +368,6 @@ namespace NurbsSharp.Operation
                 H.W += Ni * hp.W;
             }
             return H;
-            }
+        }
     }
 }
