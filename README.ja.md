@@ -26,6 +26,16 @@ NURBS Sharpは.NET向けの依存関係なしのNURBS（非一様有理 B-スプ
 - 曲線・サーフェス用のテッセレーションユーティリティ
 - 対応ターゲット：.NET 8、 .NET Standard 2.1
 
+## 制限事項
+
+- **ノットベクトル (Knot Vector)**: 現在、"Clamped" ノットベクトルのみサポートしています（多重度 = 次数 + 1）。
+- **トポロジー操作**: `SplitSurface`、`RemoveKnot`、`RefineKnot`、および `Join`（曲線用）は未実装です。
+- **IGESサポート**:
+    - **インポート**: Entity Type 126 (Rational B-spline curve) と 128 (Rational B-spline surface) のみサポートしています。
+    - **エクスポート**: NURBSエンティティのみサポートしています。メッシュのエクスポートはサポートされていません。
+- **メッシュエクスポート (OBJ/STL)**: メッシュオブジェクトのみサポートしています。NURBSからの直接エクスポートはサポートされていません（テッセレーションが必要です）。
+- **生成 (Generation)**: 近似 (Approximation) は未実装です（補間 (Interpolation) のみ利用可能）。
+
 ## インストール
 
 NuGetからインストール

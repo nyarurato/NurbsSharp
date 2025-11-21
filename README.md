@@ -27,6 +27,16 @@ It provides data structures, evaluators, topology operators, I/O and tessellatio
 - Tessellation utilities for curves and surfaces
 - Targets: .NET 8 and .NET Standard 2.1
 
+## Limitations
+
+- **Knot Vector**: Currently, only "Clamped" knot vectors are supported (multiplicity = degree + 1).
+- **Topology Operations**: `SplitSurface`, `RemoveKnot`, `RefineKnot`, and `Join` (for Curves) are not yet implemented.
+- **IGES Support**:
+    - **Import**: Only supports Entity Type 126 (Rational B-spline curve) and 128 (Rational B-spline surface).
+    - **Export**: Only supports NURBS entities. Mesh export is not supported.
+- **Mesh Export (OBJ/STL)**: Only supports Mesh objects. Direct export from NURBS is not supported (tessellation required).
+- **Generation**: Approximation is not implemented yet (only Interpolation is available).
+
 ## Installation
 
 Install via NuGet:
