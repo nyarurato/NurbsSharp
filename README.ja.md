@@ -81,6 +81,10 @@ using (var fs = new FileStream("test_output.stl", FileMode.Create, FileAccess.Wr
 }
 ```
 
+他の例： https://github.com/nyarurato/NurbsSharpSample
+または Github Wiki
+
+
 ## ドキュメント
 
 APIドキュメント: https://nyarurato.github.io/NurbsSharp/

@@ -4,8 +4,8 @@
 		<TargetFrameworks>net8.0;netstandard2.1;</TargetFrameworks>
 		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<VersionPrefix>0.0.1</VersionPrefix>
-		<VersionSuffix>beta5</VersionSuffix>
+		<!-- Version is managed by MinVer from Git tags -->
+		<MinVerMinimumMajorMinor>0.1</MinVerMinimumMajorMinor>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
@@ -57,5 +57,13 @@
 	<ItemGroup>
 	  <Folder Include="src\Intersection\" />
     <None Include="README.md" Pack="true" PackagePath="" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- MinVer: Git-based versioning (build-time only, not included in package) -->
+		<PackageReference Include="MinVer" Version="6.0.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 	</ItemGroup>
 </Project>
