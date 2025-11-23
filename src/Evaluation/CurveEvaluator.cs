@@ -220,7 +220,7 @@ namespace NurbsSharp.Evaluation
 
                     // Evaluate first derivative and take its magnitude
                     Vector3Double d = EvaluateFirstDerivative(curve, u);
-                    double speed = d?.magnitude ?? 0.0;
+                    double speed = d.magnitude;
                     spanSum += wi * speed;
                 }
 

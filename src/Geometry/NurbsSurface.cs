@@ -208,7 +208,7 @@ namespace NurbsSharp.Geometry
         /// <exception cref="ArgumentNullException"></exception>"
         public void Translate(Vector3Double delta)
         {
-            Guard.ThrowIfNull(delta, nameof(delta));
+            //Guard.ThrowIfNull(delta, nameof(delta));
             foreach (var row in ControlPoints)
             {
                 foreach(var cp in row)

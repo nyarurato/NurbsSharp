@@ -383,10 +383,7 @@ namespace NurbsSharp.Operation
             {
                 double Ni = BasicEvaluator.BSplineBasisFunction(i, p, u, knots);
                 var hp = cps[i].HomogeneousPosition;
-                H.X += Ni * hp.X;
-                H.Y += Ni * hp.Y;
-                H.Z += Ni * hp.Z;
-                H.W += Ni * hp.W;
+                H += Ni * hp;
             }
             return H;
         }

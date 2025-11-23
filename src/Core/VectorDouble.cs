@@ -10,25 +10,11 @@ namespace NurbsSharp.Core
     /// (en) 3D vector with double precision
     /// (ja) 倍精度浮動小数点数を使用した3次元ベクトル
     /// </summary>
-    public class Vector3Double
+    public readonly struct Vector3Double: IEquatable<Vector3Double>
     {
-        private readonly double[] _values = new double[3];
-
-        public double X
-        {
-            get => _values[0];
-            set => _values[0] = value;
-        }
-        public double Y
-        {
-            get => _values[1];
-            set => _values[1] = value;
-        }
-        public double Z
-        {
-            get => _values[2];
-            set => _values[2] = value;
-        }
+        public double X { get; }
+        public double Y { get; }
+        public double Z { get; }
 
         /// <summary>
         /// L2 norm
@@ -51,16 +37,16 @@ namespace NurbsSharp.Core
             }
         }
 
-        public static Vector3Double Zero => new Vector3Double(0.0, 0.0, 0.0);
+        public static Vector3Double Zero => default;
 
         /// <summary>
         /// Constructor
         /// </summary>
         public Vector3Double()
         {
-            _values[0] = 0.0;
-            _values[1] = 0.0;
-            _values[2] = 0.0;
+            X = 0.0;
+            Y = 0.0;
+            Z = 0.0;
         }
         /// <summary>
         /// Constructor
@@ -70,9 +56,9 @@ namespace NurbsSharp.Core
         /// <param name="z"></param>
         public Vector3Double(double x, double y, double z)
         {
-            _values[0] = x;
-            _values[1] = y;
-            _values[2] = z;
+            X = x;
+            Y = y;
+            Z = z;
         }
         /// <summary>
         /// (en) Calculate the distance to another vector
@@ -130,6 +116,32 @@ namespace NurbsSharp.Core
             return new Vector3Double(v.X / scalar, v.Y / scalar, v.Z / scalar);
         }
 
+        public override bool Equals(object obj)
+        {
+            return obj is Vector3Double other && Equals(other);
+        }
+
+        public bool Equals(Vector3Double other)
+        {
+            return X == other.X && Y == other.Y && Z == other.Z;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(X, Y, Z);
+        }
+
+        public static bool operator ==(Vector3Double left, Vector3Double right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(Vector3Double left, Vector3Double right)
+        {
+            return !(left == right);
+        }
+
+
         public static explicit operator Vector3(Vector3Double v)
         {
             return v.ToVector3();
@@ -177,40 +189,22 @@ namespace NurbsSharp.Core
     /// (en) 4D vector with double precision
     /// (ja) 倍精度浮動小数点数を使用した4次元ベクトル
     /// </summary>
-    public class Vector4Double
+    public readonly struct Vector4Double: IEquatable<Vector4Double>
     {
-        private readonly double[] _values = new double[4];
-
-        public double X
-        {
-            get => _values[0];
-            set => _values[0] = value;
-        }
-        public double Y
-        {
-            get => _values[1];
-            set => _values[1] = value;
-        }
-        public double Z
-        {
-            get => _values[2];
-            set => _values[2] = value;
-        }
-        public double W
-        {
-            get => _values[3];
-            set => _values[3] = value;
-        }
+        public double X { get; }
+        public double Y { get; }
+        public double Z { get; }
+        public double W { get; }
 
         /// <summary>
         /// Constructor
         /// </summary>
         public Vector4Double()
         {
-            _values[0] = 0.0;
-            _values[1] = 0.0;
-            _values[2] = 0.0;
-            _values[3] = 0.0;
+            X = 0.0;
+            Y = 0.0;
+            Z = 0.0;
+            W = 0.0;
         }
         /// <summary>
         /// Constructor
@@ -221,10 +215,10 @@ namespace NurbsSharp.Core
         /// <param name="w"></param>
         public Vector4Double(double x, double y, double z, double w)
         {
-            _values[0] = x;
-            _values[1] = y;
-            _values[2] = z;
-            _values[3] = w;
+            X = x;
+            Y = y;
+            Z = z;
+            W = w;
         }
 
         public static Vector4Double operator *(Vector4Double v, double scalar)
@@ -255,6 +249,31 @@ namespace NurbsSharp.Core
             if (scalar == 0)
                 throw new DivideByZeroException("Cannot divide by zero.");
             return new Vector4Double(v.X / scalar, v.Y / scalar, v.Z / scalar, v.W / scalar);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is Vector4Double other && Equals(other);
+        }
+
+        public bool Equals(Vector4Double other)
+        {
+            return X == other.X && Y == other.Y && Z == other.Z && W == other.W;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(X, Y, Z, W);
+        }
+
+        public static bool operator ==(Vector4Double left, Vector4Double right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(Vector4Double left, Vector4Double right)
+        {
+            return !(left == right);
         }
 
         /// <summary>

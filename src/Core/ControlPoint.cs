@@ -83,7 +83,7 @@ namespace NurbsSharp.Core
         /// <exception cref="ArgumentNullException"></exception>"
         public void Translate(Vector3Double delta)
         {
-            Guard.ThrowIfNull(delta, nameof(delta));
+            //Guard.ThrowIfNull(delta, nameof(delta));
             // Position を新しいインスタンスに置き換えることで共有参照による副作用を避ける
             Position = new Vector3Double(
                 Position.X + delta.X,
