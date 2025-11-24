@@ -304,22 +304,6 @@ namespace NurbsSharp.Operation
             return new NurbsCurve(ph, newKnotVec, newCP);
         }
 
-        // Helper methods
-        private static long Binomial(int n, int k)
-        {
-            if (k > n || k < 0) return 0;
-            if (k == 0 || k == n) return 1;
-            if (k > n - k) k = n - k;
-
-            long result = 1;
-            for (int i = 0; i < k; i++)
-            {
-                result *= (n - i);
-                result /= (i + 1);
-            }
-            return result;
-        }
-
         /// <summary>
         /// (en) Elevates the degree of a Bezier curve defined by the given control points by 'num'
         /// (ja) 与えられた制御点で定義されるベジェ曲線の次数を 'num' だけ昇降します
@@ -344,9 +328,9 @@ namespace NurbsSharp.Operation
                 int end = Math.Min(degree, i);
                 for (int j = start; j <= end; j++)
                 {
-                    double coeff = Binomial(degree, j) * 1.0;
-                    coeff *= Binomial(num, i - j);
-                    coeff /= Binomial(degree + num, i);
+                    double coeff = LinAlg.BinomialCoefficient(degree, j) * 1.0;
+                    coeff *= LinAlg.BinomialCoefficient(num, i - j);
+                    coeff /= LinAlg.BinomialCoefficient(degree + num, i);
                     outPts[i] += coeff * hp[j];
                 }
             }
@@ -386,6 +370,142 @@ namespace NurbsSharp.Operation
                 H += Ni * hp;
             }
             return H;
+        }
+
+        /// <summary>
+        /// (en) Elevates the degree of the given NURBS surface in U and/or V direction while preserving its shape
+        /// (ja) 形状を保つように与えられたNURBSサーフェスのU方向およびV方向の次数を昇降します
+        /// </summary>
+        /// <param name="surface">Surface to elevate</param>
+        /// <param name="timesU">Number of times to elevate in U direction</param>
+        /// <param name="timesV">Number of times to elevate in V direction</param>
+        /// <returns>Surface with elevated degree</returns>
+        /// <exception cref="ArgumentNullException">Thrown when surface is null</exception>
+        public static NurbsSurface ElevateDegree(NurbsSurface surface, int timesU, int timesV)
+        {
+            Guard.ThrowIfNull(surface, nameof(surface));
+
+            NurbsSurface result = surface;
+
+            // Elevate in U direction first (if needed)
+            if (timesU > 0)
+            {
+                result = ElevateDegreeU(result, timesU);
+            }
+
+            // Then elevate in V direction (if needed)
+            if (timesV > 0)
+            {
+                result = ElevateDegreeV(result, timesV);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// (en) Elevates the degree of the surface in U direction
+        /// (ja) サーフェスのU方向の次数を昇降します
+        /// </summary>
+        private static NurbsSurface ElevateDegreeU(NurbsSurface surface, int times)
+        {
+            if (times <= 0) return surface;
+
+            int degreeU = surface.DegreeU;
+            int degreeV = surface.DegreeV;
+            KnotVector knotVectorV = surface.KnotVectorV;
+            ControlPoint[][] controlPoints = surface.ControlPoints;
+
+            int nU = controlPoints.Length;
+            int nV = controlPoints[0].Length;
+
+            // For each V index, extract U-direction curve and elevate its degree
+            List<NurbsCurve> elevatedCurves = [];
+
+            for (int vIndex = 0; vIndex < nV; vIndex++)
+            {
+                // Extract control points along U direction for this V index
+                ControlPoint[] curveControlPoints = new ControlPoint[nU];
+                for (int uIndex = 0; uIndex < nU; uIndex++)
+                {
+                    curveControlPoints[uIndex] = controlPoints[uIndex][vIndex];
+                }
+
+                // Create temporary curve along U direction
+                var curve = new NurbsCurve(degreeU, surface.KnotVectorU, curveControlPoints);
+
+                // Elevate the curve degree
+                var elevatedCurve = ElevateDegree(curve, times);
+
+                elevatedCurves.Add(elevatedCurve);
+            }
+
+            // Reconstruct surface from elevated curves
+            int newNU = elevatedCurves[0].ControlPoints.Length;
+            ControlPoint[][] newControlPoints = new ControlPoint[newNU][];
+            for (int uIndex = 0; uIndex < newNU; uIndex++)
+            {
+                newControlPoints[uIndex] = new ControlPoint[nV];
+                for (int vIndex = 0; vIndex < nV; vIndex++)
+                {
+                    newControlPoints[uIndex][vIndex] = elevatedCurves[vIndex].ControlPoints[uIndex];
+                }
+            }
+
+            return new NurbsSurface(
+                elevatedCurves[0].Degree,
+                degreeV,
+                elevatedCurves[0].KnotVector,
+                knotVectorV,
+                newControlPoints);
+        }
+
+        /// <summary>
+        /// (en) Elevates the degree of the surface in V direction
+        /// (ja) サーフェスのV方向の次数を昇降します
+        /// </summary>
+        private static NurbsSurface ElevateDegreeV(NurbsSurface surface, int times)
+        {
+            if (times <= 0) return surface;
+
+            int degreeU = surface.DegreeU;
+            int degreeV = surface.DegreeV;
+            KnotVector knotVectorU = surface.KnotVectorU;
+            ControlPoint[][] controlPoints = surface.ControlPoints;
+
+            int nU = controlPoints.Length;
+            int nV = controlPoints[0].Length;
+
+            // For each U index, extract V-direction curve and elevate its degree
+            List<NurbsCurve> elevatedCurves = [];
+
+            for (int uIndex = 0; uIndex < nU; uIndex++)
+            {
+                // Extract control points along V direction for this U index
+                ControlPoint[] curveControlPoints = controlPoints[uIndex];
+
+                // Create temporary curve along V direction
+                var curve = new NurbsCurve(degreeV, surface.KnotVectorV, curveControlPoints);
+
+                // Elevate the curve degree
+                var elevatedCurve = ElevateDegree(curve, times);
+
+                elevatedCurves.Add(elevatedCurve);
+            }
+
+            // Reconstruct surface from elevated curves
+            int newNV = elevatedCurves[0].ControlPoints.Length;
+            ControlPoint[][] newControlPoints = new ControlPoint[nU][];
+            for (int uIndex = 0; uIndex < nU; uIndex++)
+            {
+                newControlPoints[uIndex] = elevatedCurves[uIndex].ControlPoints;
+            }
+
+            return new NurbsSurface(
+                degreeU,
+                elevatedCurves[0].Degree,
+                knotVectorU,
+                elevatedCurves[0].KnotVector,
+                newControlPoints);
         }
     }
 }
