@@ -138,8 +138,8 @@ namespace NurbsSharp.Operation
             int nV = controlPoints[0].Length;     // Number of columns in V direction
 
             // For each V index, extract U-direction curve and split it
-            List<NurbsCurve> leftCurves = new List<NurbsCurve>();
-            List<NurbsCurve> rightCurves = new List<NurbsCurve>();
+            List<NurbsCurve> leftCurves = [];
+            List<NurbsCurve> rightCurves = [];
 
             for (int vIndex = 0; vIndex < nV; vIndex++)
             {
@@ -223,8 +223,8 @@ namespace NurbsSharp.Operation
             int nV = controlPoints[0].Length;     // Number of columns in V direction
 
             // For each U index, extract V-direction curve and split it
-            List<NurbsCurve> leftCurves = new List<NurbsCurve>();
-            List<NurbsCurve> rightCurves = new List<NurbsCurve>();
+            List<NurbsCurve> leftCurves = [];
+            List<NurbsCurve> rightCurves = [];
 
             for (int uIndex = 0; uIndex < nU; uIndex++)
             {

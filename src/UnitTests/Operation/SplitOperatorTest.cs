@@ -136,24 +136,24 @@ namespace UnitTests.Operation
             var kvV = new KnotVector(knotsV, degreeV);
 
             var controlPoints = new ControlPoint[3][];
-            controlPoints[0] = new ControlPoint[]
-            {
+            controlPoints[0] =
+            [
                 new ControlPoint(0, 0, 0, 1),
                 new ControlPoint(0, 1, 0, 1),
                 new ControlPoint(0, 2, 0, 1)
-            };
-            controlPoints[1] = new ControlPoint[]
-            {
+            ];
+            controlPoints[1] =
+            [
                 new ControlPoint(1, 0, 1, 1),
                 new ControlPoint(1, 1, 1, 1),
                 new ControlPoint(1, 2, 1, 1)
-            };
-            controlPoints[2] = new ControlPoint[]
-            {
+            ];
+            controlPoints[2] =
+            [
                 new ControlPoint(2, 0, 0, 1),
                 new ControlPoint(2, 1, 0, 1),
                 new ControlPoint(2, 2, 0, 1)
-            };
+            ];
 
             var surface = new NurbsSurface(degreeU, degreeV, kvU, kvV, controlPoints);
 
@@ -222,24 +222,24 @@ namespace UnitTests.Operation
             var kvV = new KnotVector(knotsV, degreeV);
 
             var controlPoints = new ControlPoint[3][];
-            controlPoints[0] = new ControlPoint[]
-            {
+            controlPoints[0] =
+            [
                 new ControlPoint(0, 0, 0, 1),
                 new ControlPoint(0, 1, 0, 1),
                 new ControlPoint(0, 2, 0, 1)
-            };
-            controlPoints[1] = new ControlPoint[]
-            {
+            ];
+            controlPoints[1] =
+            [
                 new ControlPoint(1, 0, 1, 1),
                 new ControlPoint(1, 1, 1, 1),
                 new ControlPoint(1, 2, 1, 1)
-            };
-            controlPoints[2] = new ControlPoint[]
-            {
+            ];
+            controlPoints[2] =
+            [
                 new ControlPoint(2, 0, 0, 1),
                 new ControlPoint(2, 1, 0, 1),
                 new ControlPoint(2, 2, 0, 1)
-            };
+            ];
 
             var surface = new NurbsSurface(degreeU, degreeV, kvU, kvV, controlPoints);
 
@@ -610,8 +610,8 @@ namespace UnitTests.Operation
             int degreeV = 3;
             double[] knotsU = [0, 0, 0, 0, 0.5, 1, 1, 1, 1];
             double[] knotsV = [0, 0, 0, 0, 0.5, 1, 1, 1, 1];
-            KnotVector knotVectorU = new KnotVector(knotsU, degreeU);
-            KnotVector knotVectorV = new KnotVector(knotsV, degreeV);
+            var knotVectorU = new KnotVector(knotsU, degreeU);
+            var knotVectorV = new KnotVector(knotsV, degreeV);
             ControlPoint[][] controlPoints =
             [
                 [
@@ -650,7 +650,7 @@ namespace UnitTests.Operation
                 new ControlPoint(4.0, 4.0, 0.0, 1)
                 ],
             ];
-            NurbsSurface nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
+            var nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
             double[] split_us = [0.1, 0.3, 0.5, 0.75];
             double[] split_vs = [0.1, 0.25, 0.5, 0.75];
             double[] sample_points = [0, 0.1, 0.2, 0.3, 0.5, 0.55, 0.7, 0.9, 0.9999, 1];

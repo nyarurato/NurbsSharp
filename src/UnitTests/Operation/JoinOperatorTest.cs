@@ -329,7 +329,7 @@ namespace UnitTests.Operation
 
         }
 
-        void TestOutIGES(List<NurbsCurve> geometries, string filePath="testcurve.igs")
+        static void TestOutIGES(List<NurbsCurve> geometries, string filePath="testcurve.igs")
         {
             using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
 

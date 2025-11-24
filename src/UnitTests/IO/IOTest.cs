@@ -49,13 +49,13 @@ namespace UnitTests.IO
                                  "f 1 3 4\n" +
                                  "f 1 4 2";
 
-            NurbsSurface nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
+            var nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
             var mesh = SurfaceTessellator.Tessellate(nurbsSurface, 2, 2);
 
             using var ms = new MemoryStream();
             await OBJExporter.ExportAsync(mesh, ms);
             ms.Seek(0, SeekOrigin.Begin);
-            using StreamReader reader = new StreamReader(ms);
+            using var reader = new StreamReader(ms);
             string objData = reader.ReadToEnd();
 
             Assert.That(
@@ -74,8 +74,8 @@ namespace UnitTests.IO
             double[] knotsU = [0, 0, 0, 0, 1, 1, 1, 1];
             double[] knotsV = [0, 0, 0, 0, 1, 1, 1, 1];
 
-            KnotVector knotVectorU = new KnotVector(knotsU,degreeU);
-            KnotVector knotVectorV = new KnotVector(knotsV,degreeV);
+            var knotVectorU = new KnotVector(knotsU,degreeU);
+            var knotVectorV = new KnotVector(knotsV,degreeV);
 
             ControlPoint[][] controlPoints =
             [
@@ -108,9 +108,9 @@ namespace UnitTests.IO
 
                 ],
             ];
-            NurbsSurface nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
+            var nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
             var mesh = SurfaceTessellator.Tessellate(nurbsSurface, 20, 20);
-            using (FileStream fs = new FileStream("test_output.obj", FileMode.Create, FileAccess.Write))
+            using (var fs = new FileStream("test_output.obj", FileMode.Create, FileAccess.Write))
             {
                 await OBJExporter.ExportAsync(mesh, fs);
             }
@@ -128,8 +128,8 @@ namespace UnitTests.IO
             double[] knotsU = [0, 0, 0, 0, 1, 1, 1, 1];
             double[] knotsV = [0, 0, 0, 0, 1, 1, 1, 1];
 
-            KnotVector knotVectorU = new KnotVector(knotsU, degreeU);
-            KnotVector knotVectorV = new KnotVector(knotsV, degreeV);
+            var knotVectorU = new KnotVector(knotsU, degreeU);
+            var knotVectorV = new KnotVector(knotsV, degreeV);
 
             ControlPoint[][] controlPoints =
             [
@@ -162,9 +162,9 @@ namespace UnitTests.IO
 
                 ],
             ];
-            NurbsSurface nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
+            var nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
 
-            using (FileStream fs = new FileStream("test_output_nurbs.obj", FileMode.Create, FileAccess.Write))
+            using (var fs = new FileStream("test_output_nurbs.obj", FileMode.Create, FileAccess.Write))
             {
                 await OBJExporter.ExportAsync(nurbsSurface, fs);
             }
@@ -182,8 +182,8 @@ namespace UnitTests.IO
             double[] knotsU = [0, 0, 0, 0, 1, 1, 1, 1];
             double[] knotsV = [0, 0, 0, 0, 1, 1, 1, 1];
 
-            KnotVector knotVectorU = new KnotVector(knotsU, degreeU);
-            KnotVector knotVectorV = new KnotVector(knotsV, degreeV);
+            var knotVectorU = new KnotVector(knotsU, degreeU);
+            var knotVectorV = new KnotVector(knotsV, degreeV);
 
             ControlPoint[][] controlPoints =
             [
@@ -216,9 +216,9 @@ namespace UnitTests.IO
 
                 ],
             ];
-            NurbsSurface nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
+            var nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
             var mesh = SurfaceTessellator.Tessellate(nurbsSurface, 20, 20);
-            using (FileStream fs = new FileStream("test_output.stl", FileMode.Create, FileAccess.Write))
+            using (var fs = new FileStream("test_output.stl", FileMode.Create, FileAccess.Write))
             {
                 await STLExporter.ExportAsync(mesh, fs);
             }
@@ -245,11 +245,11 @@ namespace UnitTests.IO
                     new ControlPoint(1.0, 0.0, 1.5, 1)
                 ],
             ];
-            KnotVector knotVectorU = new KnotVector(knotsU, degreeU);
-            KnotVector knotVectorV = new KnotVector(knotsV, degreeV);
-            NurbsSurface nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
+            var knotVectorU = new KnotVector(knotsU, degreeU);
+            var knotVectorV = new KnotVector(knotsV, degreeV);
+            var nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
             var mesh = SurfaceTessellator.Tessellate(nurbsSurface, 100, 100);
-            using (FileStream fs = new FileStream("test_outputB.stl", FileMode.Create, FileAccess.Write))
+            using (var fs = new FileStream("test_outputB.stl", FileMode.Create, FileAccess.Write))
             {
                 await STLExporter.ExportAsync(mesh, fs);
             }
@@ -267,8 +267,8 @@ namespace UnitTests.IO
             double[] knotsU = [0, 0, 0, 0, 1, 1, 1, 1];
             double[] knotsV = [0, 0, 0, 0, 1, 1, 1, 1];
 
-            KnotVector knotVectorU = new KnotVector(knotsU, degreeU);
-            KnotVector knotVectorV = new KnotVector(knotsV, degreeV);
+            var knotVectorU = new KnotVector(knotsU, degreeU);
+            var knotVectorV = new KnotVector(knotsV, degreeV);
 
             ControlPoint[][] controlPoints =
             [
@@ -301,9 +301,9 @@ namespace UnitTests.IO
 
                 ],
             ];
-            NurbsSurface nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
+            var nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
 
-            using (FileStream fs = new FileStream("test_output.igs", FileMode.Create, FileAccess.Write))
+            using (var fs = new FileStream("test_output.igs", FileMode.Create, FileAccess.Write))
             {
                 await IGESExporter.ExportAsync([nurbsSurface], fs);
             }
@@ -321,8 +321,8 @@ namespace UnitTests.IO
             int degreeV = 3;
             double[] knotsU = [0, 0, 0, 0, 0.5,1, 1, 1, 1];
             double[] knotsV = [0, 0, 0, 0, 0.5,1, 1, 1, 1];
-            KnotVector knotVectorU = new KnotVector(knotsU, degreeU);
-            KnotVector knotVectorV = new KnotVector(knotsV, degreeV);
+            var knotVectorU = new KnotVector(knotsU, degreeU);
+            var knotVectorV = new KnotVector(knotsV, degreeV);
             ControlPoint[][] controlPoints =
             [
                 [
@@ -361,8 +361,8 @@ namespace UnitTests.IO
                 new ControlPoint(4.0, 4.0, 0.0, 1) 
                 ],
             ];
-            NurbsSurface nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
-            using (FileStream fs = new FileStream("test_outputB.igs", FileMode.Create, FileAccess.Write))
+            var nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
+            using (var fs = new FileStream("test_outputB.igs", FileMode.Create, FileAccess.Write))
             {
                 await IGESExporter.ExportAsync([nurbsSurface], fs);
             }
@@ -377,7 +377,7 @@ namespace UnitTests.IO
             // Create a simple NURBS curve
             int degree = 3;
             double[] knots = [0, 0, 0, 0, 1, 1, 1, 1];
-            KnotVector knotVector = new KnotVector(knots, degree);
+            var knotVector = new KnotVector(knots, degree);
 
             ControlPoint[] controlPoints =
             [
@@ -387,9 +387,9 @@ namespace UnitTests.IO
                 new ControlPoint(4.0, 1.0, 0.0, 1)
             ];
 
-            NurbsCurve curve = new NurbsCurve(degree, knotVector, controlPoints);
+            var curve = new NurbsCurve(degree, knotVector, controlPoints);
 
-            using (FileStream fs = new FileStream("test_curve.igs", FileMode.Create, FileAccess.Write))
+            using (var fs = new FileStream("test_curve.igs", FileMode.Create, FileAccess.Write))
             {
                 await IGESExporter.ExportAsync([curve], fs);
             }
@@ -407,7 +407,7 @@ namespace UnitTests.IO
             {
                 string filepath = Path.Combine(resourcePath, file);
                 Assert.That(File.Exists(filepath), Is.True, $"Required IGES file '{file}' does not exist in resources folder.");
-                StreamReader reader = new StreamReader(filepath, Encoding.ASCII);
+                var reader = new StreamReader(filepath, Encoding.ASCII);
                 var res = await IGESImporter.ImportAsync(reader);
                 var surface = res.OfType<NurbsSurface>().FirstOrDefault();
                 int index = igesfile.ToList().IndexOf(file);
@@ -435,7 +435,7 @@ namespace UnitTests.IO
             int expect_knot = 8;
             string filepath = Path.Combine(resourcePath, igesfile);
             Assert.That(File.Exists(filepath), Is.True, $"Required IGES file '{igesfile}' does not exist in resources folder.");
-            StreamReader reader = new StreamReader(filepath, Encoding.ASCII);
+            var reader = new StreamReader(filepath, Encoding.ASCII);
             var res = await IGESImporter.ImportAsync(reader);
             var curve = res.OfType<NurbsCurve>().FirstOrDefault();
             Assert.That(curve, Is.Not.Null, $"No NURBS curve found in IGES file '{igesfile}'.");
@@ -458,23 +458,24 @@ namespace UnitTests.IO
             if (File.Exists(filePath))
                 File.Delete(filePath);
 
-            Vector3Double campos = new Vector3Double(20, 20, 10);
+            var campos = new Vector3Double(20, 20, 10);
 
             // Act
             await BMPExporter.ExportWireframeAsync(sphere, filePath, 800, 800, 20, 20, campos);
 
             // Assert
             Assert.That(File.Exists(filePath), Is.True);
-            FileInfo fileInfo = new FileInfo(filePath);
+            var fileInfo = new FileInfo(filePath);
             Assert.That(fileInfo.Length, Is.GreaterThan(0));
 
             // Verify BMP header
-            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-            using (var reader = new BinaryReader(fs))
+            using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            using var reader = new BinaryReader(fs);
+            // Check BMP signature
+            byte b1 = reader.ReadByte();
+            byte b2 = reader.ReadByte();
+            using (Assert.EnterMultipleScope())
             {
-                // Check BMP signature
-                byte b1 = reader.ReadByte();
-                byte b2 = reader.ReadByte();
                 Assert.That((char)b1, Is.EqualTo('B'));
                 Assert.That((char)b2, Is.EqualTo('M'));
             }
@@ -493,14 +494,14 @@ namespace UnitTests.IO
             if (File.Exists(filePath))
                 File.Delete(filePath);
 
-            Vector3Double campos = new Vector3Double(10, 10, 10);
+            var campos = new Vector3Double(10, 10, 10);
 
             // Act
             await BMPExporter.ExportWireframeAsync(circle, filePath, 800, 800, 100, campos);
 
             // Assert
             Assert.That(File.Exists(filePath), Is.True);
-            FileInfo fileInfo = new FileInfo(filePath);
+            var fileInfo = new FileInfo(filePath);
             Assert.That(fileInfo.Length, Is.GreaterThan(0));
         }
 
@@ -516,13 +517,13 @@ namespace UnitTests.IO
             if (File.Exists(filePath))
                 File.Delete(filePath);
 
-            Vector3Double campos = new Vector3Double(20, 20, 50);
+            var campos = new Vector3Double(20, 20, 50);
             // Act - Export first surface (side of cylinder)
             await BMPExporter.ExportWireframeAsync(cylinder[0], filePath, 800, 800, 20, 20,campos);
 
             // Assert
             Assert.That(File.Exists(filePath), Is.True);
-            FileInfo fileInfo = new FileInfo(filePath);
+            var fileInfo = new FileInfo(filePath);
             Assert.That(fileInfo.Length, Is.GreaterThan(0));
 
         }
@@ -548,7 +549,7 @@ namespace UnitTests.IO
 
             // Assert
             Assert.That(File.Exists(filePath), Is.True);
-            FileInfo fileInfo = new FileInfo(filePath);
+            var fileInfo = new FileInfo(filePath);
             Assert.That(fileInfo.Length, Is.GreaterThan(0));
 
         }
@@ -575,7 +576,7 @@ namespace UnitTests.IO
 
             // Assert
             Assert.That(File.Exists(filePath), Is.True);
-            FileInfo fileInfo = new FileInfo(filePath);
+            var fileInfo = new FileInfo(filePath);
             Assert.That(fileInfo.Length, Is.GreaterThan(0));
 
         }

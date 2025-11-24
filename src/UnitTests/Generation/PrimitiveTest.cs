@@ -53,10 +53,10 @@ namespace UnitTests.Generation
         [Test]
         public void PrimitiveTestFace()
         {
-            Vector3Double p00 = new Vector3Double(0, 0, 0);
-            Vector3Double p01 = new Vector3Double(10, 0, 5);
-            Vector3Double p10 = new Vector3Double(0, 10, 0);
-            Vector3Double p11 = new Vector3Double(10, 10, 5);
+            var p00 = new Vector3Double(0, 0, 0);
+            var p01 = new Vector3Double(10, 0, 5);
+            var p10 = new Vector3Double(0, 10, 0);
+            var p11 = new Vector3Double(10, 10, 5);
             var face = PrimitiveFactory.CreateFace(p00, p01, p10, p11);
             using (Assert.EnterMultipleScope())
             {
@@ -94,7 +94,7 @@ namespace UnitTests.Generation
                     
                 }
             }
-            TestOutputIGES(box.ToList());
+            TestOutputIGES([.. box]);
 
 
         }
@@ -170,13 +170,13 @@ namespace UnitTests.Generation
                         
         }
 
-        private void TestOutputIGES(List<NurbsSurface> surface, string filePath= "PrimitiveTestFace.igs")
+        private static void TestOutputIGES(List<NurbsSurface> surface, string filePath= "PrimitiveTestFace.igs")
         {
             using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
             var success = IGESExporter.ExportAsync(surface, stream);
             
         }
-        private void TestOutputSTL(Mesh mesh, string filePath = "GeometryTestMesh.stl")
+        private static void TestOutputSTL(Mesh mesh, string filePath = "GeometryTestMesh.stl")
         {
             using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
             var success = STLExporter.ExportAsync(mesh, stream);

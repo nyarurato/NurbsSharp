@@ -33,7 +33,7 @@ namespace UnitTests.Geometry
             ];
             ControlPoint[] originalControlPoints = [.. controlPoints.Select(cp => new ControlPoint(cp.Position.X, cp.Position.Y, cp.Position.Z))];
             var nurbsCurve = new NurbsCurve(degree, knotVector, controlPoints);
-            Vector3Double move = new Vector3Double(1, -2.5, 3);
+            var move = new Vector3Double(1, -2.5, 3);
             nurbsCurve.Translate(move);
             for(int i = 0; i < controlPoints.Length; i++)
             {

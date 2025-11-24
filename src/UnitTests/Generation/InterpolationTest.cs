@@ -434,13 +434,13 @@ namespace UnitTests.Generation
             }
         }
 
-        private void TestOutputIGES(List<NurbsSurface> surface, string filePath = "TestFace.igs")
+        private static void TestOutputIGES(List<NurbsSurface> surface, string filePath = "TestFace.igs")
         {
             using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
             var success = IGESExporter.ExportAsync(surface, stream);
 
         }
-        private void TestOutputSTL(Mesh mesh, string filePath = "GeometryTestMesh.stl")
+        private static void TestOutputSTL(Mesh mesh, string filePath = "GeometryTestMesh.stl")
         {
             using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
             var success = STLExporter.ExportAsync(mesh, stream);

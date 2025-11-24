@@ -341,42 +341,40 @@ namespace NurbsSharp.IO.BMP
             int rowSize = ((width * 3 + 3) / 4) * 4;
             int pixelDataSize = rowSize * height;
 
-            using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, useAsync: true))
+            using var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, useAsync: true);
+            // BMP Header (14 bytes)
+            await fs.WriteAsync(("BM"u8.ToArray()).AsMemory(0, 2));
+            await WriteInt32Async(fs, 54 + pixelDataSize); // File size
+            await WriteInt16Async(fs, 0); // Reserved
+            await WriteInt16Async(fs, 0); // Reserved
+            await WriteInt32Async(fs, 54); // Pixel data offset
+
+            // DIB Header (BITMAPINFOHEADER, 40 bytes)
+            await WriteInt32Async(fs, 40); // Header size
+            await WriteInt32Async(fs, width);
+            await WriteInt32Async(fs, height);
+            await WriteInt16Async(fs, 1); // Color planes
+            await WriteInt16Async(fs, 24); // Bits per pixel
+            await WriteInt32Async(fs, 0); // Compression (BI_RGB)
+            await WriteInt32Async(fs, pixelDataSize); // Image size
+            await WriteInt32Async(fs, 2835); // X pixels per meter (72 DPI)
+            await WriteInt32Async(fs, 2835); // Y pixels per meter (72 DPI)
+            await WriteInt32Async(fs, 0); // Colors in palette
+            await WriteInt32Async(fs, 0); // Important colors
+
+            // Pixel data (bottom-up, each row padded to multiple of 4 bytes)
+            byte[] paddingBytes = new byte[3]; // Max padding is 3 bytes
+            for (int y = 0; y < height; y++)
             {
-                // BMP Header (14 bytes)
-                await fs.WriteAsync((new byte[] { (byte)'B', (byte)'M' }).AsMemory(0, 2));
-                await WriteInt32Async(fs, 54 + pixelDataSize); // File size
-                await WriteInt16Async(fs, 0); // Reserved
-                await WriteInt16Async(fs, 0); // Reserved
-                await WriteInt32Async(fs, 54); // Pixel data offset
+                int rowStart = y * width * 3;
+                int rowLength = width * 3;
+                await fs.WriteAsync(bitmapData.AsMemory(rowStart, rowLength));
 
-                // DIB Header (BITMAPINFOHEADER, 40 bytes)
-                await WriteInt32Async(fs, 40); // Header size
-                await WriteInt32Async(fs, width);
-                await WriteInt32Async(fs, height);
-                await WriteInt16Async(fs, 1); // Color planes
-                await WriteInt16Async(fs, 24); // Bits per pixel
-                await WriteInt32Async(fs, 0); // Compression (BI_RGB)
-                await WriteInt32Async(fs, pixelDataSize); // Image size
-                await WriteInt32Async(fs, 2835); // X pixels per meter (72 DPI)
-                await WriteInt32Async(fs, 2835); // Y pixels per meter (72 DPI)
-                await WriteInt32Async(fs, 0); // Colors in palette
-                await WriteInt32Async(fs, 0); // Important colors
-
-                // Pixel data (bottom-up, each row padded to multiple of 4 bytes)
-                byte[] paddingBytes = new byte[3]; // Max padding is 3 bytes
-                for (int y = 0; y < height; y++)
+                // Write padding bytes
+                int padding = rowSize - width * 3;
+                if (padding > 0)
                 {
-                    int rowStart = y * width * 3;
-                    int rowLength = width * 3;
-                    await fs.WriteAsync(bitmapData.AsMemory(rowStart, rowLength));
-
-                    // Write padding bytes
-                    int padding = rowSize - width * 3;
-                    if (padding > 0)
-                    {
-                        await fs.WriteAsync(paddingBytes.AsMemory(0, padding));
-                    }
+                    await fs.WriteAsync(paddingBytes.AsMemory(0, padding));
                 }
             }
         }
