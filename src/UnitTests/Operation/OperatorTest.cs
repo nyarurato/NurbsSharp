@@ -104,6 +104,103 @@ namespace UnitTests.Operation
             }
         }
 
+        [Test]
+        public void RefineKnot_Line_DuplicatesAndEndpointsIgnored()
+        {
+            int degree = 1;
+            double[] knots = [0, 0, 1, 1];
+            ControlPoint[] cps = [
+                new ControlPoint(0,0,0,1),
+                new ControlPoint(10,0,0,1)
+            ];
+            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), cps);
+
+            // Attempt to refine with duplicates and endpoints
+            double[] refine = [0.5, 0.5, 0.5, 0.0, 1.0, 0.25];// 0.5:3=>1 ,0.0:ignored, 1.0:ignored, 0.25:1
+            var refined = KnotOperator.RefineKnot(curve, refine);
+
+            using (Assert.EnterMultipleScope())
+            {
+                // Distinct internal knots added should be 0.25 and 0.5 (each once), ignore over degree multiplicities and endpoints
+                Assert.That(refined.KnotVector.Knots, Has.Length.EqualTo(knots.Length + 2));
+                Assert.That(refined.ControlPoints, Has.Length.EqualTo(cps.Length + 2));
+            }
+
+            // Shape preservation: sample points
+            double[] samples = [0.0, 0.1, 0.25, 0.4, 0.5, 0.6, 0.75, 0.9, 1.0];
+            foreach (var u in samples)
+            {
+                var p0 = curve.GetPos(u);
+                var p1 = refined.GetPos(u);
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(p0.X, Is.EqualTo(p1.X).Within(1e-8));
+                    Assert.That(p0.Y, Is.EqualTo(p1.Y).Within(1e-8));
+                    Assert.That(p0.Z, Is.EqualTo(p1.Z).Within(1e-8));
+                }
+            }
+
+            // Multiplicity checks
+            int multStart = refined.KnotVector.Knots.Count(k => LinAlg.ApproxEqual(0.0, k));
+            int multEnd = refined.KnotVector.Knots.Count(k => LinAlg.ApproxEqual(1, k));
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(multStart, Is.EqualTo(degree + 1));
+                Assert.That(multEnd, Is.EqualTo(degree + 1));
+            }
+        }
+
+        [Test]
+        public void RefineKnot_Circle_AddInteriorDistinctOnly()
+        {
+            int R = 2;
+            int degree = 2;
+            double[] knots = [0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1];
+            ControlPoint[] cps = [
+                new ControlPoint(R ,  0, 0, 1),
+                new ControlPoint(R ,  R, 0, 0.70710678),
+                new ControlPoint(0 ,  R, 0, 1),
+                new ControlPoint(-R,  R, 0, 0.70710678),
+                new ControlPoint(-R,  0, 0, 1),
+                new ControlPoint(-R, -R, 0, 0.70710678),
+                new ControlPoint(0 , -R, 0, 1),
+                new ControlPoint(R , -R, 0, 0.70710678),
+                new ControlPoint(R ,  0, 0, 1),
+            ];
+            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), cps);
+            double[] refine = [0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 0.125, 0.375, 0.625, 0.875, 0.0, 1.0];
+            var refined = KnotOperator.RefineKnot(curve, refine);
+
+            using (Assert.EnterMultipleScope())
+            {
+                // New distinct interior values inserted: 0.125,0.375,0.625,0.875 => 4 new knots
+                Assert.That(refined.KnotVector.Knots, Has.Length.EqualTo(knots.Length + 4));
+                Assert.That(refined.ControlPoints, Has.Length.EqualTo(cps.Length + 4));
+            }
+
+            double[] samples = [0, 0.05, 0.125, 0.2, 0.3, 0.375, 0.45, 0.5, 0.6, 0.625, 0.7, 0.75, 0.8, 0.875, 0.95, 1.0];
+            foreach (var u in samples)
+            {
+                var p0 = curve.GetPos(u);
+                var p1 = refined.GetPos(u);
+                Assert.That(p0.DistanceTo(p1), Is.LessThanOrEqualTo(5e-8));
+            }
+
+            // Check interior multiplicities do not exceed degree
+            foreach (double val in new double[] { 0.125, 0.375, 0.625, 0.875, 0.25, 0.5, 0.75 })
+            {
+                int mult = refined.KnotVector.Knots.Count(k => Math.Abs(k - val) < 1e-12);
+                Assert.That(mult, Is.LessThanOrEqualTo(degree));
+            }
+            int multStart = refined.KnotVector.Knots.Count(k => Math.Abs(k - 0.0) < 1e-12);
+            int multEnd = refined.KnotVector.Knots.Count(k => Math.Abs(k - 1.0) < 1e-12);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(multStart, Is.EqualTo(degree + 1));
+                Assert.That(multEnd, Is.EqualTo(degree + 1));
+            }
+        }
+
 
         [Test]
         public void DegreeOperator_ElevateDegree_TestA()
@@ -172,7 +269,7 @@ namespace UnitTests.Operation
         [Test]
         public void DegreeOperator_ReduceDegree_TestA()
         {
-            
+
             // Start with a line (degree 1), elevate it, then reduce it back
             int degree = 1;
             double[] knots = [0, 0, 1, 1];
@@ -200,7 +297,7 @@ namespace UnitTests.Operation
                 var pos_reduced = reducedCurve.GetPos(u);
                 double dist = pos_original.DistanceTo(pos_reduced);
                 if (dist > maxErrorDist) maxErrorDist = dist;
-                
+
                 using (Assert.EnterMultipleScope())
                 {
                     Assert.That(pos_reduced.X, Is.EqualTo(pos_original.X).Within(0.1));
@@ -210,7 +307,7 @@ namespace UnitTests.Operation
             }
         }
 
-        private NurbsCurve CreateStraightLineCurve(int degree, int numControlPoints, double[]? weights = null)
+        private static NurbsCurve CreateStraightLineCurve(int degree, int numControlPoints, double[]? weights = null)
         {
             var cps = new ControlPoint[numControlPoints];
             for (int i = 0; i < numControlPoints; i++)
@@ -302,10 +399,10 @@ namespace UnitTests.Operation
             ];
             KnotVector knotVector = KnotVector.GetClampedKnot(degree, controlPoints.Length);
             var curve = new NurbsCurve(degree, knotVector, controlPoints);
-            double[] samplePoints = [0, 0.001 ,0.1, 0.25,0.3,0.49995 ,0.5, 0.6,0.75, 0.8,0.9, 0.999,1.0];
+            double[] samplePoints = [0, 0.001, 0.1, 0.25, 0.3, 0.49995, 0.5, 0.6, 0.75, 0.8, 0.9, 0.999, 1.0];
 
             // Elevate degree once
-            var reduceCurve = DegreeOperator.ReduceDegree(curve, 1,1e-1);
+            var reduceCurve = DegreeOperator.ReduceDegree(curve, 1, 1e-1);
             Assert.That(reduceCurve.Degree, Is.EqualTo(2));
 
             double maxErrorX = 0, maxErrorY = 0, maxErrorZ = 0, maxErrorDist = 0;
@@ -313,17 +410,17 @@ namespace UnitTests.Operation
             {
                 var pos_original = curve.GetPos(u);
                 var pos_reduced = reduceCurve.GetPos(u);
-                
+
                 double errX = Math.Abs(pos_reduced.X - pos_original.X);
                 double errY = Math.Abs(pos_reduced.Y - pos_original.Y);
                 double errZ = Math.Abs(pos_reduced.Z - pos_original.Z);
                 double dist = pos_original.DistanceTo(pos_reduced);
-                
+
                 if (errX > maxErrorX) maxErrorX = errX;
                 if (errY > maxErrorY) maxErrorY = errY;
                 if (errZ > maxErrorZ) maxErrorZ = errZ;
                 if (dist > maxErrorDist) maxErrorDist = dist;
-                
+
                 using (Assert.EnterMultipleScope())
                 {
                     // Looser tolerance due to degree reduction approximation
@@ -333,7 +430,7 @@ namespace UnitTests.Operation
                     Assert.That(pos_reduced.Z, Is.EqualTo(pos_original.Z).Within(0.5));
                 }
             }
-            
+
         }
 
         [Test]
@@ -353,17 +450,17 @@ namespace UnitTests.Operation
             ];
             KnotVector knotVector = KnotVector.GetClampedKnot(degree, controlPoints.Length);
             var curve = new NurbsCurve(degree, knotVector, controlPoints);
-            
+
             // Dense sampling points including critical regions
-            double[] samplePoints = [ 
-                0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 
-                0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0 
+            double[] samplePoints = [
+                0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5,
+                0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0
             ];
 
             // Reduce degree by 2 (5 -> 3)
             var reducedCurve = DegreeOperator.ReduceDegree(curve, 2, 1e-1);
             Assert.That(reducedCurve.Degree, Is.EqualTo(3));
-                                    
+
             // Verify errors are within reasonable bounds for 2-step reduction
             // For degree reduction by 2, we expect larger errors than single-step reduction
             foreach (var u in samplePoints)

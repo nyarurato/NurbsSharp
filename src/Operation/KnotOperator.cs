@@ -114,8 +114,86 @@ namespace NurbsSharp.Operation
             var (newKnots, newControlPoints) = InsertKnot(curve.Degree, curve.KnotVector.Knots, curve.ControlPoints, u, times);
             return new NurbsCurve(curve.Degree, new KnotVector(newKnots, curve.Degree), newControlPoints);
         }
+        //TODO: InsertKnotSurface
 
         //TODO: RemoveKnot method
-        //TODO: RefineKnot method
+        //TODO: RemoveKnot for surface/curve (future)
+
+        /// <summary>
+        /// (en) Refines a knot vector by inserting a given set of knots (duplicates allowed) without changing the curve shape.
+        /// (ja) 与えられたノット集合（重複可）を形状を変えずに挿入しノットベクトルを細分化します。
+        /// knot [0 0 0 1 1 1] , degree 2, given refine [0.25,0.25,0.25,0.5,0.75] => [0 0 0 0 0.25 0.25 0.5 0.75 1 1 1 1]
+        /// </summary>
+        /// <param name="degree">Curve degree</param>
+        /// <param name="knots">Original knot vector</param>
+        /// <param name="controlPoints">Original control points</param>
+        /// <param name="refineKnots">Knots to insert (may contain duplicates, unsorted)</param>
+        /// <returns>New knot vector and control points</returns>
+        public static (double[] newKnots, ControlPoint[] newControlPoints) RefineKnot(int degree, double[] knots, ControlPoint[] controlPoints, double[] refineKnots)
+        {
+            Guard.ThrowIfNull(knots, nameof(knots));
+            Guard.ThrowIfNull(controlPoints, nameof(controlPoints));
+            Guard.ThrowIfNull(refineKnots, nameof(refineKnots));
+            if (degree < 1)
+                throw new ArgumentException("Degree must be at least 1.", nameof(degree));
+            if (refineKnots.Length == 0)
+                return (knots, controlPoints);
+
+            double start = knots[0];
+            double end = knots[^1];
+
+            // Grouping: Calculate desired insertion count for each value
+            var grouped = refineKnots
+                .Where(k => k >= start && k <= end) // ignore out-of-range knots
+                .OrderBy(k => k)
+                .GroupBy(k => k)
+                .Select(g => (value: g.Key, count: g.Count()))
+                .ToList();
+
+            double[] currentKnots = (double[])knots.Clone();
+            ControlPoint[] currentCP = (ControlPoint[])controlPoints.Clone();
+
+            foreach (var (value, requestedCount) in grouped)
+            {
+                // Endpoints (clamped) usually do not need/cannot be added: multiplicity is degree+1, so skip
+                bool isEndpoint = LinAlg.ApproxEqual(value, start) || LinAlg.ApproxEqual(value, end);
+                int existingMultiplicity = GetMultiplicity(currentKnots, value);
+                int maxMultiplicity = isEndpoint ? degree + 1 : degree; // internal: <= degree, end: <= degree+1
+                int possibleAdds = Math.Max(0, maxMultiplicity - existingMultiplicity);
+                int times = Math.Min(possibleAdds, requestedCount);
+                if (times <= 0) continue; // Skip if no insertion is possible/needed
+
+                var (newKnots, newControlPoints) = InsertKnot(degree, currentKnots, currentCP, value, times);
+                currentKnots = newKnots;
+                currentCP = newControlPoints;
+            }
+
+            return (currentKnots, currentCP);
+        }
+
+        /// <summary>
+        /// (en) Wrapper to refine a NurbsCurve with given knots.
+        /// (ja) 与えられたノット集合で NURBS 曲線を細分化するラッパー。
+        /// </summary>
+        /// <param name="curve">Target curve</param>
+        /// <param name="refineKnots">Knots to insert (may contain duplicates)</param>
+        /// <returns>Refined curve</returns>
+        public static NurbsCurve RefineKnot(NurbsCurve curve, double[] refineKnots)
+        {
+            Guard.ThrowIfNull(curve, nameof(curve));
+            Guard.ThrowIfNull(refineKnots, nameof(refineKnots));
+            var (newKnots, newControlPoints) = RefineKnot(curve.Degree, curve.KnotVector.Knots, curve.ControlPoints, refineKnots);
+            return new NurbsCurve(curve.Degree, new KnotVector(newKnots, curve.Degree), newControlPoints);
+        }
+
+        private static int GetMultiplicity(double[] knots, double value)
+        {
+            int m = 0;
+            for (int i = 0; i < knots.Length; i++)
+            {
+                if (LinAlg.ApproxEqual(knots[i], value)) m++;
+            }
+            return m;
+        }
     }
 }
