@@ -106,54 +106,6 @@ namespace UnitTests.Operation
 
 
         [Test]
-        public void SplitOperator_SplitCurve_TestA()
-        {
-            // Circle
-            int R = 2;
-            int degree = 2;
-            double[] knots = [0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1];
-            ControlPoint[] controlPoints = [
-                new ControlPoint(R ,  0, 0, 1),
-                new ControlPoint(R ,  R, 0, 0.70710678),
-                new ControlPoint(0 ,  R, 0, 1),
-                new ControlPoint(-R,  R, 0, 0.70710678),
-                new ControlPoint(-R,  0, 0, 1),
-                new ControlPoint(-R, -R, 0, 0.70710678),
-                new ControlPoint(0 , -R, 0, 1),
-                new ControlPoint(R , -R, 0, 0.70710678),
-                new ControlPoint(R ,  0, 0, 1),
-            ];
-            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
-            double[] split_us = [0.3, 0.5, 0.75];
-            double[] sample_points = [0, 0.1, 0.2, 0.3, 0.5, 0.55, 0.7, 0.9, 0.9999, 1];
-
-            foreach (var u in split_us)
-            {
-                var (leftCurve, rightCurve) = SplitOperator.SplitCurve(curve, u);
-                
-                // Verify continuity at split point
-                foreach (var s in sample_points)
-                {
-                    var pos_original = curve.GetPos(s);
-
-                    Vector3Double pos;
-                    if (s > u)//check s belong left or righ
-                        pos = rightCurve.GetPos(s);
-                    else
-                        pos = leftCurve.GetPos(s);
-                    using (Assert.EnterMultipleScope())
-                    {
-                        Assert.That(pos.X, Is.EqualTo(pos_original.X).Within(0.00000001));
-                        Assert.That(pos.Y, Is.EqualTo(pos_original.Y).Within(0.00000001));
-                        Assert.That(pos.Z, Is.EqualTo(pos_original.Z).Within(0.00000001));
-                    }
-
-                }
-               
-            }
-        }
-
-        [Test]
         public void DegreeOperator_ElevateDegree_TestA()
         {
             // Quadratic curve

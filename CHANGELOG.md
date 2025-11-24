@@ -8,8 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- JoinCurves method in JoinOperator
+- SplitSurface method in SplitOperator (U and V direction splitting)
 
 ### Changed
+- Vector3Double, Vector4Double class -> readonly struct
+- Export curve list as IGES file
 
 ### Fixed
 
