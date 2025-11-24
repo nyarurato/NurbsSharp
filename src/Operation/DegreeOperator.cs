@@ -15,23 +15,23 @@ namespace NurbsSharp.Operation
     {
         /// <summary>
         /// (en) Elevates the degree of the given NURBS curve by t while preserving its shape
-        /// (ja) 形状を保つように与えられたNURBS曲線の次数をtだけ昇降します
+        /// (ja) 形状を保つように与えられたNURBS曲線の次数をtだけ上げます
         /// </summary>
         /// <param name="curve"></param>
-        /// <param name="t"></param>
+        /// <param name="times"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
-        public static NurbsCurve ElevateDegree(NurbsCurve curve, int t)
+        public static NurbsCurve ElevateDegree(NurbsCurve curve, int times)
         {
             Guard.ThrowIfNull(curve, nameof(curve));
-            if (t <= 0)
+            Guard.ThrowIfNegative(times, nameof(times));
+
+            if (times == 0)
                 return curve;
-            if (t < 0)
-                throw new ArgumentOutOfRangeException(nameof(t), "Degree elevation must be non-negative.");
 
             NurbsCurve result = curve;
-            for (int i = 0; i < t; i++)
+            for (int i = 0; i < times; i++)
             {
                 result = ElevateDegreeBezierOnce(result);
             }
@@ -40,7 +40,7 @@ namespace NurbsSharp.Operation
 
         /// <summary>
         /// (en) Elevates the degree of the given NURBS curve by 1 using Bezier decomposition and reassembly.
-        /// (ja) ベジェ分解と再構成により、与えられたNURBS曲線の次数を1だけ昇降します。
+        /// (ja) ベジェ分解と再構成により、与えられたNURBS曲線の次数を1だけ上げます。
         /// </summary>
         /// <param name="curve"></param>
         /// <returns></returns>
@@ -120,30 +120,29 @@ namespace NurbsSharp.Operation
         }
 
         /// <summary>
-        /// (en) Reduces the degree of the curve by t using global weighted LSQ in homogeneous space.
-        /// (ja) 同次座標での重み付き最小二乗により、指定回数 t の次数低減を行います。
+        /// (en) Reduces the degree of the curve by times using global weighted LSQ in homogeneous space.
+        /// (ja) 同次座標での重み付き最小二乗により、指定回数 times の次数低減を行います。
         /// </summary>
         /// <param name="curve"></param>
-        /// <param name="t"></param>
+        /// <param name="times"></param>
         /// <param name="tolerance"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
-        public static NurbsCurve ReduceDegree(NurbsCurve curve, int t, double tolerance)
+        public static NurbsCurve ReduceDegree(NurbsCurve curve, int times, double tolerance)
         {
             Guard.ThrowIfNull(curve, nameof(curve));
-            if (t <= 0)
+            Guard.ThrowIfNegative(times, nameof(times));
+            if (times == 0)
                 return curve;
-            if (t < 0)
-                throw new ArgumentOutOfRangeException(nameof(t), "Degree reduction must be non-negative.");
 
             int p = curve.Degree;
-            int pNew = p - t;
+            int pNew = p - times;
             if (pNew < 1)
-                throw new ArgumentOutOfRangeException(nameof(t), "Resulting degree must be at least 1.");
+                throw new ArgumentOutOfRangeException(nameof(times), "Resulting degree must be at least 1.");
 
             NurbsCurve result = curve;
-            for (int i = 0; i < t; i++)
+            for (int i = 0; i < times; i++)
             {
                 result = ReduceDegreeOnceLSQ(result, tolerance);
             }
@@ -305,16 +304,16 @@ namespace NurbsSharp.Operation
         }
 
         /// <summary>
-        /// (en) Elevates the degree of a Bezier curve defined by the given control points by 'num'
-        /// (ja) 与えられた制御点で定義されるベジェ曲線の次数を 'num' だけ昇降します
+        /// (en) Elevates the degree of a Bezier curve defined by the given control points by 'times'
+        /// (ja) 与えられた制御点で定義されるベジェ曲線の次数を 'times' だけ上げます
         /// </summary>
         /// <param name="ctrlpts"></param>
-        /// <param name="num"></param>
+        /// <param name="times"></param>
         /// <returns></returns>
-        private static ControlPoint[] ElevateBezierControlPoints(ControlPoint[] ctrlpts, int num)
+        private static ControlPoint[] ElevateBezierControlPoints(ControlPoint[] ctrlpts, int times)
         {
             int degree = ctrlpts.Length - 1;
-            int numPtsElev = degree + 1 + num;
+            int numPtsElev = degree + 1 + times;
             var outPts = new Vector4Double[numPtsElev];
             for (int i = 0; i < numPtsElev; i++) outPts[i] = new Vector4Double(0, 0, 0, 0);
 
@@ -324,13 +323,13 @@ namespace NurbsSharp.Operation
 
             for (int i = 0; i < numPtsElev; i++)
             {
-                int start = Math.Max(0, i - num);
+                int start = Math.Max(0, i - times);
                 int end = Math.Min(degree, i);
                 for (int j = start; j <= end; j++)
                 {
                     double coeff = LinAlg.BinomialCoefficient(degree, j) * 1.0;
-                    coeff *= LinAlg.BinomialCoefficient(num, i - j);
-                    coeff /= LinAlg.BinomialCoefficient(degree + num, i);
+                    coeff *= LinAlg.BinomialCoefficient(times, i - j);
+                    coeff /= LinAlg.BinomialCoefficient(degree + times, i);
                     outPts[i] += coeff * hp[j];
                 }
             }
@@ -374,16 +373,19 @@ namespace NurbsSharp.Operation
 
         /// <summary>
         /// (en) Elevates the degree of the given NURBS surface in U and/or V direction while preserving its shape
-        /// (ja) 形状を保つように与えられたNURBSサーフェスのU方向およびV方向の次数を昇降します
+        /// (ja) 形状を保つように与えられたNURBSサーフェスのU方向およびV方向の次数を上げます
         /// </summary>
         /// <param name="surface">Surface to elevate</param>
         /// <param name="timesU">Number of times to elevate in U direction</param>
         /// <param name="timesV">Number of times to elevate in V direction</param>
         /// <returns>Surface with elevated degree</returns>
         /// <exception cref="ArgumentNullException">Thrown when surface is null</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when timesU or timesV is negative</exception>"
         public static NurbsSurface ElevateDegree(NurbsSurface surface, int timesU, int timesV)
         {
             Guard.ThrowIfNull(surface, nameof(surface));
+            Guard.ThrowIfNegative(timesU, nameof(timesU));
+            Guard.ThrowIfNegative(timesV, nameof(timesV));
 
             NurbsSurface result = surface;
 
@@ -403,8 +405,42 @@ namespace NurbsSharp.Operation
         }
 
         /// <summary>
+        /// (en) Reduces the degree of the given NURBS surface in U and/or V direction
+        /// (ja) 与えられたNURBSサーフェスのU方向およびV方向の次数を下げます
+        /// </summary>
+        /// <param name="surface">Surface to reduce</param>
+        /// <param name="timesU">Number of times to reduce in U direction</param>
+        /// <param name="timesV">Number of times to reduce in V direction</param>
+        /// <param name="tolerance">Tolerance for degree reduction approximation</param>
+        /// <returns>Surface with reduced degree</returns>
+        /// <exception cref="ArgumentNullException">Thrown when surface is null</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when reduction would result in degree less than 1</exception>
+        public static NurbsSurface ReduceDegree(NurbsSurface surface, int timesU, int timesV, double tolerance = 1e-6)
+        {
+            Guard.ThrowIfNull(surface, nameof(surface));
+            Guard.ThrowIfNegative(timesU, nameof(timesU));
+            Guard.ThrowIfNegative(timesV, nameof(timesV));
+
+            NurbsSurface result = surface;
+
+            // Reduce in U direction first (if needed)
+            if (timesU > 0)
+            {
+                result = ReduceDegreeU(result, timesU, tolerance);
+            }
+
+            // Then reduce in V direction (if needed)
+            if (timesV > 0)
+            {
+                result = ReduceDegreeV(result, timesV, tolerance);
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// (en) Elevates the degree of the surface in U direction
-        /// (ja) サーフェスのU方向の次数を昇降します
+        /// (ja) サーフェスのU方向の次数を上げます
         /// </summary>
         private static NurbsSurface ElevateDegreeU(NurbsSurface surface, int times)
         {
@@ -461,7 +497,7 @@ namespace NurbsSharp.Operation
 
         /// <summary>
         /// (en) Elevates the degree of the surface in V direction
-        /// (ja) サーフェスのV方向の次数を昇降します
+        /// (ja) サーフェスのV方向の次数を上げます
         /// </summary>
         private static NurbsSurface ElevateDegreeV(NurbsSurface surface, int times)
         {
@@ -505,6 +541,122 @@ namespace NurbsSharp.Operation
                 elevatedCurves[0].Degree,
                 knotVectorU,
                 elevatedCurves[0].KnotVector,
+                newControlPoints);
+        }
+
+        /// <summary>
+        /// (en) Reduces the degree of the surface in U direction
+        /// (ja) サーフェスのU方向の次数を下げます
+        /// </summary>
+        private static NurbsSurface ReduceDegreeU(NurbsSurface surface, int times, double tolerance)
+        {
+            if (times <= 0) return surface;
+
+            int degreeU = surface.DegreeU;
+            int degreeV = surface.DegreeV;
+            KnotVector knotVectorV = surface.KnotVectorV;
+            ControlPoint[][] controlPoints = surface.ControlPoints;
+
+            int nU = controlPoints.Length;
+            int nV = controlPoints[0].Length;
+
+            // Check if reduction is possible
+            if (degreeU - times < 1)
+                throw new ArgumentOutOfRangeException(nameof(times), 
+                    $"Cannot reduce U degree from {degreeU} by {times}. Resulting degree must be at least 1.");
+
+            // For each V index, extract U-direction curve and reduce its degree
+            List<NurbsCurve> reducedCurves = [];
+
+            for (int vIndex = 0; vIndex < nV; vIndex++)
+            {
+                // Extract control points along U direction for this V index
+                ControlPoint[] curveControlPoints = new ControlPoint[nU];
+                for (int uIndex = 0; uIndex < nU; uIndex++)
+                {
+                    curveControlPoints[uIndex] = controlPoints[uIndex][vIndex];
+                }
+
+                // Create temporary curve along U direction
+                var curve = new NurbsCurve(degreeU, surface.KnotVectorU, curveControlPoints);
+
+                // Reduce the curve degree
+                var reducedCurve = ReduceDegree(curve, times, tolerance);
+
+                reducedCurves.Add(reducedCurve);
+            }
+
+            // Reconstruct surface from reduced curves
+            int newNU = reducedCurves[0].ControlPoints.Length;
+            ControlPoint[][] newControlPoints = new ControlPoint[newNU][];
+            for (int uIndex = 0; uIndex < newNU; uIndex++)
+            {
+                newControlPoints[uIndex] = new ControlPoint[nV];
+                for (int vIndex = 0; vIndex < nV; vIndex++)
+                {
+                    newControlPoints[uIndex][vIndex] = reducedCurves[vIndex].ControlPoints[uIndex];
+                }
+            }
+
+            return new NurbsSurface(
+                reducedCurves[0].Degree,
+                degreeV,
+                reducedCurves[0].KnotVector,
+                knotVectorV,
+                newControlPoints);
+        }
+
+        /// <summary>
+        /// (en) Reduces the degree of the surface in V direction
+        /// (ja) サーフェスのV方向の次数を下げます
+        /// </summary>
+        private static NurbsSurface ReduceDegreeV(NurbsSurface surface, int times, double tolerance)
+        {
+            if (times <= 0) return surface;
+
+            int degreeU = surface.DegreeU;
+            int degreeV = surface.DegreeV;
+            KnotVector knotVectorU = surface.KnotVectorU;
+            ControlPoint[][] controlPoints = surface.ControlPoints;
+
+            int nU = controlPoints.Length;
+            int nV = controlPoints[0].Length;
+
+            // Check if reduction is possible
+            if (degreeV - times < 1)
+                throw new ArgumentOutOfRangeException(nameof(times), 
+                    $"Cannot reduce V degree from {degreeV} by {times}. Resulting degree must be at least 1.");
+
+            // For each U index, extract V-direction curve and reduce its degree
+            List<NurbsCurve> reducedCurves = [];
+
+            for (int uIndex = 0; uIndex < nU; uIndex++)
+            {
+                // Extract control points along V direction for this U index
+                ControlPoint[] curveControlPoints = controlPoints[uIndex];
+
+                // Create temporary curve along V direction
+                var curve = new NurbsCurve(degreeV, surface.KnotVectorV, curveControlPoints);
+
+                // Reduce the curve degree
+                var reducedCurve = ReduceDegree(curve, times, tolerance);
+
+                reducedCurves.Add(reducedCurve);
+            }
+
+            // Reconstruct surface from reduced curves
+            int newNV = reducedCurves[0].ControlPoints.Length;
+            ControlPoint[][] newControlPoints = new ControlPoint[nU][];
+            for (int uIndex = 0; uIndex < nU; uIndex++)
+            {
+                newControlPoints[uIndex] = reducedCurves[uIndex].ControlPoints;
+            }
+
+            return new NurbsSurface(
+                degreeU,
+                reducedCurves[0].Degree,
+                knotVectorU,
+                reducedCurves[0].KnotVector,
                 newControlPoints);
         }
     }

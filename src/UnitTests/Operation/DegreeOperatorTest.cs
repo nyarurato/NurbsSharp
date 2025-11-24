@@ -540,5 +540,185 @@ namespace UnitTests.Operation
             Assert.Throws<ArgumentNullException>(() =>
                 DegreeOperator.ElevateDegree(null!, 1, 1));
         }
+
+        [Test]
+        public void ReduceDegree_Surface_UDirection_BasicTest()
+        {
+            // Create a surface with degree 3
+            int degreeU = 3;
+            int degreeV = 2;
+            var knotsU = new double[] { 0, 0, 0, 0, 1, 1, 1, 1 };
+            var knotsV = new double[] { 0, 0, 0, 1, 1, 1 };
+            var kvU = new KnotVector(knotsU, degreeU);
+            var kvV = new KnotVector(knotsV, degreeV);
+
+            var controlPoints = new ControlPoint[4][];
+            for (int i = 0; i < 4; i++)
+            {
+                controlPoints[i] = new ControlPoint[3];
+                for (int j = 0; j < 3; j++)
+                {
+                    controlPoints[i][j] = new ControlPoint(i, j, Math.Sin(i) * Math.Cos(j), 1);
+                }
+            }
+
+            var surface = new NurbsSurface(degreeU, degreeV, kvU, kvV, controlPoints);
+
+            // Reduce degree in U direction
+            var reducedSurface = DegreeOperator.ReduceDegree(surface, 1, 0, 1e-3);
+
+            // Verify dimensions
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(reducedSurface.DegreeU, Is.EqualTo(degreeU - 1));
+                Assert.That(reducedSurface.DegreeV, Is.EqualTo(degreeV));
+                Assert.That(reducedSurface.ControlPoints, Is.Not.Empty);
+            }
+
+            // Verify shape is approximately preserved (degree reduction is approximate)
+            double[] samplePoints = [0, 0.25, 0.5, 0.75, 1];
+            foreach (var u in samplePoints)
+            {
+                foreach (var v in samplePoints)
+                {
+                    var originalPos = surface.GetPos(u, v);
+                    var reducedPos = reducedSurface.GetPos(u, v);
+
+                    using (Assert.EnterMultipleScope())
+                    {
+                        Assert.That(reducedPos.X, Is.EqualTo(originalPos.X).Within(0.01));
+                        Assert.That(reducedPos.Y, Is.EqualTo(originalPos.Y).Within(0.01));
+                        Assert.That(reducedPos.Z, Is.EqualTo(originalPos.Z).Within(0.01));
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void ReduceDegree_Surface_VDirection_BasicTest()
+        {
+            // Create a surface with degree 3
+            int degreeU = 2;
+            int degreeV = 3;
+            var knotsU = new double[] { 0, 0, 0, 1, 1, 1 };
+            var knotsV = new double[] { 0, 0, 0, 0, 1, 1, 1, 1 };
+            var kvU = new KnotVector(knotsU, degreeU);
+            var kvV = new KnotVector(knotsV, degreeV);
+
+            var controlPoints = new ControlPoint[3][];
+            for (int i = 0; i < 3; i++)
+            {
+                controlPoints[i] = new ControlPoint[4];
+                for (int j = 0; j < 4; j++)
+                {
+                    controlPoints[i][j] = new ControlPoint(i, j, Math.Sin(i) * Math.Cos(j), 1);
+                }
+            }
+
+            var surface = new NurbsSurface(degreeU, degreeV, kvU, kvV, controlPoints);
+
+            // Reduce degree in V direction
+            var reducedSurface = DegreeOperator.ReduceDegree(surface, 0, 1, 1e-3);
+
+            // Verify dimensions
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(reducedSurface.DegreeU, Is.EqualTo(degreeU));
+                Assert.That(reducedSurface.DegreeV, Is.EqualTo(degreeV - 1));
+                Assert.That(reducedSurface.ControlPoints, Is.Not.Empty);
+            }
+
+            // Verify shape is approximately preserved
+            double[] samplePoints = [0, 0.25, 0.5, 0.75, 1];
+            foreach (var u in samplePoints)
+            {
+                foreach (var v in samplePoints)
+                {
+                    var originalPos = surface.GetPos(u, v);
+                    var reducedPos = reducedSurface.GetPos(u, v);
+
+                    using (Assert.EnterMultipleScope())
+                    {
+                        Assert.That(reducedPos.X, Is.EqualTo(originalPos.X).Within(0.01));
+                        Assert.That(reducedPos.Y, Is.EqualTo(originalPos.Y).Within(0.01));
+                        Assert.That(reducedPos.Z, Is.EqualTo(originalPos.Z).Within(0.01));
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void ReduceDegree_Surface_InvalidReduction_ThrowsException()
+        {
+            int degreeU = 2;
+            int degreeV = 2;
+            var knotsU = new double[] { 0, 0, 0, 1, 1, 1 };
+            var knotsV = new double[] { 0, 0, 0, 1, 1, 1 };
+            var kvU = new KnotVector(knotsU, degreeU);
+            var kvV = new KnotVector(knotsV, degreeV);
+
+            var controlPoints = new ControlPoint[3][];
+            for (int i = 0; i < 3; i++)
+            {
+                controlPoints[i] = new ControlPoint[3];
+                for (int j = 0; j < 3; j++)
+                {
+                    controlPoints[i][j] = new ControlPoint(i, j, 0, 1);
+                }
+            }
+
+            var surface = new NurbsSurface(degreeU, degreeV, kvU, kvV, controlPoints);
+
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+                DegreeOperator.ReduceDegree(surface, 3, 0, 1e-3));
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+                DegreeOperator.ReduceDegree(surface, 0, 3, 1e-3));
+        }
+
+        [Test]
+        public void ReduceDegree_Surface_ZeroTimes_ReturnsOriginal()
+        {
+            int degreeU = 2;
+            int degreeV = 2;
+            var knotsU = new double[] { 0, 0, 0, 1, 1, 1 };
+            var knotsV = new double[] { 0, 0, 0, 1, 1, 1 };
+            var kvU = new KnotVector(knotsU, degreeU);
+            var kvV = new KnotVector(knotsV, degreeV);
+
+            var controlPoints = new ControlPoint[3][];
+            for (int i = 0; i < 3; i++)
+            {
+                controlPoints[i] = new ControlPoint[3];
+                for (int j = 0; j < 3; j++)
+                {
+                    controlPoints[i][j] = new ControlPoint(i, j, 0, 1);
+                }
+            }
+
+            var surface = new NurbsSurface(degreeU, degreeV, kvU, kvV, controlPoints);
+
+            // Reduce degree 0 times
+            var reducedSurface = DegreeOperator.ReduceDegree(surface, 0, 0);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(reducedSurface.DegreeU, Is.EqualTo(degreeU));
+                Assert.That(reducedSurface.DegreeV, Is.EqualTo(degreeV));
+            }
+            foreach (var u in new double[] { 0, 0.25, 0.5, 0.75, 1 })
+            {
+                foreach (var v in new double[] { 0, 0.25, 0.5, 0.75, 1 })
+                {
+                    var originalPos = surface.GetPos(u, v);
+                    var reducedPos = reducedSurface.GetPos(u, v);
+                    using (Assert.EnterMultipleScope())
+                    {
+                        Assert.That(reducedPos.X, Is.EqualTo(originalPos.X).Within(1e-6));
+                        Assert.That(reducedPos.Y, Is.EqualTo(originalPos.Y).Within(1e-6));
+                        Assert.That(reducedPos.Z, Is.EqualTo(originalPos.Z).Within(1e-6));
+                    }
+                }
+            }
+        }
     }
 }

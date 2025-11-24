@@ -61,5 +61,23 @@ namespace NurbsSharp.Core
                 throw new ArgumentOutOfRangeException(paramName, $"{paramName} cannot be negative.");
 #endif
         }
+
+        /// <summary>
+        /// (en) Throws an ArgumentOutOfRangeException if the provided integer value is negative.
+        /// (ja) 指定された整数値が負の場合、ArgumentOutOfRangeExceptionをスローします。
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="paramName"></param>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        public static void ThrowIfNegative(int value, string paramName)
+        {
+#if NET8_OR_GREATER
+            ArgumentOutOfRangeException.ThrowIfNegative(value, paramName);
+
+#else
+            if (value < 0)
+                throw new ArgumentOutOfRangeException(paramName, $"{paramName} must be greater than zero.");
+#endif
+        }
     }
 }
