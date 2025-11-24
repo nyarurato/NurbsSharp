@@ -219,7 +219,7 @@ namespace NurbsSharp.Operation
                 usList.Add((u, 1.0));
             }
             // Enhance weighting for commonly tested evaluation points
-            double[] pivots = new double[] { 0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0 };
+            double[] pivots = [ 0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0 ];
             foreach (var t in pivots)
             {
                 double u = uMin + (uMax - uMin) * t;
@@ -378,7 +378,7 @@ namespace NurbsSharp.Operation
             if (u < knots[p]) u = knots[p];
             if (u > knots[knots.Length - p - 1]) u = knots[knots.Length - p - 1];
 
-            Vector4Double H = new Vector4Double(0, 0, 0, 0);
+            Vector4Double H = new();
             for (int i = 0; i < cps.Length; i++)
             {
                 double Ni = BasicEvaluator.BSplineBasisFunction(i, p, u, knots);

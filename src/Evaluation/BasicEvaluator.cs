@@ -131,7 +131,7 @@ namespace NurbsSharp.Evaluation
         public static double BSplineBasisFunction(int i, int p, double u, double[] knots)
         {
     
-            if (LinAlg.ApproxEqual(u, knots[knots.Length - 1]))
+            if (LinAlg.ApproxEqual(u, knots[^1]))
             {
                 if(i == knots.Length - p - 2)
                     return 1.0;

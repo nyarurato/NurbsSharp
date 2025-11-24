@@ -22,7 +22,7 @@ namespace NurbsSharp.Generation.Interpolation
         /// <returns>NURBS curve passing through all points</returns>
         /// <exception cref="ArgumentNullException">Thrown when points is null</exception>
         /// <exception cref="ArgumentException">Thrown when not enough points or invalid degree</exception>
-        public static NurbsCurve InterpolateCurve(Vector3Double[] points, int degree, InterpolationOptions options = null)
+        public static NurbsCurve InterpolateCurve(Vector3Double[] points, int degree, InterpolationOptions? options = null)
         {
             Guard.ThrowIfNull(points, nameof(points));
             
@@ -35,7 +35,7 @@ namespace NurbsSharp.Generation.Interpolation
             if (degree >= points.Length)
                 throw new ArgumentException($"Degree ({degree}) must be less than the number of points ({points.Length}).", nameof(degree));
 
-            options = options ?? new InterpolationOptions();
+            options ??= new InterpolationOptions();
 
             int n = points.Length - 1;
 
@@ -87,7 +87,7 @@ namespace NurbsSharp.Generation.Interpolation
         /// <returns>NURBS surface passing through all points</returns>
         /// <exception cref="ArgumentNullException">Thrown when points is null</exception>
         /// <exception cref="ArgumentException">Thrown when invalid input</exception>
-        public static NurbsSurface InterpolateSurf(Vector3Double[][] points, int degreeU, int degreeV, InterpolationOptions options = null)
+        public static NurbsSurface InterpolateSurf(Vector3Double[][] points, int degreeU, int degreeV, InterpolationOptions? options = null)
         {
             // 1. Validate inputs
             Guard.ThrowIfNull(points, nameof(points));
@@ -120,7 +120,7 @@ namespace NurbsSharp.Generation.Interpolation
             if (degreeV >= size_v)
                 throw new ArgumentException($"Degree V ({degreeV}) must be less than the number of V points ({size_v}).", nameof(degreeV));
 
-            options = options ?? new InterpolationOptions();
+            options ??= new InterpolationOptions();
 
             // 2. Compute parameters
             var (uk, vl) = InterpolationHelper.ComputeParametersSurface(points, options.ParameterizationType);

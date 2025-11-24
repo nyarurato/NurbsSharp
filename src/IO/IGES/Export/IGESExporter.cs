@@ -235,7 +235,7 @@ namespace NurbsSharp.IO.IGES
             {
                 if (!_counters.ContainsKey(section)) _counters[section] = 1;
                 int seq = _counters[section]++;
-                string dataPadded = data72.Length > 72 ? data72.Substring(0, 72) : data72.PadRight(72, ' ');
+                string dataPadded = data72.Length > 72 ? data72[..72] : data72.PadRight(72, ' ');
                 string seqStr = seq.ToString().PadLeft(7, ' ');
                 return dataPadded + section + seqStr;
             }

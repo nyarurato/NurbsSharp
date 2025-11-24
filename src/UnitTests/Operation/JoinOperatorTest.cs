@@ -39,8 +39,8 @@ namespace UnitTests.Operation
             using (Assert.EnterMultipleScope())
             {
                 Assert.That(joined.Degree, Is.EqualTo(1));
-                Assert.That(joined.ControlPoints.Length, Is.EqualTo(3));
-                Assert.That(joined.ControlPoints[0].Position.X, Is.EqualTo(0));
+                Assert.That(joined.ControlPoints, Has.Length.EqualTo(3));
+                Assert.That(joined.ControlPoints[0].Position.X, Is.Zero);
                 Assert.That(joined.ControlPoints[1].Position.X, Is.EqualTo(1));
                 Assert.That(joined.ControlPoints[2].Position.X, Is.EqualTo(2));
             }
@@ -48,9 +48,9 @@ namespace UnitTests.Operation
             // Expected knots: 0,0, 1, 2,2
             using (Assert.EnterMultipleScope())
             {
-                Assert.That(joined.KnotVector.Knots.Length, Is.EqualTo(5));
-                Assert.That(joined.KnotVector.Knots[0], Is.EqualTo(0));
-                Assert.That(joined.KnotVector.Knots[1], Is.EqualTo(0));
+                Assert.That(joined.KnotVector.Knots, Has.Length.EqualTo(5));
+                Assert.That(joined.KnotVector.Knots[0], Is.Zero);
+                Assert.That(joined.KnotVector.Knots[1], Is.Zero);
                 Assert.That(joined.KnotVector.Knots[2], Is.EqualTo(1));
                 Assert.That(joined.KnotVector.Knots[3], Is.EqualTo(2)); // shifted by 1
                 Assert.That(joined.KnotVector.Knots[4], Is.EqualTo(2));
@@ -105,14 +105,14 @@ namespace UnitTests.Operation
             {
                 Assert.That(joined.Degree, Is.EqualTo(2));
                 // 3 + 3 - 1 = 5 CPs
-                Assert.That(joined.ControlPoints.Length, Is.EqualTo(5));
+                Assert.That(joined.ControlPoints, Has.Length.EqualTo(5));
             }
 
             // Expected knots: 0,0,0, 1,1, 2,2,2
             // Length: 5 + 2 + 1 = 8
             using (Assert.EnterMultipleScope())
             {
-                Assert.That(joined.KnotVector.Knots.Length, Is.EqualTo(8));
+                Assert.That(joined.KnotVector.Knots, Has.Length.EqualTo(8));
                 Assert.That(joined.KnotVector.Knots[3], Is.EqualTo(1));
                 Assert.That(joined.KnotVector.Knots[4], Is.EqualTo(1));
                 Assert.That(joined.KnotVector.Knots[5], Is.EqualTo(2));
@@ -171,7 +171,7 @@ namespace UnitTests.Operation
 
                 // Then join with Curve 2 (3 CPs)
                 // Total CPs: 3 + 3 - 1 = 5
-                Assert.That(joined.ControlPoints.Length, Is.EqualTo(5));
+                Assert.That(joined.ControlPoints, Has.Length.EqualTo(5));
             }
 
             double[] sampler_point = [0.0, 0.001, 0.5, 0.99, 1.0, 1.01, 1.5, 1.999, 2.0];
@@ -255,7 +255,7 @@ namespace UnitTests.Operation
 
             // Should succeed with larger tolerance
             var joined = JoinOperator.JoinCurves(c1, c2, tolerance: 1e-3);
-            Assert.That(joined.ControlPoints.Length, Is.EqualTo(3));
+            Assert.That(joined.ControlPoints, Has.Length.EqualTo(3));
 
             double[] sampler_point = [0.0, 0.001, 0.5, 0.99, 1.0, 1.01, 1.5, 1.999, 2.0];
             foreach (var u in sampler_point)
@@ -307,7 +307,7 @@ namespace UnitTests.Operation
             using (Assert.EnterMultipleScope())
             {
                 Assert.That(joined.Degree, Is.EqualTo(4));
-                Assert.That(joined.ControlPoints.Length, Is.EqualTo(9)); // 5 + 2 + 3(elevation) - 1 = 9
+                Assert.That(joined.ControlPoints, Has.Length.EqualTo(9)); // 5 + 2 + 3(elevation) - 1 = 9
             }
 
             double[] sampler_point = [0.0, 0.001, 0.5, 0.99, 1.0, 1.01, 1.5, 1.999, 2.0];

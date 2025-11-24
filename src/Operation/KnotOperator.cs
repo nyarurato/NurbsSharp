@@ -33,7 +33,7 @@ namespace NurbsSharp.Operation
             Guard.ThrowIfNull(controlPoints, nameof(controlPoints));
             if(degree < 1)
                 throw new ArgumentException("Degree must be at least 1.", nameof(degree));
-            if(u < knots[0] || u > knots[knots.Length - 1])
+            if(u < knots[0] || u > knots[^1])
                 throw new ArgumentOutOfRangeException(nameof(u), "Knot value to insert is out of the knot vector range.");
 
             //TODO: Check if times exceeds the maximum multiplicity allowed

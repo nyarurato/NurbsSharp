@@ -40,7 +40,7 @@ namespace NurbsSharp.Operation
             // Check G0 continuity (position)
             var knots1 = first_curve.KnotVector.Knots;
             var knots2 = second_curve.KnotVector.Knots;
-            Vector3Double endPos1 = first_curve.GetPos(knots1[knots1.Length - 1]); //estimate clamped knot
+            Vector3Double endPos1 = first_curve.GetPos(knots1[^1]); //estimate clamped knot
             Vector3Double startPos2 = second_curve.GetPos(knots2[0]);
             if (endPos1.DistanceTo(startPos2) > tolerance)
             {
@@ -50,7 +50,7 @@ namespace NurbsSharp.Operation
             // Check weight continuity at join point
             var cp1 = first_curve.ControlPoints;
             var cp2 = second_curve.ControlPoints;
-            if (Math.Abs(cp1[cp1.Length - 1].Weight - cp2[0].Weight) > tolerance)
+            if (Math.Abs(cp1[^1].Weight - cp2[0].Weight) > tolerance)
             {
                 throw new InvalidOperationException("The weights at the join point do not match.");
             }
@@ -93,7 +93,7 @@ namespace NurbsSharp.Operation
             // where shift = u_{m1} - v_{0} (assuming standard clamped, v_0 = v_p)
             // For clamped knot vectors, max_u and min_v are at the ends
             
-            double max_u = knots1[knots1.Length - 1]; //estimate clamped knot
+            double max_u = knots1[^1]; //estimate clamped knot
             double min_v = knots2[0];
             double shift = max_u - min_v;
                         

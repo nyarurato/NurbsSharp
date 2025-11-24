@@ -30,9 +30,12 @@ namespace UnitTests.Generation
             var curve = GlobalInterpolator.InterpolateCurve(points, degree);
 
             // Assert
-            Assert.That(curve, Is.Not.Null);
-            Assert.That(curve.Degree, Is.EqualTo(degree));
-            Assert.That(curve.ControlPoints.Length, Is.EqualTo(3));
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(curve, Is.Not.Null);
+                Assert.That(curve.Degree, Is.EqualTo(degree));
+                Assert.That(curve.ControlPoints, Has.Length.EqualTo(3));
+            }
 
             // Verify curve passes through the points
             double[] parameters = InterpolationHelper.ComputeParameters(points, ParameterizationType.Chord);
@@ -66,9 +69,12 @@ namespace UnitTests.Generation
             var curve = GlobalInterpolator.InterpolateCurve(points, degree);
 
             // Assert
-            Assert.That(curve, Is.Not.Null);
-            Assert.That(curve.Degree, Is.EqualTo(degree));
-            Assert.That(curve.ControlPoints.Length, Is.EqualTo(5));
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(curve, Is.Not.Null);
+                Assert.That(curve.Degree, Is.EqualTo(degree));
+                Assert.That(curve.ControlPoints, Has.Length.EqualTo(5));
+            }
 
             // Verify curve passes through the points
             double[] parameters = InterpolationHelper.ComputeParameters(points, ParameterizationType.Chord);
@@ -116,13 +122,16 @@ namespace UnitTests.Generation
 
             // All curves should pass through endpoints
             var startPoint = points[0];
-            var endPoint = points[points.Length - 1];
+            var endPoint = points[^1];
 
             var evalChordStart = curveChord.GetPos(curveChord.KnotVector.Knots[degree]);
             var evalChordEnd = curveChord.GetPos(curveChord.KnotVector.Knots[curveChord.KnotVector.Length - degree - 1]);
 
-            Assert.That(evalChordStart.X, Is.EqualTo(startPoint.X).Within(1e-8));
-            Assert.That(evalChordEnd.X, Is.EqualTo(endPoint.X).Within(1e-8));
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(evalChordStart.X, Is.EqualTo(startPoint.X).Within(1e-8));
+                Assert.That(evalChordEnd.X, Is.EqualTo(endPoint.X).Within(1e-8));
+            }
         }
 
         [Test]
@@ -152,16 +161,14 @@ namespace UnitTests.Generation
             // Arrange: 2x2 point grid for a bilinear surface (degree 1x1)
             var points = new Vector3Double[][]
             {
-                new Vector3Double[]
-                {
+                [
                     new Vector3Double(0, 0, 0),
                     new Vector3Double(0, 1, 0)
-                },
-                new Vector3Double[]
-                {
+                ],
+                [
                     new Vector3Double(1, 0, 1),
                     new Vector3Double(1, 1, 1)
-                }
+                ]
             };
             int degreeU = 1;
             int degreeV = 1;
@@ -170,11 +177,14 @@ namespace UnitTests.Generation
             var surface = GlobalInterpolator.InterpolateSurf(points, degreeU, degreeV);
 
             // Assert
-            Assert.That(surface, Is.Not.Null);
-            Assert.That(surface.DegreeU, Is.EqualTo(degreeU));
-            Assert.That(surface.DegreeV, Is.EqualTo(degreeV));
-            Assert.That(surface.ControlPoints.Length, Is.EqualTo(2));
-            Assert.That(surface.ControlPoints[0].Length, Is.EqualTo(2));
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(surface, Is.Not.Null);
+                Assert.That(surface.DegreeU, Is.EqualTo(degreeU));
+                Assert.That(surface.DegreeV, Is.EqualTo(degreeV));
+                Assert.That(surface.ControlPoints, Has.Length.EqualTo(2));
+                Assert.That(surface.ControlPoints[0], Has.Length.EqualTo(2));
+            }
 
             // Verify surface passes through the corner points
             var (uk, vl) = InterpolationHelper.ComputeParametersSurface(points, ParameterizationType.Chord);
@@ -218,11 +228,14 @@ namespace UnitTests.Generation
             var surface = GlobalInterpolator.InterpolateSurf(points, degreeU, degreeV);
 
             // Assert
-            Assert.That(surface, Is.Not.Null);
-            Assert.That(surface.DegreeU, Is.EqualTo(degreeU));
-            Assert.That(surface.DegreeV, Is.EqualTo(degreeV));
-            Assert.That(surface.ControlPoints.Length, Is.EqualTo(5));
-            Assert.That(surface.ControlPoints[0].Length, Is.EqualTo(5));
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(surface, Is.Not.Null);
+                Assert.That(surface.DegreeU, Is.EqualTo(degreeU));
+                Assert.That(surface.DegreeV, Is.EqualTo(degreeV));
+                Assert.That(surface.ControlPoints, Has.Length.EqualTo(5));
+                Assert.That(surface.ControlPoints[0], Has.Length.EqualTo(5));
+            }
 
             // Verify surface passes through all points
             var (uk, vl) = InterpolationHelper.ComputeParametersSurface(points, ParameterizationType.Chord);
@@ -267,8 +280,8 @@ namespace UnitTests.Generation
                 Assert.That(surface, Is.Not.Null);
                 Assert.That(surface.DegreeU, Is.EqualTo(degreeU));
                 Assert.That(surface.DegreeV, Is.EqualTo(degreeV));
-                Assert.That(surface.ControlPoints.Length, Is.EqualTo(4));
-                Assert.That(surface.ControlPoints[0].Length, Is.EqualTo(5));
+                Assert.That(surface.ControlPoints, Has.Length.EqualTo(4));
+                Assert.That(surface.ControlPoints[0], Has.Length.EqualTo(5));
             }
 
             // Verify interpolation at corners
@@ -322,8 +335,8 @@ namespace UnitTests.Generation
                 // Verify structure
                 Assert.That(surfaceChord.DegreeU, Is.EqualTo(degreeU));
                 Assert.That(surfaceChord.DegreeV, Is.EqualTo(degreeV));
-                Assert.That(surfaceChord.ControlPoints.Length, Is.EqualTo(3));
-                Assert.That(surfaceChord.ControlPoints[0].Length, Is.EqualTo(3));
+                Assert.That(surfaceChord.ControlPoints, Has.Length.EqualTo(3));
+                Assert.That(surfaceChord.ControlPoints[0], Has.Length.EqualTo(3));
             }
         }
 
@@ -337,7 +350,7 @@ namespace UnitTests.Generation
             // Test with too few rows
             var tooFewRows = new Vector3Double[][]
             {
-                new Vector3Double[] { new Vector3Double(0, 0, 0), new Vector3Double(0, 1, 0) }
+                [new Vector3Double(0, 0, 0), new Vector3Double(0, 1, 0)]
             };
             Assert.Throws<ArgumentException>(() =>
                 GlobalInterpolator.InterpolateSurf(tooFewRows, 1, 1));
@@ -345,8 +358,8 @@ namespace UnitTests.Generation
             // Test with too few columns
             var tooFewCols = new Vector3Double[][]
             {
-                new Vector3Double[] { new Vector3Double(0, 0, 0) },
-                new Vector3Double[] { new Vector3Double(1, 0, 0) }
+                [new Vector3Double(0, 0, 0)],
+                [new Vector3Double(1, 0, 0)]
             };
             Assert.Throws<ArgumentException>(() =>
                 GlobalInterpolator.InterpolateSurf(tooFewCols, 1, 1));
@@ -354,8 +367,8 @@ namespace UnitTests.Generation
             // Test with invalid grid (not rectangular)
             var invalidGrid = new Vector3Double[][]
             {
-                new Vector3Double[] { new Vector3Double(0, 0, 0), new Vector3Double(0, 1, 0) },
-                new Vector3Double[] { new Vector3Double(1, 0, 0) } // Different length
+                [new Vector3Double(0, 0, 0), new Vector3Double(0, 1, 0)],
+                [new Vector3Double(1, 0, 0)] // Different length
             };
             Assert.Throws<ArgumentException>(() =>
                 GlobalInterpolator.InterpolateSurf(invalidGrid, 1, 1));
@@ -363,8 +376,8 @@ namespace UnitTests.Generation
             // Test with degree too high in U
             var validGrid = new Vector3Double[][]
             {
-                new Vector3Double[] { new Vector3Double(0, 0, 0), new Vector3Double(0, 1, 0) },
-                new Vector3Double[] { new Vector3Double(1, 0, 0), new Vector3Double(1, 1, 0) }
+                [new Vector3Double(0, 0, 0), new Vector3Double(0, 1, 0)],
+                [new Vector3Double(1, 0, 0), new Vector3Double(1, 1, 0)]
             };
             Assert.Throws<ArgumentException>(() =>
                 GlobalInterpolator.InterpolateSurf(validGrid, 3, 1));
@@ -404,8 +417,8 @@ namespace UnitTests.Generation
                 Assert.That(surface, Is.Not.Null);
                 Assert.That(surface.DegreeU, Is.EqualTo(degreeU));
                 Assert.That(surface.DegreeV, Is.EqualTo(degreeV));
-                Assert.That(surface.ControlPoints.Length, Is.EqualTo(4));
-                Assert.That(surface.ControlPoints[0].Length, Is.EqualTo(10));
+                Assert.That(surface.ControlPoints, Has.Length.EqualTo(4));
+                Assert.That(surface.ControlPoints[0], Has.Length.EqualTo(10));
             }
 
             for (int i = 0; i < 100; i++)

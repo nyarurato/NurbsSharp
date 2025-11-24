@@ -116,7 +116,7 @@ namespace NurbsSharp.Core
             return new Vector3Double(v.X / scalar, v.Y / scalar, v.Z / scalar);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is Vector3Double other && Equals(other);
         }
@@ -251,7 +251,7 @@ namespace NurbsSharp.Core
             return new Vector4Double(v.X / scalar, v.Y / scalar, v.Z / scalar, v.W / scalar);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is Vector4Double other && Equals(other);
         }

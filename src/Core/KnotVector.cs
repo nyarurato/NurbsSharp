@@ -95,7 +95,7 @@ namespace NurbsSharp.Core
                 if (startMultiplicity != expectedMultiplicity)
                     throw new InvalidOperationException("Knot vector START multiplicity does not match clamped type.");
                 // Check end multiplicity
-                double lastKnot = Knots[Knots.Length - 1];
+                double lastKnot = Knots[^1];
                 int endMultiplicity = Knots.AsEnumerable().Reverse().TakeWhile(k => k == lastKnot).Count();
                 if (endMultiplicity != expectedMultiplicity)
                     throw new InvalidOperationException("Knot vector END multiplicity does not match clamped type.");
@@ -112,7 +112,7 @@ namespace NurbsSharp.Core
         public void Normalize()
         {
             double min = Knots[0];
-            double max = Knots[Knots.Length - 1];
+            double max = Knots[^1];
             double range = max - min;
             if (range == 0)
                 throw new InvalidOperationException("Cannot normalize knot vector with zero range.");

@@ -153,8 +153,8 @@ namespace NurbsSharp.IO.IGES
             string zerostr = "       0";
             string nonestr = "        ";
             
-            string s1 = $"     {EntityType}{parameterPointer.ToString().PadLeft(8, ' ')}{zerostr}{zerostr}{zerostr}{nonestr}{nonestr}{nonestr}{status}";
-            string s2 = $"     {EntityType}{zerostr}{zerostr}{parameterLineCount.ToString().PadLeft(8, ' ')}{zerostr}{nonestr}{nonestr}{nonestr}{zerostr}";
+            string s1 = $"     {EntityType}{parameterPointer,8}{zerostr}{zerostr}{zerostr}{nonestr}{nonestr}{nonestr}{status}";
+            string s2 = $"     {EntityType}{zerostr}{zerostr}{parameterLineCount,8}{zerostr}{nonestr}{nonestr}{nonestr}{zerostr}";
             return [s1, s2];
         }
 

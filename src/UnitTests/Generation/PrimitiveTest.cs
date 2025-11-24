@@ -78,7 +78,7 @@ namespace UnitTests.Generation
         public void PrimitiveTestBox()
         {
             var box = PrimitiveFactory.CreateBox(10, 20, 30);
-　          Assert.That(box.Length, Is.EqualTo(6));
+　          Assert.That(box, Has.Length.EqualTo(6));
 
             foreach(var face in box)
             {

@@ -22,15 +22,15 @@ namespace UnitTests.Geometry
         {
             //translate test
             int degree = 2;
-            double[] knots = new double[] { 0, 0, 0, 0.5, 1, 1, 1 };
-            KnotVector knotVector = new KnotVector(knots,degree);
-            ControlPoint[] controlPoints = new ControlPoint[]
-            {
+            double[] knots = [0, 0, 0, 0.5, 1, 1, 1];
+            var knotVector = new KnotVector(knots,degree);
+            ControlPoint[] controlPoints =
+            [
                 new ControlPoint(0, 0, 0),
                 new ControlPoint(5, 10, 0),
                 new ControlPoint(10, 0, 0),
                 new ControlPoint(15, -10, 0),
-            };
+            ];
             ControlPoint[] originalControlPoints = [.. controlPoints.Select(cp => new ControlPoint(cp.Position.X, cp.Position.Y, cp.Position.Z))];
             var nurbsCurve = new NurbsCurve(degree, knotVector, controlPoints);
             Vector3Double move = new Vector3Double(1, -2.5, 3);
@@ -53,19 +53,17 @@ namespace UnitTests.Geometry
             //translate test
             int degreeU = 1;
             int degreeV = 1;
-            ControlPoint[][] controlPoints = new ControlPoint[][]
-            {
-                new ControlPoint[]
-                {
+            ControlPoint[][] controlPoints =
+            [
+                [
                     new ControlPoint(0,0,0),
                     new ControlPoint(10,0,5),
-                },
-                new ControlPoint[]
-                {
+                ],
+                [
                     new ControlPoint(0,10,0),
                     new ControlPoint(10,10,5),
-                }
-            };
+                ]
+            ];
             ControlPoint[][] originalControlPoints = controlPoints
                 .Select(row => row.Select(cp => new ControlPoint(cp.Position.X, cp.Position.Y, cp.Position.Z)).ToArray())
                 .ToArray();
@@ -73,7 +71,7 @@ namespace UnitTests.Geometry
             KnotVector knotV = KnotVector.GetClampedKnot(degreeV, controlPoints[0].Length);
 
             var nurbsSurface = new NurbsSurface(degreeU, degreeV, knotU, knotV, controlPoints);
-            Vector3Double move = new Vector3Double(-2, 3.5, 1);
+            var move = new Vector3Double(-2, 3.5, 1);
 
             nurbsSurface.Translate(move);
             for (int i = 0; i < controlPoints.Length; i++)
