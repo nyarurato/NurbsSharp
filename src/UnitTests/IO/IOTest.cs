@@ -1,14 +1,16 @@
+using NurbsSharp.Core;
+using NurbsSharp.Geometry;
+using NurbsSharp.IO;
+using NurbsSharp.IO.BMP;
+using NurbsSharp.IO.IGES;
+using NurbsSharp.Tesselation;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using NurbsSharp.Core;
-using NurbsSharp.Geometry;
-using NurbsSharp.IO;
-using NurbsSharp.IO.IGES;
-using NurbsSharp.Tesselation;
+using NurbsSharp.Generation;
 
 namespace UnitTests.IO
 {
@@ -443,6 +445,139 @@ namespace UnitTests.IO
                 Assert.That(curve.ControlPoints, Has.Length.EqualTo(expect_cp));
                 Assert.That(curve.KnotVector.Knots, Has.Length.EqualTo(expect_knot));
             }
+        }
+
+        [Test]
+        public async Task ExportSphereWireframe_ShouldCreateBMPFile()
+        {
+            double radius = 5.0;
+            var sphere = PrimitiveFactory.CreateSphere(radius);
+            string filePath = "test_sphere_wireframe.bmp";
+
+            // Clean up if file exists
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+
+            Vector3Double campos = new Vector3Double(20, 20, 10);
+
+            // Act
+            await BMPExporter.ExportWireframeAsync(sphere, filePath, 800, 800, 20, 20, campos);
+
+            // Assert
+            Assert.That(File.Exists(filePath), Is.True);
+            FileInfo fileInfo = new FileInfo(filePath);
+            Assert.That(fileInfo.Length, Is.GreaterThan(0));
+
+            // Verify BMP header
+            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            using (var reader = new BinaryReader(fs))
+            {
+                // Check BMP signature
+                byte b1 = reader.ReadByte();
+                byte b2 = reader.ReadByte();
+                Assert.That((char)b1, Is.EqualTo('B'));
+                Assert.That((char)b2, Is.EqualTo('M'));
+            }
+
+
+        }
+
+        [Test]
+        public async Task ExportCircleWireframe_ShouldCreateBMPFile()
+        {
+            double radius = 3.0;
+            var circle = PrimitiveFactory.CreateCircle(radius);
+            string filePath = "test_circle_wireframe.bmp";
+
+            // Clean up if file exists
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+
+            Vector3Double campos = new Vector3Double(10, 10, 10);
+
+            // Act
+            await BMPExporter.ExportWireframeAsync(circle, filePath, 800, 800, 100, campos);
+
+            // Assert
+            Assert.That(File.Exists(filePath), Is.True);
+            FileInfo fileInfo = new FileInfo(filePath);
+            Assert.That(fileInfo.Length, Is.GreaterThan(0));
+        }
+
+        [Test]
+        public async Task ExportCylinderWireframe_ShouldCreateBMPFile()
+        {
+            double radius = 2.0;
+            double height = 5.0;
+            var cylinder = PrimitiveFactory.CreateCylinder(radius, height, false);
+            string filePath = "test_cylinder_wireframe.bmp";
+
+            // Clean up if file exists
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+
+            Vector3Double campos = new Vector3Double(20, 20, 50);
+            // Act - Export first surface (side of cylinder)
+            await BMPExporter.ExportWireframeAsync(cylinder[0], filePath, 800, 800, 20, 20,campos);
+
+            // Assert
+            Assert.That(File.Exists(filePath), Is.True);
+            FileInfo fileInfo = new FileInfo(filePath);
+            Assert.That(fileInfo.Length, Is.GreaterThan(0));
+
+        }
+
+        [Test]
+        public async Task ExportSphereWithFrontCamera_ShouldCreateBMPFile()
+        {
+            double radius = 5.0;
+            var sphere = PrimitiveFactory.CreateSphere(radius);
+            string filePath = "test_sphere_front_camera.bmp";
+
+            // Clean up if file exists
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+
+            // Act - Export from front view
+            await BMPExporter.ExportWireframeAsync(
+                sphere,
+                filePath,
+                800, 800, 20, 20,
+                cameraPosition: new Vector3Double(0, -15, 0)
+            );
+
+            // Assert
+            Assert.That(File.Exists(filePath), Is.True);
+            FileInfo fileInfo = new FileInfo(filePath);
+            Assert.That(fileInfo.Length, Is.GreaterThan(0));
+
+        }
+
+        [Test]
+        public async Task ExportSphereWithIsometricCamera_ShouldCreateBMPFile()
+        {
+            // Arrange
+            double radius = 5.0;
+            var sphere = PrimitiveFactory.CreateSphere(radius);
+            string filePath = "test_sphere_isometric_camera.bmp";
+
+            // Clean up if file exists
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+
+            // Act - Export from isometric view
+            await BMPExporter.ExportWireframeAsync(
+                sphere,
+                filePath,
+                800, 800, 20, 20,
+                cameraPosition: new Vector3Double(10, 10, 10)
+            );
+
+            // Assert
+            Assert.That(File.Exists(filePath), Is.True);
+            FileInfo fileInfo = new FileInfo(filePath);
+            Assert.That(fileInfo.Length, Is.GreaterThan(0));
+
         }
     }
 }
