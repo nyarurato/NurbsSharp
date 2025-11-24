@@ -75,15 +75,15 @@ namespace NurbsSharp.IO.IGES
         /// (en) Export NURBS curve to IGES format
         /// (ja) NURBS曲線をIGES形式でエクスポートする
         /// </summary>
-        /// <param name="curve"></param>
+        /// <param name="curves"></param>
         /// <param name="stream"></param>
         /// <param name="fileName"></param>
         /// <param name="author"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
-        public static async Task<bool> ExportAsync(NurbsCurve curve, Stream stream, string fileName = "model.igs", string author = "NurbsSharp")
+        public static async Task<bool> ExportAsync(List<NurbsCurve> curves, Stream stream, string fileName = "model.igs", string author = "NurbsSharp")
         {
-            Guard.ThrowIfNull(curve, nameof(curve));
+            Guard.ThrowIfNull(curves, nameof(curves));
             Guard.ThrowIfNull(stream, nameof(stream));
 
             using var writer = new StreamWriter(stream, Encoding.ASCII, 1024, leaveOpen: true);
@@ -93,9 +93,10 @@ namespace NurbsSharp.IO.IGES
             countS = await WriteStartSection(iges, fileName, author);
             countG = await WriteGlobalSection(iges);
 
-            var entities = new List<IIgesExportEntity>
+            var entities = new List<IIgesExportEntity>();
+            foreach(var curve in curves)
             {
-                new IgesRationalBSplineCurve(curve)
+                entities.Add(new IgesRationalBSplineCurve(curve));
             };
 
             //Prepare Directory / Parameter Section (Estimate Parameter Line Count)
@@ -105,11 +106,6 @@ namespace NurbsSharp.IO.IGES
             }
 
             countD = await WriteDirectorySection(iges, entities);
-            
-            foreach (var e in entities)
-            {
-                e.GenerateParameterData();// Regenerate Parameter Data for Directory Pointer update
-            }
             countP = await WriteParameterSectionAsync(iges, entities);
 
             WriteTerminateSection(iges, countS, countG, countD, countP);

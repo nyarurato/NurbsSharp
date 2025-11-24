@@ -383,7 +383,7 @@ namespace UnitTests.IO
 
             using (FileStream fs = new FileStream("test_curve.igs", FileMode.Create, FileAccess.Write))
             {
-                await IGESExporter.ExportAsync(curve, fs);
+                await IGESExporter.ExportAsync([curve], fs);
             }
             Console.WriteLine($"IGES curve file 'test_curve.igs' has been created. At Current :{Directory.GetCurrentDirectory()}");
             Assert.That(File.Exists("test_curve.igs"), Is.True);
