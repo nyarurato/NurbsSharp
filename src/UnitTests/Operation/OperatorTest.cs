@@ -201,5 +201,199 @@ namespace UnitTests.Operation
             }
         }
 
+        [Test]
+        public void KnotOperator_InsertKnot_Surface_UDirection()
+        {
+            // Create a simple planar surface
+            int degreeU = 2;
+            int degreeV = 1;
+            double[] knotsU = [0, 0, 0, 1, 1, 1];
+            double[] knotsV = [0, 0, 1, 1];
+            
+            ControlPoint[][] controlPoints = new ControlPoint[3][];
+            controlPoints[0] = [
+                new ControlPoint(0, 0, 0, 1),
+                new ControlPoint(0, 1, 0, 1)
+            ];
+            controlPoints[1] = [
+                new ControlPoint(1, 0, 0, 1),
+                new ControlPoint(1, 1, 0, 1)
+            ];
+            controlPoints[2] = [
+                new ControlPoint(2, 0, 0, 1),
+                new ControlPoint(2, 1, 0, 1)
+            ];
+
+            var surface = new NurbsSurface(degreeU, degreeV, 
+                new KnotVector(knotsU, degreeU), 
+                new KnotVector(knotsV, degreeV), 
+                controlPoints);
+
+            // Insert knot in U direction
+            double u = 0.5;
+            int times = 1;
+            var newSurface = KnotOperator.InsertKnot(surface, u, times, SurfaceDirection.U);
+
+            // Verify knot vector and control points size
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(newSurface.KnotVectorU.Knots, Has.Length.EqualTo(knotsU.Length + times));
+                Assert.That(newSurface.ControlPoints, Has.Length.EqualTo(controlPoints.Length + times));
+                Assert.That(newSurface.ControlPoints[0], Has.Length.EqualTo(controlPoints[0].Length));
+            }
+
+            // Verify shape preservation by sampling
+            double[] samplesU = [0.0, 0.25, 0.5, 0.75, 1.0];
+            double[] samplesV = [0.0, 0.5, 1.0];
+            
+            foreach (var su in samplesU)
+            {
+                foreach (var sv in samplesV)
+                {
+                    var pos_original = surface.GetPos(su, sv);
+                    var pos_new = newSurface.GetPos(su, sv);
+                    
+                    using (Assert.EnterMultipleScope())
+                    {
+                        Assert.That(pos_new.X, Is.EqualTo(pos_original.X).Within(1e-8));
+                        Assert.That(pos_new.Y, Is.EqualTo(pos_original.Y).Within(1e-8));
+                        Assert.That(pos_new.Z, Is.EqualTo(pos_original.Z).Within(1e-8));
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void KnotOperator_InsertKnot_Surface_VDirection()
+        {
+            // Create a simple planar surface
+            int degreeU = 1;
+            int degreeV = 2;
+            double[] knotsU = [0, 0, 1, 1];
+            double[] knotsV = [0, 0, 0, 1, 1, 1];
+            
+            ControlPoint[][] controlPoints = new ControlPoint[2][];
+            controlPoints[0] = [
+                new ControlPoint(0, 0, 0, 1),
+                new ControlPoint(0, 1, 0, 1),
+                new ControlPoint(0, 2, 0, 1)
+            ];
+            controlPoints[1] = [
+                new ControlPoint(1, 0, 0, 1),
+                new ControlPoint(1, 1, 0, 1),
+                new ControlPoint(1, 2, 0, 1)
+            ];
+
+            var surface = new NurbsSurface(degreeU, degreeV, 
+                new KnotVector(knotsU, degreeU), 
+                new KnotVector(knotsV, degreeV), 
+                controlPoints);
+
+            // Insert knot in V direction
+            double v = 0.5;
+            int times = 1;
+            var newSurface = KnotOperator.InsertKnot(surface, v, times, SurfaceDirection.V);
+
+            // Verify knot vector and control points size
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(newSurface.KnotVectorV.Knots, Has.Length.EqualTo(knotsV.Length + times));
+                Assert.That(newSurface.ControlPoints, Has.Length.EqualTo(controlPoints.Length));
+                Assert.That(newSurface.ControlPoints[0], Has.Length.EqualTo(controlPoints[0].Length + times));
+            }
+
+            // Verify shape preservation by sampling
+            double[] samplesU = [0.0, 0.5, 1.0];
+            double[] samplesV = [0.0, 0.25, 0.5, 0.75, 1.0];
+            
+            foreach (var su in samplesU)
+            {
+                foreach (var sv in samplesV)
+                {
+                    var pos_original = surface.GetPos(su, sv);
+                    var pos_new = newSurface.GetPos(su, sv);
+                    
+                    using (Assert.EnterMultipleScope())
+                    {
+                        Assert.That(pos_new.X, Is.EqualTo(pos_original.X).Within(1e-8));
+                        Assert.That(pos_new.Y, Is.EqualTo(pos_original.Y).Within(1e-8));
+                        Assert.That(pos_new.Z, Is.EqualTo(pos_original.Z).Within(1e-8));
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void KnotOperator_InsertKnot_Surface_CurvedSurface()
+        {
+            // Create a curved surface (cylindrical)
+            int degreeU = 2;
+            int degreeV = 1;
+            double[] knotsU = [0, 0, 0, 1, 1, 1];
+            double[] knotsV = [0, 0, 1, 1];
+            
+            double R = 2.0;
+            double w = 1.0 / Math.Sqrt(2.0);
+            
+            ControlPoint[][] controlPoints = new ControlPoint[3][];
+            controlPoints[0] = [
+                new ControlPoint(R, 0, 0, 1),
+                new ControlPoint(R, 0, 1, 1)
+            ];
+            controlPoints[1] = [
+                new ControlPoint(R, R, 0, w),
+                new ControlPoint(R, R, 1, w)
+            ];
+            controlPoints[2] = [
+                new ControlPoint(0, R, 0, 1),
+                new ControlPoint(0, R, 1, 1)
+            ];
+
+            var surface = new NurbsSurface(degreeU, degreeV, 
+                new KnotVector(knotsU, degreeU), 
+                new KnotVector(knotsV, degreeV), 
+                controlPoints);
+
+            // Insert knots in both directions
+            double u = 0.5;
+            var surfaceU = KnotOperator.InsertKnot(surface, u, 2, SurfaceDirection.U);
+            
+            double v = 0.5;
+            var surfaceUV = KnotOperator.InsertKnot(surfaceU, v, 1, SurfaceDirection.V);
+
+            // Verify knot vector sizes
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(surfaceU.KnotVectorU.Knots, Has.Length.EqualTo(knotsU.Length + 2));
+                Assert.That(surfaceUV.KnotVectorU.Knots, Has.Length.EqualTo(knotsU.Length + 2));
+                Assert.That(surfaceUV.KnotVectorV.Knots, Has.Length.EqualTo(knotsV.Length + 1));
+            }
+
+            // Verify shape preservation
+            double[] samplesU = [0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0];
+            double[] samplesV = [0.0, 0.3, 0.5, 0.7, 1.0];
+            
+            foreach (var su in samplesU)
+            {
+                foreach (var sv in samplesV)
+                {
+                    var pos_original = surface.GetPos(su, sv);
+                    var pos_afterU = surfaceU.GetPos(su, sv);
+                    var pos_afterUV = surfaceUV.GetPos(su, sv);
+                    
+                    using (Assert.EnterMultipleScope())
+                    {
+                        Assert.That(pos_afterU.X, Is.EqualTo(pos_original.X).Within(1e-8));
+                        Assert.That(pos_afterU.Y, Is.EqualTo(pos_original.Y).Within(1e-8));
+                        Assert.That(pos_afterU.Z, Is.EqualTo(pos_original.Z).Within(1e-8));
+                        
+                        Assert.That(pos_afterUV.X, Is.EqualTo(pos_original.X).Within(1e-8));
+                        Assert.That(pos_afterUV.Y, Is.EqualTo(pos_original.Y).Within(1e-8));
+                        Assert.That(pos_afterUV.Z, Is.EqualTo(pos_original.Z).Within(1e-8));
+                    }
+                }
+            }
+        }
+
     }
 }

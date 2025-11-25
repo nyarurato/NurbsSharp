@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simple BMP Exporter
 - ElevateDegree for surfaces in DegreeOperator
 - ReduceDegree for surfaces in DegreeOperator
+- InsertKnot for surfaces in KnotOperator
 
 ### Changed
 - Vector3Double, Vector4Double class -> readonly struct

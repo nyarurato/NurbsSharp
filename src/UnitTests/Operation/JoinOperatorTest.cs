@@ -372,8 +372,8 @@ namespace UnitTests.Operation
             {
                 Assert.That(joinedSurface.DegreeU, Is.EqualTo(degreeU));
                 Assert.That(joinedSurface.DegreeV, Is.EqualTo(degreeV));
-                Assert.That(joinedSurface.ControlPoints.Length, Is.GreaterThan(cp1.Length));
-                Assert.That(joinedSurface.ControlPoints[0].Length, Is.EqualTo(3));
+                Assert.That(joinedSurface.ControlPoints, Has.Length.GreaterThan(cp1.Length));
+                Assert.That(joinedSurface.ControlPoints[0], Has.Length.EqualTo(3));
             }
 
             // check a few sample points
@@ -447,8 +447,8 @@ namespace UnitTests.Operation
             {
                 Assert.That(joinedSurface.DegreeU, Is.EqualTo(degreeU));
                 Assert.That(joinedSurface.DegreeV, Is.EqualTo(degreeV));
-                Assert.That(joinedSurface.ControlPoints.Length, Is.EqualTo(3));
-                Assert.That(joinedSurface.ControlPoints[0].Length, Is.GreaterThan(cp1[0].Length));
+                Assert.That(joinedSurface.ControlPoints, Has.Length.EqualTo(3));
+                Assert.That(joinedSurface.ControlPoints[0], Has.Length.GreaterThan(cp1[0].Length));
             }
 
             // check a few sample points

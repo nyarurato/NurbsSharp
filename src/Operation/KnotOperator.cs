@@ -114,7 +114,87 @@ namespace NurbsSharp.Operation
             var (newKnots, newControlPoints) = InsertKnot(curve.Degree, curve.KnotVector.Knots, curve.ControlPoints, u, times);
             return new NurbsCurve(curve.Degree, new KnotVector(newKnots, curve.Degree), newControlPoints);
         }
-        //TODO: InsertKnotSurface
+
+        /// <summary>
+        /// (en) Inserts a knot into the NURBS surface multiple times in the specified direction while preserving the shape
+        /// (ja) 形状を保つようにNURBSサーフェスに指定方向で複数回ノットを挿入します
+        /// </summary>
+        /// <param name="surface">Target NURBS surface</param>
+        /// <param name="u">Knot value to insert</param>
+        /// <param name="times">Number of times to insert the knot</param>
+        /// <param name="direction">Direction (U or V) in which to insert the knot</param>
+        /// <returns>New NURBS surface with the knot inserted</returns>
+        public static NurbsSurface InsertKnot(NurbsSurface surface, double u, int times, SurfaceDirection direction)
+        {
+            if(direction == SurfaceDirection.U)
+            {
+                // Insert knot in U direction: treat each V-column as an independent curve
+                int nV = surface.ControlPoints[0].Length;
+                int oldNU = surface.ControlPoints.Length;
+                
+                // Extract control points for each V column and perform knot insertion
+                List<ControlPoint[]> newColumns = new List<ControlPoint[]>();
+                double[]? newKnots = null;
+                
+                for (int j = 0; j < nV; j++)
+                {
+                    // Extract control points for this V column (varying U)
+                    ControlPoint[] columnCPs = new ControlPoint[oldNU];
+                    for (int i = 0; i < oldNU; i++)
+                    {
+                        columnCPs[i] = surface.ControlPoints[i][j];
+                    }
+                    
+                    // Insert knot for this column
+                    var (colNewKnots, colNewControlPoints) = InsertKnot(surface.DegreeU, surface.KnotVectorU.Knots, columnCPs, u, times);
+                    newKnots = colNewKnots; // Same for all columns
+                    newColumns.Add(colNewControlPoints);
+                }
+                
+                // Rebuild control points 2D array [U][V]
+                int newNU = newColumns[0].Length;
+                ControlPoint[][] newCPs = new ControlPoint[newNU][];
+                for (int i = 0; i < newNU; i++)
+                {
+                    newCPs[i] = new ControlPoint[nV];
+                    for (int j = 0; j < nV; j++)
+                    {
+                        newCPs[i][j] = newColumns[j][i];
+                    }
+                }
+                
+                if (newKnots == null)
+                    throw new InvalidOperationException("Failed to insert knot: no columns processed.");
+                
+                return new NurbsSurface(surface.DegreeU, surface.DegreeV, new KnotVector(newKnots, surface.DegreeU), surface.KnotVectorV, newCPs);
+            }
+            else // V direction
+            {
+                // Insert knot in V direction: treat each U-row as an independent curve
+                int nU = surface.ControlPoints.Length;
+                int oldNV = surface.ControlPoints[0].Length;
+                
+                // Extract control points for each U row and perform knot insertion
+                ControlPoint[][] newCPs = new ControlPoint[nU][];
+                double[]? newKnots = null;
+                
+                for (int i = 0; i < nU; i++)
+                {
+                    // Extract control points for this U row (varying V)
+                    ControlPoint[] rowCPs = surface.ControlPoints[i]; // Already an array in V direction
+                    
+                    // Insert knot for this row
+                    var (rowNewKnots, rowNewControlPoints) = InsertKnot(surface.DegreeV, surface.KnotVectorV.Knots, rowCPs, u, times);
+                    newKnots = rowNewKnots; // Same for all rows
+                    newCPs[i] = rowNewControlPoints;
+                }
+                
+                if (newKnots == null)
+                    throw new InvalidOperationException("Failed to insert knot: no rows processed.");
+                
+                return new NurbsSurface(surface.DegreeU, surface.DegreeV, surface.KnotVectorU, new KnotVector(newKnots, surface.DegreeV), newCPs);
+            }
+        }
 
         //TODO: RemoveKnot method
         //TODO: RemoveKnot for surface/curve (future)
