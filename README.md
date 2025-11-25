@@ -7,6 +7,8 @@ It provides data structures, evaluators, topology operators, I/O and tessellatio
 
 [Japanese Readme](./README.ja.md)
 
+![test_freesurf_isometric_camera.bmp](https://github.com/user-attachments/files/23741209/test_freesurf_isometric_camera.bmp)
+
 ## Table of Contents
 
 - [Features](#features)

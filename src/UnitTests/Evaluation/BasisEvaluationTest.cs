@@ -31,7 +31,7 @@ namespace UnitTests.Evaluation
             Assert.That(span, Is.EqualTo(3));
 
             // knot vector multiplicity invalid case
-            knots = new double[] { 0, 0.2, 0.5, 1, 2, 2, 3, 3.5, 4 };
+            knots = [0, 0.2, 0.5, 1, 2, 2, 3, 3.5, 4];
             degree = 3;
             span = evaluator.ExposeFindSpan(degree, knots, 0.1);
             Assert.That(span, Is.EqualTo(3));

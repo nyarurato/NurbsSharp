@@ -580,5 +580,71 @@ namespace UnitTests.IO
             Assert.That(fileInfo.Length, Is.GreaterThan(0));
 
         }
+
+        [Test]
+        public async Task ExportFreeSurfWithIsometricCamera_ShouldCreateBMPFile()
+        {
+            // Create a simple NURBS surface
+            int degreeU = 3;
+            int degreeV = 3;
+            double[] knotsU = [0, 0, 0, 0, 0.5,1, 1, 1, 1];
+            double[] knotsV = [0, 0, 0, 0, 0.5,1, 1, 1, 1];
+            var knotVectorU = new KnotVector(knotsU, degreeU);
+            var knotVectorV = new KnotVector(knotsV, degreeV);
+            ControlPoint[][] controlPoints =
+            [
+                [
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(1.0, 0.0, 0.0, 1),
+                new ControlPoint(2.0, 0.0, 0.0, 1),
+                new ControlPoint(3.0, 0.0, 0.0, 1),
+                new ControlPoint(4.0, 0.0, 0.0, 1)
+                ],
+                [
+                new ControlPoint(0.0, 1.0, 0.5, 1),
+                new ControlPoint(1.0, 1.0, -1.5, 1),
+                new ControlPoint(2.0, 1.0, 4.0, 1),
+                new ControlPoint(3.0, 1.0, -3.0, 1),
+                new ControlPoint(4.0, 1.0, 0.5, 1)
+                ],
+                [
+                new ControlPoint(0.0, 2.0, 1.5, 1),
+                new ControlPoint(1.0, 2.0, 2.5, 1),
+                new ControlPoint(2.0, 2.0, 3.5, 0.7),
+                new ControlPoint(3.0, 2.0, 3.0, 1),
+                new ControlPoint(4.0, 2.0, 0.0, 1)
+                ],
+                [
+                new ControlPoint(0.0, 3.0, 0.5, 1),
+                new ControlPoint(1.5, 3.0, -1.5, 1),
+                new ControlPoint(2.5, 3.0, 2.0 ,1),
+                new ControlPoint(3.5, 3.0, -1.5, 1),
+                new ControlPoint(4.5, 3.0, -1.0, 1)
+                ],
+                [
+                new ControlPoint(0.0, 4.0, 0.5, 1),
+                new ControlPoint(1.0, 4.0, 0.5, 1),
+                new ControlPoint(2.0, 4.0, 0.0, 1),
+                new ControlPoint(3.0, 4.0, 0.0, 1),
+                new ControlPoint(4.0, 4.0, 0.0, 1) 
+                ],
+            ];
+            var nurbsSurface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
+            string filePath = "test_freesurf_isometric_camera.bmp";
+            // Clean up if file exists
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+            // Act - Export from isometric view
+            await BMPExporter.ExportWireframeAsync(
+                nurbsSurface,
+                filePath,
+                800, 800, 20, 20,
+                cameraPosition: new Vector3Double(5, 5,0.5)
+            );
+            // Assert
+            Assert.That(File.Exists(filePath), Is.True);
+            var fileInfo = new FileInfo(filePath);
+            Assert.That(fileInfo.Length, Is.GreaterThan(0));
+        }
     }
 }
