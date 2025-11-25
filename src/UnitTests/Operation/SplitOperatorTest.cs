@@ -158,7 +158,7 @@ namespace UnitTests.Operation
             var surface = new NurbsSurface(degreeU, degreeV, kvU, kvV, controlPoints);
 
             // Act: Split in U direction at u = 0.5
-            var (surface1, surface2) = SplitOperator.SplitSurface(surface, 0.5, SplitDirection.U);
+            var (surface1, surface2) = SplitOperator.SplitSurface(surface, 0.5, SurfaceDirection.U);
 
             using (Assert.EnterMultipleScope())
             {
@@ -182,7 +182,7 @@ namespace UnitTests.Operation
 
             foreach (var u in split_us)
             {
-                (surface1, surface2) = SplitOperator.SplitSurface(surface,u, SplitDirection.U);
+                (surface1, surface2) = SplitOperator.SplitSurface(surface,u, SurfaceDirection.U);
 
                 // Verify continuity at split point
                 foreach (var s in sample_points)
@@ -244,7 +244,7 @@ namespace UnitTests.Operation
             var surface = new NurbsSurface(degreeU, degreeV, kvU, kvV, controlPoints);
 
             // Act: Split in V direction at v = 0.5
-            var (surface1, surface2) = SplitOperator.SplitSurface(surface, 0.5, SplitDirection.V);
+            var (surface1, surface2) = SplitOperator.SplitSurface(surface, 0.5, SurfaceDirection.V);
 
             using (Assert.EnterMultipleScope())
             {
@@ -268,7 +268,7 @@ namespace UnitTests.Operation
 
             foreach (var v in split_us)
             {
-                (surface1, surface2) = SplitOperator.SplitSurface(surface, v, SplitDirection.V);
+                (surface1, surface2) = SplitOperator.SplitSurface(surface, v, SurfaceDirection.V);
 
                 // Verify continuity at split point
                 foreach (var s in sample_points)
@@ -320,7 +320,7 @@ namespace UnitTests.Operation
             double splitU = 0.5;
 
             // Act
-            var (surface1, surface2) = SplitOperator.SplitSurface(surface, splitU, SplitDirection.U);
+            var (surface1, surface2) = SplitOperator.SplitSurface(surface, splitU, SurfaceDirection.U);
 
             // Assert: Verify geometry continuity at split
             for (double v = 0; v <= 1; v += 0.1)
@@ -336,7 +336,7 @@ namespace UnitTests.Operation
 
             foreach (var u in split_us)
             {
-                (surface1, surface2) = SplitOperator.SplitSurface(surface, u, SplitDirection.U);
+                (surface1, surface2) = SplitOperator.SplitSurface(surface, u, SurfaceDirection.U);
 
                 // Verify continuity at split point
                 foreach (var s in sample_points)
@@ -388,7 +388,7 @@ namespace UnitTests.Operation
             double splitV = 0.5;
 
             // Act
-            var (surface1, surface2) = SplitOperator.SplitSurface(surface, splitV, SplitDirection.V);
+            var (surface1, surface2) = SplitOperator.SplitSurface(surface, splitV, SurfaceDirection.V);
 
             // Assert: Verify geometry continuity at split
             for (double u = 0; u <= 1; u += 0.1)
@@ -404,7 +404,7 @@ namespace UnitTests.Operation
 
             foreach (var v in split_us)
             {
-                (surface1, surface2) = SplitOperator.SplitSurface(surface, v, SplitDirection.V);
+                (surface1, surface2) = SplitOperator.SplitSurface(surface, v, SurfaceDirection.V);
 
                 // Verify continuity at split point
                 foreach (var s in sample_points)
@@ -455,7 +455,7 @@ namespace UnitTests.Operation
             var surface = new NurbsSurface(degreeU, degreeV, kvU, kvV, controlPoints);
 
             // Act
-            var (surface1, surface2) = SplitOperator.SplitSurface(surface, 0.5, SplitDirection.U);
+            var (surface1, surface2) = SplitOperator.SplitSurface(surface, 0.5, SurfaceDirection.U);
 
             using (Assert.EnterMultipleScope())
             {
@@ -471,7 +471,7 @@ namespace UnitTests.Operation
 
             foreach (var u in split_us)
             {
-                (surface1, surface2) = SplitOperator.SplitSurface(surface, u, SplitDirection.U);
+                (surface1, surface2) = SplitOperator.SplitSurface(surface, u, SurfaceDirection.U);
 
                 // Verify continuity at split point
                 foreach (var s in sample_points)
@@ -523,9 +523,9 @@ namespace UnitTests.Operation
 
             // Act & Assert
             Assert.Throws<ArgumentOutOfRangeException>(() =>
-                SplitOperator.SplitSurface(surface, 1.5, SplitDirection.U));
+                SplitOperator.SplitSurface(surface, 1.5, SurfaceDirection.U));
             Assert.Throws<ArgumentOutOfRangeException>(() =>
-                SplitOperator.SplitSurface(surface, -0.5, SplitDirection.V));
+                SplitOperator.SplitSurface(surface, -0.5, SurfaceDirection.V));
         }
 
         [Test]
@@ -533,7 +533,7 @@ namespace UnitTests.Operation
         {
             // Act & Assert
             Assert.Throws<ArgumentNullException>(() =>
-                SplitOperator.SplitSurface(null!, 0.5, SplitDirection.U));
+                SplitOperator.SplitSurface(null!, 0.5, SurfaceDirection.U));
         }
 
         [Test]
@@ -560,7 +560,7 @@ namespace UnitTests.Operation
             var surface = new NurbsSurface(degreeU, degreeV, kvU, kvV, controlPoints);
 
             // Act: Split at existing knot
-            var (surface1, surface2) = SplitOperator.SplitSurface(surface, 0.5, SplitDirection.U);
+            var (surface1, surface2) = SplitOperator.SplitSurface(surface, 0.5, SurfaceDirection.U);
 
             using (Assert.EnterMultipleScope())
             {
@@ -576,7 +576,7 @@ namespace UnitTests.Operation
 
             foreach (var u in split_us)
             {
-                (surface1, surface2) = SplitOperator.SplitSurface(surface, u, SplitDirection.U);
+                (surface1, surface2) = SplitOperator.SplitSurface(surface, u, SurfaceDirection.U);
 
                 // Verify continuity at split point
                 foreach (var s in sample_points)
@@ -658,9 +658,9 @@ namespace UnitTests.Operation
             {
                 foreach(var v in split_vs)
                 {
-                    var (surfaceU1, surfaceU2) = SplitOperator.SplitSurface(nurbsSurface, u, SplitDirection.U);
-                    var (surfaceU1V1, surfaceU1V2) = SplitOperator.SplitSurface(surfaceU1, v, SplitDirection.V);
-                    var (surfaceU2V1, surfaceU2V2) = SplitOperator.SplitSurface(surfaceU2, v, SplitDirection.V);
+                    var (surfaceU1, surfaceU2) = SplitOperator.SplitSurface(nurbsSurface, u, SurfaceDirection.U);
+                    var (surfaceU1V1, surfaceU1V2) = SplitOperator.SplitSurface(surfaceU1, v, SurfaceDirection.V);
+                    var (surfaceU2V1, surfaceU2V2) = SplitOperator.SplitSurface(surfaceU2, v, SurfaceDirection.V);
                     // Verify continuity at split point
                     foreach (var s in sample_points)
                     {

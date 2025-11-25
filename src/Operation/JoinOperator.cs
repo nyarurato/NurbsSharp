@@ -125,6 +125,251 @@ namespace NurbsSharp.Operation
             return new NurbsCurve(degree, newKnotVector, newControlPoints);
         }
 
-        // TODO: JoinSurfaces method can be implemented similarly, handling U and V directions.
+        /// <summary>
+        /// (en) Join two NURBS surfaces with C0 (positional) continuity along U or V direction.
+        /// The edges of surface1 and surface2 must match at the join location.
+        /// NOTE: This method does NOT guarantee C1 (tangent) continuity.
+        /// (ja) 2つのNURBSサーフェスをU方向またはV方向のエッジに沿ってC0（位置）連続性で結合します。
+        /// surface1とsurface2のエッジが結合位置で一致する必要があります。
+        /// 注意: このメソッドはC1（接線）連続性を保証しません。
+        /// </summary>
+        /// <param name="surface1">First surface</param>
+        /// <param name="surface2">Second surface</param>
+        /// <param name="direction">Direction of join (U or V)</param>
+        /// <param name="tolerance">Tolerance for edge matching</param>
+        /// <returns>Joined NURBS surface</returns>
+        /// <exception cref="ArgumentNullException">Thrown when surface1 or surface2 is null</exception>
+        /// <exception cref="InvalidOperationException">Thrown when edges don't match or sizes are incompatible</exception>
+        public static NurbsSurface JoinSurfaces(
+            NurbsSurface surface1,
+            NurbsSurface surface2,
+            SurfaceDirection direction,
+            double tolerance = 1e-6)
+        {
+            Guard.ThrowIfNull(surface1, nameof(surface1));
+            Guard.ThrowIfNull(surface2, nameof(surface2));
+
+            if (direction == SurfaceDirection.U)
+            {
+                return JoinSurfacesU(surface1, surface2, tolerance);
+            }
+            else
+            {
+                return JoinSurfacesV(surface1, surface2, tolerance);
+            }
+        }
+
+        /// <summary>
+        /// (en) Join two surfaces in U direction (surface1's Umax to surface2's Umin)
+        /// (ja) U方向で2つのサーフェスを結合（surface1のUmaxとsurface2のUmin）
+        /// </summary>
+        private static NurbsSurface JoinSurfacesU(NurbsSurface surface1, NurbsSurface surface2, double tolerance)
+        {
+            int degreeU1 = surface1.DegreeU;
+            int degreeU2 = surface2.DegreeU;
+            int degreeV1 = surface1.DegreeV;
+            int degreeV2 = surface2.DegreeV;
+
+            ControlPoint[][] cp1 = surface1.ControlPoints;
+            ControlPoint[][] cp2 = surface2.ControlPoints;
+
+            int nU1 = cp1.Length;
+            int nV1 = cp1[0].Length;
+            int nU2 = cp2.Length;
+            int nV2 = cp2[0].Length;
+
+            // Check that V dimensions match
+            if (nV1 != nV2)
+            {
+                throw new InvalidOperationException(
+                    $"V dimensions must match for U-direction join. Surface1 has {nV1} V control points, Surface2 has {nV2}.");
+            }
+
+            NurbsSurface surf1 = surface1;
+            NurbsSurface surf2 = surface2;
+
+            // Elevate V degree if needed (orthogonal direction must match)
+            if (degreeV1 != degreeV2)
+            {
+                int targetDegreeV = Math.Max(degreeV1, degreeV2);
+                if (degreeV1 < targetDegreeV)
+                {
+                    surf1 = DegreeOperator.ElevateDegree(surf1, 0, targetDegreeV - degreeV1);
+                }
+                if (degreeV2 < targetDegreeV)
+                {
+                    surf2 = DegreeOperator.ElevateDegree(surf2, 0, targetDegreeV - degreeV2);
+                }
+                // Update references
+                cp1 = surf1.ControlPoints;
+                cp2 = surf2.ControlPoints;
+                nV1 = cp1[0].Length;
+                nV2 = cp2[0].Length;
+            }
+
+            // Verify edges match by sampling points
+            double[] vSamples = [0, 0.25, 0.5, 0.75, 1];
+            var knots1U = surf1.KnotVectorU.Knots;
+            var knots2U = surf2.KnotVectorU.Knots;
+            double uMax1 = knots1U[^1];
+            double uMin2 = knots2U[0];
+
+            foreach (var v in vSamples)
+            {
+                var edge1 = surf1.GetPos(uMax1, v);
+                var edge2 = surf2.GetPos(uMin2, v);
+                if (edge1.DistanceTo(edge2) > tolerance)
+                {
+                    throw new InvalidOperationException(
+                        $"Edges do not match at v={v}. Distance: {edge1.DistanceTo(edge2)}");
+                }
+            }
+
+            // Join curves in U direction for each V index
+            List<NurbsCurve> joinedCurves = [];
+
+            for (int vIndex = 0; vIndex < nV1; vIndex++)
+            {
+                // Extract U-direction curves for this V index
+                ControlPoint[] curve1CP = new ControlPoint[nU1];
+                for (int uIndex = 0; uIndex < nU1; uIndex++)
+                {
+                    curve1CP[uIndex] = cp1[uIndex][vIndex];
+                }
+
+                ControlPoint[] curve2CP = new ControlPoint[nU2];
+                for (int uIndex = 0; uIndex < nU2; uIndex++)
+                {
+                    curve2CP[uIndex] = cp2[uIndex][vIndex];
+                }
+
+                var curve1 = new NurbsCurve(surf1.DegreeU, surf1.KnotVectorU, curve1CP);
+                var curve2 = new NurbsCurve(surf2.DegreeU, surf2.KnotVectorU, curve2CP);
+
+                // Join the curves
+                var joinedCurve = JoinCurves(curve1, curve2, tolerance);
+
+                joinedCurves.Add(joinedCurve);
+            }
+
+            // Reconstruct surface from joined curves
+            int newNU = joinedCurves[0].ControlPoints.Length;
+            ControlPoint[][] newControlPoints = new ControlPoint[newNU][];
+            for (int uIndex = 0; uIndex < newNU; uIndex++)
+            {
+                newControlPoints[uIndex] = new ControlPoint[nV1];
+                for (int vIndex = 0; vIndex < nV1; vIndex++)
+                {
+                    newControlPoints[uIndex][vIndex] = joinedCurves[vIndex].ControlPoints[uIndex];
+                }
+            }
+
+            return new NurbsSurface(
+                joinedCurves[0].Degree,
+                surf1.DegreeV,
+                joinedCurves[0].KnotVector,
+                surf1.KnotVectorV,
+                newControlPoints);
+        }
+
+        /// <summary>
+        /// (en) Join two surfaces in V direction (surface1's Vmax to surface2's Vmin)
+        /// (ja) V方向で2つのサーフェスを結合（surface1のVmaxとsurface2のVmin）
+        /// </summary>
+        private static NurbsSurface JoinSurfacesV(NurbsSurface surface1, NurbsSurface surface2, double tolerance)
+        {
+            int degreeU1 = surface1.DegreeU;
+            int degreeU2 = surface2.DegreeU;
+            int degreeV1 = surface1.DegreeV;
+            int degreeV2 = surface2.DegreeV;
+
+            ControlPoint[][] cp1 = surface1.ControlPoints;
+            ControlPoint[][] cp2 = surface2.ControlPoints;
+
+            int nU1 = cp1.Length;
+            int nV1 = cp1[0].Length;
+            int nU2 = cp2.Length;
+            int nV2 = cp2[0].Length;
+
+            // Check that U dimensions match
+            if (nU1 != nU2)
+            {
+                throw new InvalidOperationException(
+                    $"U dimensions must match for V-direction join. Surface1 has {nU1} U control points, Surface2 has {nU2}.");
+            }
+
+            NurbsSurface surf1 = surface1;
+            NurbsSurface surf2 = surface2;
+
+            // Elevate U degree if needed (orthogonal direction must match)
+            if (degreeU1 != degreeU2)
+            {
+                int targetDegreeU = Math.Max(degreeU1, degreeU2);
+                if (degreeU1 < targetDegreeU)
+                {
+                    surf1 = DegreeOperator.ElevateDegree(surf1, targetDegreeU - degreeU1, 0);
+                }
+                if (degreeU2 < targetDegreeU)
+                {
+                    surf2 = DegreeOperator.ElevateDegree(surf2, targetDegreeU - degreeU2, 0);
+                }
+                // Update references
+                cp1 = surf1.ControlPoints;
+                cp2 = surf2.ControlPoints;
+                nU1 = cp1.Length;
+                nU2 = cp2.Length;
+            }
+
+            // Verify edges match by sampling points
+            double[] uSamples = [0, 0.25, 0.5, 0.75, 1];
+            var knots1V = surf1.KnotVectorV.Knots;
+            var knots2V = surf2.KnotVectorV.Knots;
+            double vMax1 = knots1V[^1];
+            double vMin2 = knots2V[0];
+
+            foreach (var u in uSamples)
+            {
+                var edge1 = surf1.GetPos(u, vMax1);
+                var edge2 = surf2.GetPos(u, vMin2);
+                if (edge1.DistanceTo(edge2) > tolerance)
+                {
+                    throw new InvalidOperationException(
+                        $"Edges do not match at u={u}. Distance: {edge1.DistanceTo(edge2)}");
+                }
+            }
+
+            // Join curves in V direction for each U index
+            List<NurbsCurve> joinedCurves = [];
+
+            for (int uIndex = 0; uIndex < nU1; uIndex++)
+            {
+                // Extract V-direction curves for this U index
+                ControlPoint[] curve1CP = cp1[uIndex];
+                ControlPoint[] curve2CP = cp2[uIndex];
+
+                var curve1 = new NurbsCurve(surf1.DegreeV, surf1.KnotVectorV, curve1CP);
+                var curve2 = new NurbsCurve(surf2.DegreeV, surf2.KnotVectorV, curve2CP);
+
+                // Join the curves
+                var joinedCurve = JoinCurves(curve1, curve2, tolerance);
+
+                joinedCurves.Add(joinedCurve);
+            }
+
+            // Reconstruct surface from joined curves
+            int newNV = joinedCurves[0].ControlPoints.Length;
+            ControlPoint[][] newControlPoints = new ControlPoint[nU1][];
+            for (int uIndex = 0; uIndex < nU1; uIndex++)
+            {
+                newControlPoints[uIndex] = joinedCurves[uIndex].ControlPoints;
+            }
+
+            return new NurbsSurface(
+                surf1.DegreeU,
+                joinedCurves[0].Degree,
+                surf1.KnotVectorU,
+                joinedCurves[0].KnotVector,
+                newControlPoints);
+        }
     }
 }

@@ -12,22 +12,6 @@ using NurbsSharp.Operation;
 namespace NurbsSharp.Operation
 {
     /// <summary>
-    /// (en) Direction for splitting NURBS surfaces
-    /// (ja) NURBSサーフェスを分割する方向
-    /// </summary>
-    public enum SplitDirection
-    {
-        /// <summary>
-        /// Split along U direction
-        /// </summary>
-        U,
-        /// <summary>
-        /// Split along V direction
-        /// </summary>
-        V
-    }
-
-    /// <summary>
     /// (en) Operator for splitting NURBS
     /// (ja) NURBSを分割するためのオペレーター
     /// </summary>
@@ -101,11 +85,11 @@ namespace NurbsSharp.Operation
         /// <returns>Tuple of two NURBS surfaces (surface1, surface2)</returns>
         /// <exception cref="ArgumentNullException">Thrown when surface is null</exception>
         /// <exception cref="ArgumentOutOfRangeException">Thrown when parameter is out of range</exception>
-        public static (NurbsSurface surface1, NurbsSurface surface2) SplitSurface(NurbsSurface surface, double parameter, SplitDirection direction)
+        public static (NurbsSurface surface1, NurbsSurface surface2) SplitSurface(NurbsSurface surface, double parameter, SurfaceDirection direction)
         {
             Guard.ThrowIfNull(surface, nameof(surface));
 
-            if (direction == SplitDirection.U)
+            if (direction == SurfaceDirection.U)
             {
                 return SplitSurfaceU(surface, parameter);
             }
