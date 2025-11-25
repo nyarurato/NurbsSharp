@@ -277,6 +277,21 @@ namespace NurbsSharp.Core
         }
 
         /// <summary>
+        /// (en) Convert to System.Numerics.Vector4
+        /// (ja) System.Numerics.Vector4 に変換する
+        /// </summary>
+        /// <returns></returns>
+        public Vector4 ToVector4()
+        {
+            return new Vector4((float)X, (float)Y, (float)Z, (float)W);
+        }
+
+        public static explicit operator Vector4(Vector4Double v)
+        {
+            return v.ToVector4();
+        }
+
+        /// <summary>
         /// return string representation
         /// </summary>
         /// <returns></returns>

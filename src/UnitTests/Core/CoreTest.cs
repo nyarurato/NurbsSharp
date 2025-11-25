@@ -144,6 +144,17 @@ namespace UnitTests.Core
                 Assert.That(v.Z, Is.EqualTo(3.0));
                 Assert.That(v.W, Is.EqualTo(4.0));
             }
+            Vector4 vSys = v.ToVector4();
+            Assert.That(vSys, Is.TypeOf(typeof(Vector4)));
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(vSys.X, Is.EqualTo((float)v.X));
+                Assert.That(vSys.Y, Is.EqualTo((float)v.Y));
+                Assert.That(vSys.Z, Is.EqualTo((float)v.Z));
+                Assert.That(vSys.W, Is.EqualTo((float)v.W));
+            }
+            Vector4 v2 = (Vector4)v;
+            Assert.That(v2, Is.TypeOf(typeof(Vector4)));
         }
 
         [Test]
@@ -156,6 +167,17 @@ namespace UnitTests.Core
                 Assert.That(v.Y, Is.EqualTo(2.0));
                 Assert.That(v.Z, Is.EqualTo(3.0));
             }
+
+            Vector3 vSys = v.ToVector3();
+            Assert.That(vSys, Is.TypeOf(typeof(Vector3)));
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(vSys.X, Is.EqualTo((float)v.X));
+                Assert.That(vSys.Y, Is.EqualTo((float)v.Y));
+                Assert.That(vSys.Z, Is.EqualTo((float)v.Z));
+            }
+            Vector3 v2 = (Vector3)v;
+            Assert.That(v2, Is.TypeOf(typeof(Vector3)));
         }
 
         [Test]
@@ -164,6 +186,7 @@ namespace UnitTests.Core
             Vector3Double v1 = new Vector3Double(1.0, 2.0, 3.0);
             Vector3Double v2 = new Vector3Double(4.0, 5.0, 6.0);
             Vector3Double v3 = v1 + v2;
+            Assert.That(v3, Is.EqualTo(new Vector3Double(5.0, 7.0, 9.0)));
             using (Assert.EnterMultipleScope())
             {
                 Assert.That(v3.X, Is.EqualTo(5.0));
@@ -361,6 +384,181 @@ namespace UnitTests.Core
                 Assert.That(zero.Z, Is.Zero);
             }
         }
+
+        [Test]
+        public void Vector3DoubleSubtractionOperatorCheck()
+        {
+            Vector3Double v1 = new Vector3Double(5.0, 7.0, 9.0);
+            Vector3Double v2 = new Vector3Double(1.0, 2.0, 3.0);
+            Vector3Double v3 = v1 - v2;
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(v3.X, Is.EqualTo(4.0));
+                Assert.That(v3.Y, Is.EqualTo(5.0));
+                Assert.That(v3.Z, Is.EqualTo(6.0));
+            }
+
+            v1 = new Vector3Double(0.0, 0.0, 0.0);
+            v2 = new Vector3Double(1.0, 2.0, 3.0);
+            v3 = v1 - v2;
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(v3.X, Is.EqualTo(-1.0));
+                Assert.That(v3.Y, Is.EqualTo(-2.0));
+                Assert.That(v3.Z, Is.EqualTo(-3.0));
+            }
+        }
+
+        [Test]
+        public void Vector3DoubleEqualityOperatorCheck()
+        {
+            Vector3Double v1 = new Vector3Double(1.0, 2.0, 3.0);
+            Vector3Double v2 = new Vector3Double(1.0, 2.0, 3.0);
+            Vector3Double v3 = new Vector3Double(1.0, 2.0, 4.0);
+
+            // == operator
+            Assert.That(v1 == v2, Is.True);
+            Assert.That(v1 == v3, Is.False);
+
+            // != operator
+            Assert.That(v1 != v3, Is.True);
+            Assert.That(v1 != v2, Is.False);
+
+            // Edge case: zero vectors
+            Vector3Double zero1 = Vector3Double.Zero;
+            Vector3Double zero2 = new Vector3Double(0.0, 0.0, 0.0);
+            Assert.That(zero1 == zero2, Is.True);
+        }
+
+        [Test]
+        public void Vector3DoubleEqualsMethodCheck()
+        {
+            Vector3Double v1 = new Vector3Double(1.0, 2.0, 3.0);
+            Vector3Double v2 = new Vector3Double(1.0, 2.0, 3.0);
+            Vector3Double v3 = new Vector3Double(1.0, 2.0, 4.0);
+
+            // Equals(Vector3Double)
+            Assert.That(v1.Equals(v2), Is.True);
+            Assert.That(v1.Equals(v3), Is.False);
+
+            // Equals(object)
+            Assert.That(v1.Equals((object)v2), Is.True);
+            Assert.That(v1.Equals((object)v3), Is.False);
+            Assert.That(v1.Equals(null), Is.False);
+            Assert.That(v1.Equals("not a vector"), Is.False);
+        }
+
+        [Test]
+        public void Vector3DoubleGetHashCodeCheck()
+        {
+            Vector3Double v1 = new Vector3Double(1.0, 2.0, 3.0);
+            Vector3Double v2 = new Vector3Double(1.0, 2.0, 3.0);
+            Vector3Double v3 = new Vector3Double(1.0, 2.0, 4.0);
+
+            // Equal vectors should have equal hash codes
+            Assert.That(v1.GetHashCode(), Is.EqualTo(v2.GetHashCode()));
+
+            // Different vectors may have different hash codes (not guaranteed, but likely)
+            // We just verify it doesn't throw
+            Assert.DoesNotThrow(() => _ = v3.GetHashCode());
+        }
+
+        [Test]
+        public void Vector3DoubleToStringCheck()
+        {
+            Vector3Double v = new Vector3Double(1.0, 2.5, 3.75);
+            string str = v.ToString();
+            Assert.That(str, Is.EqualTo("(1, 2.5, 3.75)"));
+        }
+
+        [Test]
+        public void Vector4DoubleSubtractionOperatorCheck()
+        {
+            Vector4Double w1 = new Vector4Double(6.0, 8.0, 10.0, 12.0);
+            Vector4Double w2 = new Vector4Double(1.0, 2.0, 3.0, 4.0);
+            Vector4Double w3 = w1 - w2;
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(w3.X, Is.EqualTo(5.0));
+                Assert.That(w3.Y, Is.EqualTo(6.0));
+                Assert.That(w3.Z, Is.EqualTo(7.0));
+                Assert.That(w3.W, Is.EqualTo(8.0));
+            }
+
+            w1 = new Vector4Double(0.0, 0.0, 0.0, 0.0);
+            w2 = new Vector4Double(1.0, 2.0, 3.0, 4.0);
+            w3 = w1 - w2;
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(w3.X, Is.EqualTo(-1.0));
+                Assert.That(w3.Y, Is.EqualTo(-2.0));
+                Assert.That(w3.Z, Is.EqualTo(-3.0));
+                Assert.That(w3.W, Is.EqualTo(-4.0));
+            }
+        }
+
+        [Test]
+        public void Vector4DoubleEqualityOperatorCheck()
+        {
+            Vector4Double w1 = new Vector4Double(1.0, 2.0, 3.0, 4.0);
+            Vector4Double w2 = new Vector4Double(1.0, 2.0, 3.0, 4.0);
+            Vector4Double w3 = new Vector4Double(1.0, 2.0, 3.0, 5.0);
+
+            // == operator
+            Assert.That(w1 == w2, Is.True);
+            Assert.That(w1 == w3, Is.False);
+
+            // != operator
+            Assert.That(w1 != w3, Is.True);
+            Assert.That(w1 != w2, Is.False);
+
+            // Edge case: zero vectors
+            Vector4Double zero1 = new Vector4Double(0.0, 0.0, 0.0, 0.0);
+            Vector4Double zero2 = new Vector4Double(0.0, 0.0, 0.0, 0.0);
+            Assert.That(zero1 == zero2, Is.True);
+        }
+
+        [Test]
+        public void Vector4DoubleEqualsMethodCheck()
+        {
+            Vector4Double w1 = new Vector4Double(1.0, 2.0, 3.0, 4.0);
+            Vector4Double w2 = new Vector4Double(1.0, 2.0, 3.0, 4.0);
+            Vector4Double w3 = new Vector4Double(1.0, 2.0, 3.0, 5.0);
+
+            // Equals(Vector4Double)
+            Assert.That(w1.Equals(w2), Is.True);
+            Assert.That(w1.Equals(w3), Is.False);
+
+            // Equals(object)
+            Assert.That(w1.Equals((object)w2), Is.True);
+            Assert.That(w1.Equals((object)w3), Is.False);
+            Assert.That(w1.Equals(null), Is.False);
+            Assert.That(w1.Equals("not a vector"), Is.False);
+        }
+
+        [Test]
+        public void Vector4DoubleGetHashCodeCheck()
+        {
+            Vector4Double w1 = new Vector4Double(1.0, 2.0, 3.0, 4.0);
+            Vector4Double w2 = new Vector4Double(1.0, 2.0, 3.0, 4.0);
+            Vector4Double w3 = new Vector4Double(1.0, 2.0, 3.0, 5.0);
+
+            // Equal vectors should have equal hash codes
+            Assert.That(w1.GetHashCode(), Is.EqualTo(w2.GetHashCode()));
+
+            // Different vectors may have different hash codes (not guaranteed, but likely)
+            // We just verify it doesn't throw
+            Assert.DoesNotThrow(() => _ = w3.GetHashCode());
+        }
+
+        [Test]
+        public void Vector4DoubleToStringCheck()
+        {
+            Vector4Double w = new Vector4Double(1.0, 2.5, 3.75, 4.25);
+            string str = w.ToString();
+            Assert.That(str, Is.EqualTo("(1, 2.5, 3.75, 4.25)"));
+        }
+
         /*
          * 
          * LinAlg tests

@@ -87,5 +87,34 @@ namespace UnitTests.Geometry
                 }
             }
         }
+
+        [Test]
+        public void TestMesh()
+        {
+            Vector3Double[] vertices =
+            [
+                new Vector3Double(0, 0, 0),
+                new Vector3Double(1, 0, 0),
+                new Vector3Double(1, 1, 0),
+                new Vector3Double(0, 1, 0),
+            ];
+            int[][] faces =
+            [
+                [0, 1, 2],
+                [0, 2, 3],
+            ];
+            var mesh = new Mesh();
+            mesh.Vertices = vertices;
+            mesh.Indexes = [.. faces.SelectMany(f => f)];
+            //check
+            for(int i = 0; i < faces.Length; i++)
+            {
+                for(int j = 0; j < faces[i].Length; j++)
+                {
+                    Assert.That(mesh.Indexes[i * 3 + j], Is.EqualTo(faces[i][j]));
+                }
+            }
+
+        }
     }
 }
