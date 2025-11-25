@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - JoinCurves method in JoinOperator
+- JoinSurfaces method in JoinOperator (U and V direction joining)
 - SplitSurface method in SplitOperator (U and V direction splitting)
 - Simple BMP Exporter
 - ElevateDegree for surfaces in DegreeOperator

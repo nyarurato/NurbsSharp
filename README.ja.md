@@ -22,14 +22,14 @@ NURBS Sharpは.NET向けの依存関係なしのNURBS（非一様有理 B-スプ
 
 - NURBS曲線・サーフェスの生成および評価
 - トポロジー演算：次数変更、ノット挿入/削除、結合/分割
-- 入出力ヘルパー：`OBJ`/`STL`出力（メッシュのみ）、`IGES`入出力（NURBSのみ）
+- 入出力ヘルパー：`OBJ`/`STL`出力（メッシュのみ）、`IGES`入出力（NURBSのみ）、`BMP`出力（簡易）
 - 曲線・サーフェス用のテッセレーションユーティリティ
 - 対応ターゲット：.NET 8、 .NET Standard 2.1
 
 ## 制限事項
 
 - **ノットベクトル (Knot Vector)**: 現在、"Clamped" ノットベクトルのみサポートしています（多重度 = 次数 + 1）。
-- **トポロジー操作**: `SplitSurface`、`RemoveKnot`、`RefineKnot`、および `Join`（曲線用）は未実装です。
+- **トポロジー操作**: `RemoveKnot`は未実装です。
 - **IGESサポート**:
     - **インポート**: Entity Type 126 (Rational B-spline curve) と 128 (Rational B-spline surface) のみサポートしています。
     - **エクスポート**: NURBSエンティティのみサポートしています。メッシュのエクスポートはサポートされていません。
@@ -91,8 +91,8 @@ using (var fs = new FileStream("test_output.stl", FileMode.Create, FileAccess.Wr
 }
 ```
 
-他の例： https://github.com/nyarurato/NurbsSharpSample
-または Github Wiki
+サンプルプロジェクト: https://github.com/nyarurato/NurbsSharpSample  
+Github Wiki: https://github.com/nyarurato/NurbsSharp/wiki/Samples  
 
 
 ## ドキュメント

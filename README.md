@@ -23,14 +23,14 @@ It provides data structures, evaluators, topology operators, I/O and tessellatio
 
 - Generation and evaluation of NURBS curves and surfaces
 - Topology operators: degree, knot insertion/removal, join/split
-- IO helpers: simple OBJ/STL export for ONLY Mesh, IGES import / export for ONLY NURBS
+- IO helpers: simple OBJ/STL export for ONLY Mesh, IGES import / export for ONLY NURBS, simple BMP export
 - Tessellation utilities for curves and surfaces
 - Targets: .NET 8 and .NET Standard 2.1
 
 ## Limitations
 
 - **Knot Vector**: Currently, only "Clamped" knot vectors are supported (multiplicity = degree + 1).
-- **Topology Operations**: `SplitSurface`, `RemoveKnot`, `RefineKnot`, and `Join` (for Curves) are not yet implemented.
+- **Topology Operations**:  `JoinSurface` are not yet implemented.
 - **IGES Support**:
     - **Import**: Only supports Entity Type 126 (Rational B-spline curve) and 128 (Rational B-spline surface).
     - **Export**: Only supports NURBS entities. Mesh export is not supported.
@@ -92,8 +92,8 @@ using (var fs = new FileStream("test_output.stl", FileMode.Create, FileAccess.Wr
 }
 ```
 
-Other examples: https://github.com/nyarurato/NurbsSharpSample
-or Github Wiki
+Examples Project: https://github.com/nyarurato/NurbsSharpSample  
+Github Wiki: https://github.com/nyarurato/NurbsSharp/wiki/Samples  
 
 ## Documentation
 
