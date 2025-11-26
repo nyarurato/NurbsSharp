@@ -13,6 +13,7 @@ namespace NurbsSharp.Geometry
     /// </summary>
     public class Mesh : IGeometry
     {
+        BoundingBox? _boundingBox;
         /// <summary>
         /// (en) Array of vertices
         /// (ja) 頂点の配列
@@ -23,6 +24,18 @@ namespace NurbsSharp.Geometry
         /// (ja) 三角形のインデックスの配列（連続する3つの整数が1つの三角形を表す）
         /// </summary>
         public int[] Indexes { get; set; }
+
+        /// <summary>
+        /// Bounding box by control points
+        /// </summary>
+        public BoundingBox BoundingBox
+        {
+            get
+            {
+                _boundingBox ??= BoundingBox.FromPoints(Vertices);
+                return _boundingBox.Value;
+            }
+        }
 
         /// <summary>
         /// Constructor

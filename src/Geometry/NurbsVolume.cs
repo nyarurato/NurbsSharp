@@ -40,7 +40,20 @@ namespace NurbsSharp.Geometry
         /// <summary>
         /// Control points grid [U][V][W]
         /// </summary>
-        public ControlPoint[][][] ControlPoints { get; set; }
+        public ControlPoint[][][] ControlPoints { get; private set; }
+
+        private BoundingBox? _boundingBox;
+        /// <summary>
+        /// Bounding box by control points
+        /// </summary>
+        public BoundingBox BoundingBox
+        {
+            get
+            {
+                _boundingBox ??= BoundingBox.FromControlPoints(ControlPoints);
+                return _boundingBox.Value;
+            }
+        }
 
         /// <summary>
         /// Constructor

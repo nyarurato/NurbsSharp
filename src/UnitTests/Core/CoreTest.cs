@@ -1021,5 +1021,166 @@ namespace UnitTests.Core
             Assert.That(str, Does.Contain("Min"));
             Assert.That(str, Does.Contain("Max"));
         }
+
+        /*
+         * Ray tests
+         */
+        [Test]
+        public void RayBasicTest()
+        {
+            // Constructor test with normalization
+            var origin = new Vector3Double(1, 2, 3);
+            var direction = new Vector3Double(3, 0, 4); // magnitude = 5
+            var ray = new Ray(origin, direction);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(ray.Origin, Is.EqualTo(origin));
+                Assert.That(ray.IsNormalized, Is.True);
+                Assert.That(ray.Direction.magnitude, Is.EqualTo(1.0).Within(1e-10));
+            }
+
+            // Constructor without normalization
+            var rayUnnormalized = new Ray(origin, direction, normalize: false);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(rayUnnormalized.IsNormalized, Is.False);
+                Assert.That(rayUnnormalized.Direction, Is.EqualTo(direction));
+            }
+
+            // Zero vector should throw
+            Assert.Throws<ArgumentException>(() => new Ray(origin, Vector3Double.Zero));
+        }
+
+        [Test]
+        public void RayPointAtTest()
+        {
+            var origin = new Vector3Double(1, 2, 3);
+            var direction = new Vector3Double(1, 0, 0); //normalized
+            var ray = new Ray(origin, direction);
+
+            // t = 0 should return origin
+            Assert.That(ray.PointAt(0), Is.EqualTo(origin));// (1,2,3) * (0,0,0)
+
+            // t = 5 should return origin + 5 * direction
+            var expected = new Vector3Double(6, 2, 3);
+            Assert.That(ray.PointAt(5), Is.EqualTo(expected));//(1,2,3) + 5*(1,0,0) = (6,2,3)
+
+            // Negative t (mathematically valid, but represents opposite direction)
+            var negative = ray.PointAt(-2);
+            Assert.That(negative, Is.EqualTo(new Vector3Double(-1, 2, 3)));// (1,2,3) + -2*(1,0,0) = (-1,2,3)
+        }
+
+
+        [Test]
+        public void RayNormalizedTest()
+        {
+            var origin = new Vector3Double(1, 2, 3);
+            var direction = new Vector3Double(3, 0, 4); // magnitude = 5
+            
+            // Create unnormalized ray
+            var ray = new Ray(origin, direction, normalize: false);
+            Assert.That(ray.IsNormalized, Is.False);
+
+            // Get normalized version
+            var normalized = ray.Normalized();
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(normalized.IsNormalized, Is.True);
+                Assert.That(normalized.Direction.magnitude, Is.EqualTo(1.0).Within(1e-10));
+                Assert.That(normalized.Origin, Is.EqualTo(origin));
+            }
+
+            // Normalizing already normalized ray should return same ray
+            var alreadyNormalized = new Ray(origin, direction, normalize: true);
+            var normalized2 = alreadyNormalized.Normalized();
+            Assert.That(normalized2, Is.EqualTo(alreadyNormalized));
+        }
+
+        [Test]
+        public void RayTranslateTest()
+        {
+            var origin = new Vector3Double(1, 2, 3);
+            var direction = new Vector3Double(1, 0, 0);
+            var ray = new Ray(origin, direction);
+
+            var offset = new Vector3Double(5, 10, 15);
+            var translated = ray.Translate(offset);// (1,2,3) + (5,10,15) = (6,12,18)
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(translated.Origin, Is.EqualTo(new Vector3Double(6, 12, 18)));
+                Assert.That(translated.Direction, Is.EqualTo(direction));
+            }
+
+            // Zero translation
+            var notTranslated = ray.Translate(Vector3Double.Zero);
+            Assert.That(notTranslated.Origin, Is.EqualTo(origin));
+        }
+
+        [Test]
+        public void RayEqualityTest()
+        {
+            var origin1 = new Vector3Double(1, 2, 3);
+            var direction1 = new Vector3Double(1, 0, 0);
+            var ray1 = new Ray(origin1, direction1);
+            var ray2 = new Ray(origin1, direction1);
+
+            var origin2 = new Vector3Double(2, 3, 4);
+            var ray3 = new Ray(origin2, direction1);
+
+            using (Assert.EnterMultipleScope())
+            {
+                bool eq = ray1 == ray2;
+                Assert.That(eq, Is.True);
+
+                eq = ray1.Equals(ray2);
+                Assert.That(eq, Is.True);
+
+                eq = ray1 != ray3;
+                Assert.That(eq, Is.True);
+                
+                eq = ray1.Equals(ray3);
+                Assert.That(eq, Is.False);
+            }
+
+            // GetHashCode test
+            Assert.That(ray1.GetHashCode(), Is.EqualTo(ray2.GetHashCode()));
+        }
+
+        [Test]
+        public void RayToStringTest()
+        {
+            var ray = new Ray(
+                new Vector3Double(1, 2, 3),
+                new Vector3Double(1, 0, 0)
+            );
+
+            var str = ray.ToString();
+            Assert.That(str, Does.Contain("Ray"));
+            Assert.That(str, Does.Contain("Origin"));
+            Assert.That(str, Does.Contain("Direction"));
+        }
+
+        [Test]
+        public void RayNormalizationAccuracyTest()
+        {
+            // Test various direction vectors for normalization accuracy
+            var testVectors = new[]
+            {
+                new Vector3Double(1, 1, 1),
+                new Vector3Double(3, 4, 0),
+                new Vector3Double(1, 2, 2),
+                new Vector3Double(0.1, 0.2, 0.3),
+                new Vector3Double(100, 200, 300)
+            };
+
+            foreach (var direction in testVectors)
+            {
+                var ray = new Ray(Vector3Double.Zero, direction, normalize: true);
+                Assert.That(ray.Direction.magnitude, Is.EqualTo(1.0).Within(1e-10),
+                    $"Direction {direction} failed normalization");
+            }
+        }
     }
 }

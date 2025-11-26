@@ -12,6 +12,8 @@ namespace NurbsSharp.Geometry
     /// </summary>
     public class NurbsSurface:IGeometry
     {
+        private BoundingBox? _boundingBox;
+
         /// <summary>
         /// Degree in U direction
         /// </summary>
@@ -36,7 +38,19 @@ namespace NurbsSharp.Geometry
         /// i  [CP20, CP21, CP22, ...], <br/>
         /// r  [...   ...   ...  ...]] 
         /// </summary>
-        public ControlPoint[][] ControlPoints { get; set; }
+        public ControlPoint[][] ControlPoints { get; private set; }
+
+        /// <summary>
+        /// Bounding box by control points
+        /// </summary>
+        public BoundingBox BoundingBox
+        {
+            get
+            {
+                _boundingBox ??= BoundingBox.FromControlPoints(ControlPoints);
+                return _boundingBox.Value;
+            }
+        }
 
         /// <summary>
         /// Constructor

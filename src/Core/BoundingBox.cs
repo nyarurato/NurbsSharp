@@ -156,6 +156,27 @@ namespace NurbsSharp.Core
         }
 
         /// <summary>
+        /// (en) Create a bounding box from 3D control points array (for volumes)
+        /// (ja) 3次元制御点配列から境界ボックスを作成（ボリューム用）
+        /// </summary>
+        /// <param name="controlPoints"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static BoundingBox FromControlPoints(ControlPoint[][][] controlPoints)
+        {
+            Guard.ThrowIfNull(controlPoints, nameof(controlPoints));
+            if (controlPoints.Length == 0)
+                throw new ArgumentException("Control points array cannot be empty.", nameof(controlPoints));
+
+            var allPoints = controlPoints.SelectMany(
+                matrix => matrix.SelectMany(
+                    row => row.Select(cp => cp.Position)
+                )
+            );
+            return FromPoints(allPoints);
+        }
+
+        /// <summary>
         /// (en) Check if a point is contained within the bounding box
         /// (ja) 点が境界ボックス内に含まれるか確認
         /// </summary>

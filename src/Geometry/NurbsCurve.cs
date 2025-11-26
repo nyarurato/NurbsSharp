@@ -12,6 +12,7 @@ namespace NurbsSharp.Geometry
     /// </summary>
     public class NurbsCurve:IGeometry
     {
+        private BoundingBox? _boundingBox;
         /// <summary>
         /// (en) Degree of the NURBS curve
         /// (ja) NURBS曲線の次数
@@ -29,7 +30,19 @@ namespace NurbsSharp.Geometry
         /// (en) Control points of the NURBS curve
         /// (ja) NURBS曲線の制御点
         /// </summary>
-        public ControlPoint[] ControlPoints { get; set; }
+        public ControlPoint[] ControlPoints { get; private set; }
+
+        /// <summary>
+        /// Bounding box by control points
+        /// </summary>
+        public BoundingBox BoundingBox
+        {
+            get
+            {
+                _boundingBox ??= BoundingBox.FromControlPoints(ControlPoints);
+                return _boundingBox.Value;
+            }
+        }
 
         /// <summary>
         /// Constructor
