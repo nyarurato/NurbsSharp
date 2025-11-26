@@ -8,8 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-
+- BoundingBox
+- Ray
+- Ray-Box Intersector
+- Ray-Mesh Intersector
 ### Changed
+- Add boundingbox variable to NURBS, Mesh
 
 ### Fixed
 

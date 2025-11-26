@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace UnitTests.Intersection
 {
     [TestFixture]
-    public class RayBoxTest
+    public class RayBoxIntersectorTest
     {
         [Test]
         public void RayBoxIntersects_RayHitsBox()
