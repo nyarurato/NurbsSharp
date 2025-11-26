@@ -2,6 +2,8 @@ using System;
 
 namespace NurbsSharp.Core
 {
+    //TODO: Consider using Vector3(float) for performance optimization
+
     /// <summary>
     /// (en) Represents a ray with an origin point and a direction vector
     /// (ja) 原点と方向ベクトルを持つレイを表す
@@ -62,7 +64,7 @@ namespace NurbsSharp.Core
         {
             return Origin + Direction * t;
         }
-        
+
         /// <summary>
         /// (en) Get a normalized version of this ray
         /// (ja) このレイの正規化版を取得

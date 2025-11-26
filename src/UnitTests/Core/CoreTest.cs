@@ -763,19 +763,17 @@ namespace UnitTests.Core
             }
 
             // 2D array test
-            var controlPoints2D = new[]
-            {
-                new[]
-                {
+            ControlPoint[][] controlPoints2D = [
+                [
+                
                     new ControlPoint(-5, -5, 0, 1),
                     new ControlPoint(-5, 5, 0, 1)
-                },
-                new[]
-                {
+                ],
+                [
                     new ControlPoint(5, -5, 10, 1),
                     new ControlPoint(5, 5, 10, 1)
-                }
-            };
+                ]
+            ];
 
             var box2D = BoundingBox.FromControlPoints(controlPoints2D);
 
@@ -998,10 +996,17 @@ namespace UnitTests.Core
 
             using (Assert.EnterMultipleScope())
             {
-                Assert.That(box1.Equals(box2), Is.True);
-                Assert.That(box1 == box2, Is.True);
-                Assert.That(box1.Equals(box3), Is.False);
-                Assert.That(box1 != box3, Is.True);
+                bool eq = box1.Equals(box2);
+                Assert.That(eq, Is.True);
+
+                eq = box1 == box2;
+                Assert.That(eq, Is.True);
+
+                eq = box1.Equals(box3);
+                Assert.That(eq, Is.False);
+
+                eq = box1 != box3;
+                Assert.That(eq, Is.True);
             }
 
             // GetHashCode test
