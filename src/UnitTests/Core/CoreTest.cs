@@ -416,18 +416,28 @@ namespace UnitTests.Core
             Vector3Double v2 = new Vector3Double(1.0, 2.0, 3.0);
             Vector3Double v3 = new Vector3Double(1.0, 2.0, 4.0);
 
-            // == operator
-            Assert.That(v1 == v2, Is.True);
-            Assert.That(v1 == v3, Is.False);
+            using (Assert.EnterMultipleScope())
+            {
+                // == operator
+                bool eq = v1 == v2;
+                Assert.That(eq, Is.True);
 
-            // != operator
-            Assert.That(v1 != v3, Is.True);
-            Assert.That(v1 != v2, Is.False);
+                eq = v1 == v3;
+                Assert.That(eq, Is.False);
+
+                // != operator
+                eq = v1 != v3;
+                Assert.That(eq, Is.True);
+
+                eq = v1 != v2;
+                Assert.That(eq, Is.False);
+            }
 
             // Edge case: zero vectors
             Vector3Double zero1 = Vector3Double.Zero;
             Vector3Double zero2 = new Vector3Double(0.0, 0.0, 0.0);
-            Assert.That(zero1 == zero2, Is.True);
+            var eq2 = zero1 == zero2;
+            Assert.That(eq2, Is.True);
         }
 
         [Test]
@@ -437,15 +447,28 @@ namespace UnitTests.Core
             Vector3Double v2 = new Vector3Double(1.0, 2.0, 3.0);
             Vector3Double v3 = new Vector3Double(1.0, 2.0, 4.0);
 
-            // Equals(Vector3Double)
-            Assert.That(v1.Equals(v2), Is.True);
-            Assert.That(v1.Equals(v3), Is.False);
+            using (Assert.EnterMultipleScope())
+            {
+                // Equals(Vector3Double)
+                bool eq = v1.Equals(v2);
+                Assert.That(eq, Is.True);
 
-            // Equals(object)
-            Assert.That(v1.Equals((object)v2), Is.True);
-            Assert.That(v1.Equals((object)v3), Is.False);
-            Assert.That(v1.Equals(null), Is.False);
-            Assert.That(v1.Equals("not a vector"), Is.False);
+                eq = v1.Equals(v3);
+                Assert.That(eq, Is.False);
+
+                // Equals(object)
+                eq = v1.Equals((object)v2);
+                Assert.That(eq, Is.True);
+
+                eq = v1.Equals((object)v3);
+                Assert.That(eq, Is.False);
+
+                eq = v1.Equals(null);
+                Assert.That(eq, Is.False);
+
+                eq = v1.Equals("not a vector");
+                Assert.That(eq, Is.False);
+            }
         }
 
         [Test]
@@ -504,18 +527,28 @@ namespace UnitTests.Core
             Vector4Double w2 = new Vector4Double(1.0, 2.0, 3.0, 4.0);
             Vector4Double w3 = new Vector4Double(1.0, 2.0, 3.0, 5.0);
 
-            // == operator
-            Assert.That(w1 == w2, Is.True);
-            Assert.That(w1 == w3, Is.False);
+            using (Assert.EnterMultipleScope())
+            {
+                // == operator
+                bool eq = w1 == w2;
+                Assert.That(eq, Is.True);
 
-            // != operator
-            Assert.That(w1 != w3, Is.True);
-            Assert.That(w1 != w2, Is.False);
+                eq = w1 == w3;
+                Assert.That(eq, Is.False);
+
+                // != operator
+                eq = w1 != w3;
+                Assert.That(eq, Is.True);
+
+                eq = w1 != w2;
+                Assert.That(eq, Is.False);
+            }
 
             // Edge case: zero vectors
             Vector4Double zero1 = new Vector4Double(0.0, 0.0, 0.0, 0.0);
             Vector4Double zero2 = new Vector4Double(0.0, 0.0, 0.0, 0.0);
-            Assert.That(zero1 == zero2, Is.True);
+            var eq2 = zero1 == zero2;
+            Assert.That(eq2, Is.True);
         }
 
         [Test]
@@ -525,15 +558,28 @@ namespace UnitTests.Core
             Vector4Double w2 = new Vector4Double(1.0, 2.0, 3.0, 4.0);
             Vector4Double w3 = new Vector4Double(1.0, 2.0, 3.0, 5.0);
 
-            // Equals(Vector4Double)
-            Assert.That(w1.Equals(w2), Is.True);
-            Assert.That(w1.Equals(w3), Is.False);
+            using (Assert.EnterMultipleScope())
+            {
+                // Equals(Vector4Double)
+                bool eq = w1.Equals(w2);
+                Assert.That(eq, Is.True);
 
-            // Equals(object)
-            Assert.That(w1.Equals((object)w2), Is.True);
-            Assert.That(w1.Equals((object)w3), Is.False);
-            Assert.That(w1.Equals(null), Is.False);
-            Assert.That(w1.Equals("not a vector"), Is.False);
+                eq = w1.Equals(w3);
+                Assert.That(eq, Is.False);
+
+                // Equals(object)
+                eq = w1.Equals((object)w2);
+                Assert.That(eq, Is.True);
+
+                eq = w1.Equals((object)w3);
+                Assert.That(eq, Is.False);
+
+                eq = w1.Equals(null);
+                Assert.That(eq, Is.False);
+
+                eq = w1.Equals((object)w3);
+                Assert.That(eq, Is.False);
+            }
         }
 
         [Test]
@@ -631,6 +677,349 @@ namespace UnitTests.Core
             Assert.Throws<ArgumentOutOfRangeException>(() => Guard.ThrowIfNegativeOrZero(value, nameof(value)));
             value = 1;
             Assert.DoesNotThrow(() => Guard.ThrowIfNegativeOrZero(value, nameof(value)));
+        }
+
+        /*
+         * BoundingBox tests
+         */
+        [Test]
+        public void BoundingBoxBasicTest()
+        {
+            var min = new Vector3Double(0, 0, 0);
+            var max = new Vector3Double(10, 20, 30);
+            var box = new BoundingBox(min, max);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(box.Min, Is.EqualTo(min));
+                Assert.That(box.Max, Is.EqualTo(max));
+                Assert.That(box.IsValid, Is.True);
+            }
+
+            var expectedCenter = new Vector3Double(5, 10, 15);
+            var expectedSize = new Vector3Double(10, 20, 30);
+            double expectedVolume = 10 * 20 * 30;
+            double expectedSurfaceArea = 2 * (10 * 20 + 20 * 30 + 30 * 10);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(box.Center, Is.EqualTo(expectedCenter));
+                Assert.That(box.Size, Is.EqualTo(expectedSize));
+                Assert.That(box.Volume, Is.EqualTo(expectedVolume));
+                Assert.That(box.SurfaceArea, Is.EqualTo(expectedSurfaceArea));
+            }
+
+            // Invalid box
+            Assert.Throws<ArgumentException>(() =>
+            {
+                var invalidBox = new BoundingBox(max,min);
+            });
+        }
+
+        [Test]
+        public void BoundingBoxFromPointsTest()
+        {
+            var points = new[]
+            {
+                new Vector3Double(1, 2, 3),
+                new Vector3Double(5, 6, 7),
+                new Vector3Double(-1, 0, 2),
+                new Vector3Double(3, 8, 1)
+            };
+            // Max(5,8,7), Min(-1,0,1)
+            var box = BoundingBox.FromPoints(points);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(box.Min.X, Is.EqualTo(-1));
+                Assert.That(box.Min.Y, Is.EqualTo(0));
+                Assert.That(box.Min.Z, Is.EqualTo(1));
+                Assert.That(box.Max.X, Is.EqualTo(5));
+                Assert.That(box.Max.Y, Is.EqualTo(8));
+                Assert.That(box.Max.Z, Is.EqualTo(7));
+            }
+
+            // Empty test
+            Assert.Throws<ArgumentException>(() => BoundingBox.FromPoints(Array.Empty<Vector3Double>()));
+        }
+
+        [Test]
+        public void BoundingBoxFromControlPointsTest()
+        {
+            var controlPoints = new[]
+            {
+                new ControlPoint(0, 0, 0, 1),
+                new ControlPoint(10, 0, 0, 1),
+                new ControlPoint(10, 10, 0, 1),
+                new ControlPoint(0, 10, 5, 1)
+            };
+            // Min(0,0,0), Max(10,10,5)
+            var box = BoundingBox.FromControlPoints(controlPoints);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(box.Min, Is.EqualTo(new Vector3Double(0, 0, 0)));
+                Assert.That(box.Max, Is.EqualTo(new Vector3Double(10, 10, 5)));
+            }
+
+            // 2D array test
+            var controlPoints2D = new[]
+            {
+                new[]
+                {
+                    new ControlPoint(-5, -5, 0, 1),
+                    new ControlPoint(-5, 5, 0, 1)
+                },
+                new[]
+                {
+                    new ControlPoint(5, -5, 10, 1),
+                    new ControlPoint(5, 5, 10, 1)
+                }
+            };
+
+            var box2D = BoundingBox.FromControlPoints(controlPoints2D);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(box2D.Min, Is.EqualTo(new Vector3Double(-5, -5, 0)));
+                Assert.That(box2D.Max, Is.EqualTo(new Vector3Double(5, 5, 10)));
+            }
+        }
+
+        [Test]
+        public void BoundingBoxContainsTest()
+        {
+            var box = new BoundingBox(
+                new Vector3Double(0, 0, 0),
+                new Vector3Double(10, 10, 10)
+            );
+
+            using (Assert.EnterMultipleScope())
+            {
+                // Inside points
+                Assert.That(box.Contains(new Vector3Double(5, 5, 5)), Is.True);
+                Assert.That(box.Contains(new Vector3Double(0, 0, 0)), Is.True);
+                Assert.That(box.Contains(new Vector3Double(10, 10, 10)), Is.True);
+
+                // Outside points
+                Assert.That(box.Contains(new Vector3Double(-1, 5, 5)), Is.False);
+                Assert.That(box.Contains(new Vector3Double(5, 11, 5)), Is.False);
+                Assert.That(box.Contains(new Vector3Double(5, 5, 15)), Is.False);
+            }
+        }
+
+        [Test]
+        public void BoundingBoxIntersectsTest()
+        {
+            var box1 = new BoundingBox(
+                new Vector3Double(0, 0, 0),
+                new Vector3Double(10, 10, 10)
+            );
+
+            // Overlapping box
+            var box2 = new BoundingBox(
+                new Vector3Double(5, 5, 5),
+                new Vector3Double(15, 15, 15)
+            );
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(box1.Intersects(box2), Is.True);
+                Assert.That(box2.Intersects(box1), Is.True);
+            }
+
+            // Touching box
+            var box3 = new BoundingBox(
+                new Vector3Double(10, 0, 0),
+                new Vector3Double(20, 10, 10)
+            );
+            Assert.That(box1.Intersects(box3), Is.True);
+
+            // Separate box
+            var box4 = new BoundingBox(
+                new Vector3Double(20, 20, 20),
+                new Vector3Double(30, 30, 30)
+            );
+            Assert.That(box1.Intersects(box4), Is.False);
+
+            // Contained box
+            var box5 = new BoundingBox(
+                new Vector3Double(2, 2, 2),
+                new Vector3Double(8, 8, 8)
+            );
+            Assert.That(box1.Intersects(box5), Is.True);
+        }
+
+        [Test]
+        public void BoundingBoxUnionTest()
+        {
+            var box1 = new BoundingBox(
+                new Vector3Double(0, 0, 0),
+                new Vector3Double(10, 10, 10)
+            );
+
+            var box2 = new BoundingBox(
+                new Vector3Double(5, 5, 5),
+                new Vector3Double(20, 15, 12)
+            );
+
+            var union = box1.Union(box2);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(union.Min, Is.EqualTo(new Vector3Double(0, 0, 0)));
+                Assert.That(union.Max, Is.EqualTo(new Vector3Double(20, 15, 12)));
+            }
+
+            // Test commutativity
+            var union2 = box2.Union(box1);
+            Assert.That(union, Is.EqualTo(union2));
+        }
+
+        [Test]
+        public void BoundingBoxExpandTest()
+        {
+            var box = new BoundingBox(
+                new Vector3Double(0, 0, 0),
+                new Vector3Double(10, 10, 10)
+            );
+
+            var expanded = box.Expand(5);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(expanded.Min, Is.EqualTo(new Vector3Double(-5, -5, -5)));
+                Assert.That(expanded.Max, Is.EqualTo(new Vector3Double(15, 15, 15)));
+            }
+
+            // Zero expansion
+            var notExpanded = box.Expand(0);
+            Assert.That(notExpanded, Is.EqualTo(box));
+        }
+
+        [Test]
+        public void BoundingBoxSubdivideTest()
+        {
+            var box = new BoundingBox(
+                new Vector3Double(0, 0, 0),
+                new Vector3Double(10, 10, 10)
+            );
+
+            var octants = box.Subdivide();
+
+            // Should return 8 boxes
+            Assert.That(octants, Has.Length.EqualTo(8));
+
+            var center = new Vector3Double(5, 5, 5);
+
+            // Check first octant (min corner)
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(octants[0].Min, Is.EqualTo(new Vector3Double(0, 0, 0)));
+                Assert.That(octants[0].Max, Is.EqualTo(center));
+            }
+
+            // Check last octant (max corner)
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(octants[7].Min, Is.EqualTo(center));
+                Assert.That(octants[7].Max, Is.EqualTo(new Vector3Double(10, 10, 10)));
+            }
+
+            // All octants should have same volume
+            double expectedVolume = box.Volume / 8.0;
+            foreach (var octant in octants)
+            {
+                Assert.That(octant.Volume, Is.EqualTo(expectedVolume).Within(1e-10));
+            }
+        }
+
+        [Test]
+        public void BoundingBoxClosestPointTest()
+        {
+            var box = new BoundingBox(
+                new Vector3Double(0, 0, 0),
+                new Vector3Double(10, 10, 10)
+            );
+
+            // Point inside
+            var inside = new Vector3Double(5, 5, 5);
+            Assert.That(box.ClosestPoint(inside), Is.EqualTo(inside));
+
+            // Point outside
+            var outside = new Vector3Double(15, 5, 5);
+            var expectedClosest = new Vector3Double(10, 5, 5);
+            Assert.That(box.ClosestPoint(outside), Is.EqualTo(expectedClosest));
+
+            // Point outside in multiple dimensions
+            var outside2 = new Vector3Double(-5, 15, 5);
+            var expectedClosest2 = new Vector3Double(0, 10, 5);
+            Assert.That(box.ClosestPoint(outside2), Is.EqualTo(expectedClosest2));
+        }
+
+        [Test]
+        public void BoundingBoxDistanceToTest()
+        {
+            var box = new BoundingBox(
+                new Vector3Double(0, 0, 0),
+                new Vector3Double(10, 10, 10)
+            );
+
+            // Point inside (distance should be 0)
+            var inside = new Vector3Double(5, 5, 5);
+            Assert.That(box.DistanceTo(inside), Is.EqualTo(0));
+
+            // Point outside on one axis
+            var outside = new Vector3Double(15, 5, 5);
+            Assert.That(box.DistanceTo(outside), Is.EqualTo(5));
+
+            // Point outside on multiple axes
+            var outside2 = new Vector3Double(13, 13, 10);
+            double expectedDistance = Math.Sqrt(3 * 3 + 3 * 3);
+            Assert.That(box.DistanceTo(outside2), Is.EqualTo(expectedDistance).Within(1e-10));
+        }
+
+        [Test]
+        public void BoundingBoxEqualityTest()
+        {
+            var box1 = new BoundingBox(
+                new Vector3Double(0, 0, 0),
+                new Vector3Double(10, 10, 10)
+            );
+
+            var box2 = new BoundingBox(
+                new Vector3Double(0, 0, 0),
+                new Vector3Double(10, 10, 10)
+            );
+
+            var box3 = new BoundingBox(
+                new Vector3Double(0, 0, 0),
+                new Vector3Double(5, 5, 5)
+            );
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(box1.Equals(box2), Is.True);
+                Assert.That(box1 == box2, Is.True);
+                Assert.That(box1.Equals(box3), Is.False);
+                Assert.That(box1 != box3, Is.True);
+            }
+
+            // GetHashCode test
+            Assert.That(box1.GetHashCode(), Is.EqualTo(box2.GetHashCode()));
+        }
+
+        [Test]
+        public void BoundingBoxToStringTest()
+        {
+            var box = new BoundingBox(
+                new Vector3Double(0, 0, 0),
+                new Vector3Double(10, 10, 10)
+            );
+
+            var str = box.ToString();
+            Assert.That(str, Does.Contain("BoundingBox"));
+            Assert.That(str, Does.Contain("Min"));
+            Assert.That(str, Does.Contain("Max"));
         }
     }
 }
