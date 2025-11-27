@@ -217,6 +217,7 @@ namespace NurbsSharp.Intersection
             return false;
         }
     }
+    //TODO: Bounding Volume Hierarchy implementation
 
     /// <summary>
     /// (en) Represents a ray-mesh intersection result
