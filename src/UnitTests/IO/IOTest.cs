@@ -369,6 +369,20 @@ namespace UnitTests.IO
             Console.WriteLine($"IGES file 'test_outputB.igs' has been created. At Current :{Directory.GetCurrentDirectory()}");
             Assert.That(File.Exists("test_outputB.igs"), Is.True);
 
+            //out points
+            var points = controlPoints.Aggregate(new List<Vector3Double>(), (list, cpRow) =>
+            {
+                foreach (var cp in cpRow)
+                {
+                    list.Add(cp.Position);
+                }
+                return list;
+            });
+            using (var fs = new FileStream("test_outputB_points.igs", FileMode.Create, FileAccess.Write))
+            {
+                await IGESExporter.ExportAsync(points, fs);
+            }
+            Assert.That(File.Exists("test_outputB_points.igs"), Is.True);
         }
 
         [Test]
@@ -395,6 +409,24 @@ namespace UnitTests.IO
             }
             Console.WriteLine($"IGES curve file 'test_curve.igs' has been created. At Current :{Directory.GetCurrentDirectory()}");
             Assert.That(File.Exists("test_curve.igs"), Is.True);
+        }
+
+        [Test]
+        public async Task IgesExportPointsTest()
+        {
+            
+            var points = new List<Vector3Double>
+            {
+                new Vector3Double(0.0, 0.0, 0.0),
+                new Vector3Double(1.0, 1.0, 1.0),
+                new Vector3Double(2.0, 2.0, 2.0)
+            };
+            using (var fs = new FileStream("test_points.igs", FileMode.Create, FileAccess.Write))
+            {
+                await IGESExporter.ExportAsync(points, fs);
+            }
+            Console.WriteLine($"IGES points file 'test_points.igs' has been created. At Current :{Directory.GetCurrentDirectory()}");
+            Assert.That(File.Exists("test_points.igs"), Is.True);
         }
 
         [Test]

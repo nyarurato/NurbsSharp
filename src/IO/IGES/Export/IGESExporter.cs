@@ -115,6 +115,42 @@ namespace NurbsSharp.IO.IGES
         }
 
         /// <summary>
+        /// (en) Export Points to IGES format
+        /// (ja) 点群をIGES形式でエクスポートする
+        /// </summary>
+        /// <param name="points"></param>
+        /// <param name="stream"></param>
+        /// <param name="fileName"></param>
+        /// <param name="author"></param>
+        /// <returns></returns>
+        public static async Task<bool> ExportAsync(List<Vector3Double> points, Stream stream, string fileName = "model.igs", string author = "NurbsSharp")
+        {
+            Guard.ThrowIfNull(points, nameof(points));
+            Guard.ThrowIfNull(stream, nameof(stream));
+            using var writer = new StreamWriter(stream, Encoding.ASCII, 1024, leaveOpen: true);
+            var iges = new IgesWriter(writer);
+            int countS = 0, countG = 0, countD = 0, countP = 0;
+            countS = await WriteStartSection(iges, fileName, author);
+            countG = await WriteGlobalSection(iges);
+            var entities = new List<IIgesExportEntity>();
+            foreach (var point in points)
+            {
+                entities.Add(new IgesPoint(point));
+            };
+
+            //Prepare Directory / Parameter Section (Estimate Parameter Line Count)
+            foreach (var e in entities)
+            {
+                e.GenerateParameterData();
+            }
+            countD = await WriteDirectorySection(iges, entities);
+            countP = await WriteParameterSectionAsync(iges, entities);
+            WriteTerminateSection(iges, countS, countG, countD, countP);
+            await writer.FlushAsync();
+            return true;
+        }
+
+        /// <summary>
         /// Export Mesh (Not Supported Yet) 
         /// </summary>
         [Obsolete("IGES export:Export Mesh not support yet")]
