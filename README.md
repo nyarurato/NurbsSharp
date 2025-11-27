@@ -35,9 +35,8 @@ It provides data structures, evaluators, topology operators, I/O and tessellatio
 - **Topology Operations**:  `JoinSurface` are not yet implemented.
 - **IGES Support**:
     - **Import**: Only supports Entity Type 126 (Rational B-spline curve) and 128 (Rational B-spline surface).
-    - **Export**: Only supports NURBS entities. Mesh export is not supported.
+    - **Export**: Only supports NURBS and Point entities. Mesh export is not supported.
 - **Mesh Export (OBJ/STL)**: Only supports Mesh objects. Direct export from NURBS is not supported (tessellation required).
-- **Generation**: Approximation is not implemented yet (only Interpolation is available).
 
 ## Installation
 

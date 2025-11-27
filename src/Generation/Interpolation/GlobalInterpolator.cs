@@ -4,8 +4,6 @@ using NurbsSharp.Geometry;
 
 namespace NurbsSharp.Generation.Interpolation
 {
-    //TODO: Add Approximation method (another class?)
-
     /// <summary>
     /// (en) Global interpolation for NURBS curves and surfaces
     /// (ja) NURBS曲線とサーフェスのグローバル補間

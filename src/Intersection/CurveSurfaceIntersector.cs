@@ -12,6 +12,7 @@ namespace NurbsSharp.Intersection
     /// </summary>
     public static class CurveSurfaceIntersector
     {
+        //TODO: Implement marching method for better robustness
         /// <summary>
         /// (en) Tolerance for intersection convergence
         /// (ja) 交点収束の許容誤差
