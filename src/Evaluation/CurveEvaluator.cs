@@ -58,6 +58,36 @@ namespace NurbsSharp.Evaluation
         }
 
         /// <summary>
+        /// (en) Evaluates the homogeneous position (weighted) on the NURBS curve at the specified parameter u.
+        /// (ja) 指定したパラメータ u でNURBS曲線上の同次座標（重み付き）位置を評価します。
+        /// </summary>
+        /// <param name="curve"></param>
+        /// <param name="u"></param>
+        /// <returns></returns>
+        public static Vector4Double EvaluateHomogeneous(NurbsCurve curve, double u)
+        {
+            Guard.ThrowIfNull(curve, nameof(curve));
+
+            if (curve.KnotVector.Knots[0] > u || curve.KnotVector.Knots[curve.KnotVector.Length - 1] < u)
+                throw new ArgumentOutOfRangeException(nameof(u), "Parameter 'u' must be in the range [0, 1].");
+            if (curve.Degree < 1)
+                throw new ArgumentException("Curve degree must be at least 1.", nameof(curve));
+
+            int degree = curve.Degree;
+            var knots = curve.KnotVector.Knots;
+            var controlPoints = curve.ControlPoints;
+
+            if (u < knots[degree])
+                u = knots[degree];
+            else if (u > knots[knots.Length - degree - 1])
+                u = knots[knots.Length - degree - 1];
+
+            int k = FindSpan(degree, knots, u);
+
+            return DeBoor(degree, knots, k, controlPoints.Select(cp => cp.HomogeneousPosition).ToArray(), u);
+        }
+
+        /// <summary>
         /// (en) Evaluates the first derivative vector on the NURBS curve at the specified parameter u.
         /// (ja) 指定したパラメータ u でNURBS曲線上の一階微分ベクトルを評価します。
         /// </summary>

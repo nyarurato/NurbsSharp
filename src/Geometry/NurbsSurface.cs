@@ -215,6 +215,28 @@ namespace NurbsSharp.Geometry
         }
 
         /// <summary>
+        /// (en) Get isocurve at fixed U parameter (returns curve along V)
+        /// (ja) 固定されたUパラメータでのアイソカーブを取得する（V方向の曲線を返す）
+        /// </summary>
+        /// <param name="u"></param>
+        /// <returns></returns>
+        public NurbsCurve GetIsoCurveU(double u)
+        {
+            return Operation.SurfaceOperator.ExtractIsoCurveU(this, u);
+        }
+
+        /// <summary>
+        /// (en) Get isocurve at fixed V parameter (returns curve along U)
+        /// (ja) 固定されたVパラメータでのアイソカーブを取得する（U方向の曲線を返す）
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        public NurbsCurve GetIsoCurveV(double v)
+        {
+            return Operation.SurfaceOperator.ExtractIsoCurveV(this, v);
+        }
+
+        /// <summary>
         /// (en) Translate the whole surface by delta (in-place).
         /// (ja) サーフェスの全制御点を並進移動する（破壊的）。
         /// </summary>
