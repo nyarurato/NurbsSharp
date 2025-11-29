@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+### Removed
+
+### Deprecated
+
+## [0.1.2] - 2025-XX-XX
+### Added
 - BoundingBox
 - Ray
 - Ray-Box Intersector
@@ -17,14 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Least Squares Approximation for curves and surfaces
 - ApproximationOptions with parameterization type and clamped/free ends options
 - IGES Exporter: support for Point and NURBS entities
+- Surface Operator
 ### Changed
 - Add boundingbox variable to NURBS, Mesh
-
-### Fixed
-
-### Removed
-
-### Deprecated
 
 ## [0.1.1] - 2025-11-25
 ### Added

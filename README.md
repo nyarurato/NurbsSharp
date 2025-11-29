@@ -37,6 +37,7 @@ It provides data structures, evaluators, topology operators, I/O and tessellatio
     - **Import**: Only supports Entity Type 126 (Rational B-spline curve) and 128 (Rational B-spline surface).
     - **Export**: Only supports NURBS and Point entities. Mesh export is not supported.
 - **Mesh Export (OBJ/STL)**: Only supports Mesh objects. Direct export from NURBS is not supported (tessellation required).
+- **Intersection Calculations** : Currently may be unstable depending on initial conditions.
 
 ## Installation
 
