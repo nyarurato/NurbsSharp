@@ -459,7 +459,7 @@ namespace UnitTests.Operation
                 foreach (var v in samples_extend_dir)
                 {
                     Vector3Double estimatedPos;
-                    if (u <= 1.0)
+                    if (v <= 1.0)
                     {
                         estimatedPos = surface1.GetPos(u, v);
                     }
@@ -564,7 +564,7 @@ namespace UnitTests.Operation
         }
 
         [Test]
-        public void JoinSurfaces_DifferentDegrees_AutoElevation()
+        public void JoinSurfaces_DifferentDegrees_AutoElevationA()
         {
             // Create two surfaces with same V degree but different U degrees
             // They must have the same number of control points in V direction
@@ -639,6 +639,282 @@ namespace UnitTests.Operation
                 }
             }
         }
+
+         [Test]
+        public void JoinSurfaces_DifferentDegrees_AutoElevationB()
+        {
+            // Create two surfaces with same V degree but different U degrees
+            // They must have the same number of control points in V direction
+            int degreeU1 = 3;
+            int degreeU2 = 1;
+            int degreeV = 2;
+
+            // Surface1: 4x3 control points
+            var cp1 = new ControlPoint[degreeU1 + 1][];
+            for (int i = 0; i < degreeU1 + 1; i++)
+            {
+                cp1[i] = new ControlPoint[degreeV + 1];
+                for (int j = 0; j < degreeV + 1; j++)
+                {
+                    cp1[i][j] = new ControlPoint(i, j, 0, 1);
+                }
+            }
+
+            // Surface2: 2x3 control points (different U degree, same V degree and CP count)
+            var cp2 = new ControlPoint[degreeU2 + 1][];
+            for (int i = 0; i < degreeU2 + 1; i++)
+            {
+                cp2[i] = new ControlPoint[degreeV + 1];
+                for (int j = 0; j < degreeV + 1; j++)
+                {
+                    cp2[i][j] = new ControlPoint(i + degreeU1, j, 0, 1);
+                }
+            }
+
+            var kvU1 = KnotVector.GetClampedKnot(degreeU1, cp1.Length);
+            var kvU2 = KnotVector.GetClampedKnot(degreeU2, cp2.Length);
+            var kvV = KnotVector.GetClampedKnot(degreeV, cp1[0].Length);
+
+            var surface1 = new NurbsSurface(degreeU1, degreeV, kvU1, kvV, cp1);
+            // U end V: (2,0,0),(2,1,0),(2,2,0)
+
+            var surface2 = new NurbsSurface(degreeU2, degreeV, kvU2, kvV, cp2);
+            // U0 V: (2,0,0),(2,1,0),(2,2,0)
+
+            // Join in U direction - should auto-elevate degreeU to 3
+            var joinedSurface = JoinOperator.JoinSurfaces(surface1, surface2, SurfaceDirection.U);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(joinedSurface.DegreeU, Is.EqualTo(Math.Max(degreeU1, degreeU2)));
+                Assert.That(joinedSurface.DegreeV, Is.EqualTo(degreeV));
+            }
+
+            // check a few sample points
+            double[] samples_extend_dir = [0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+            double[] samples_other_dir = [0, 0.5, 1];
+            foreach (var u in samples_extend_dir)
+            {
+                foreach (var v in samples_other_dir)
+                {
+                    Vector3Double estimatedPos;
+                    if (u <= 1.0)
+                    {
+                        estimatedPos = surface1.GetPos(u, v);
+                    }
+                    else
+                    {
+                        estimatedPos = surface2.GetPos(u - 1.0, v);
+                    }
+                    var joinedPos = joinedSurface.GetPos(u, v);
+                    using (Assert.EnterMultipleScope())
+                    {
+                        Assert.That(joinedPos.X, Is.EqualTo(estimatedPos.X).Within(1e-6));
+                        Assert.That(joinedPos.Y, Is.EqualTo(estimatedPos.Y).Within(1e-6));
+                        Assert.That(joinedPos.Z, Is.EqualTo(estimatedPos.Z).Within(1e-6));
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void JoinSurfaces_DifferentDegrees_AutoElevationC()
+        {
+            int degreeV1 = 3;
+            int degreeV2 = 1;
+            int degreeU = 2;
+
+            // Surface1 3x4 control points
+            var cp1 = new ControlPoint[degreeU + 1][];
+            for (int i = 0; i < degreeU + 1; i++)
+            {
+                cp1[i] = new ControlPoint[degreeV1 + 1];
+                for (int j = 0; j < degreeV1 + 1; j++)
+                {
+                    cp1[i][j] = new ControlPoint(i, j, 0, 1);
+                }
+            }
+
+            // Surface2 3x2 control points (different V degree, same U degree and CP count)
+            var cp2 = new ControlPoint[degreeU + 1][];
+            for (int i = 0; i < degreeU + 1; i++)
+            {
+                cp2[i] = new ControlPoint[degreeV2 + 1];
+                for (int j = 0; j < degreeV2 + 1; j++)
+                {
+                    cp2[i][j] = new ControlPoint(i, j + degreeV1, 0, 1);
+                }
+            }
+
+            var kvU = KnotVector.GetClampedKnot(degreeU, cp1.Length);
+            var kvV1 = KnotVector.GetClampedKnot(degreeV1, cp1[0].Length);
+            var kvV2 = KnotVector.GetClampedKnot(degreeV2, cp2[0].Length);
+
+            var surface1 = new NurbsSurface(degreeU, degreeV1, kvU, kvV1, cp1);
+            // V end U: (0,degreeV1,0),(1,degreeV1,0),(2,degreeV1,0)
+
+            var surface2 = new NurbsSurface(degreeU, degreeV2, kvU, kvV2, cp2);
+            // V0 U: (0,degreeV1,0),(1,degreeV1,0),(2,degreeV1,0)
+
+            // Join in V direction - should auto-elevate degreeV to 3
+            var joinedSurface = JoinOperator.JoinSurfaces(surface1, surface2, SurfaceDirection.V);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(joinedSurface.DegreeU, Is.EqualTo(degreeU));
+                Assert.That(joinedSurface.DegreeV, Is.EqualTo(Math.Max(degreeV1, degreeV2)));
+            }
+
+
+            // check a few sample points
+            double[] samples_extend_dir = [0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+            double[] samples_other_dir = [0, 0.5, 1];
+            foreach (var v in samples_extend_dir)
+            {
+                foreach (var u in samples_other_dir)
+                {
+                    Vector3Double estimatedPos;
+                    if (v <= 1.0)
+                    {
+                        estimatedPos = surface1.GetPos(u, v);
+                    }
+                    else
+                    {
+                        estimatedPos = surface2.GetPos(u , v- 1.0);
+                    }
+                    var joinedPos = joinedSurface.GetPos(u, v);
+                    using (Assert.EnterMultipleScope())
+                    {
+                        Assert.That(joinedPos.X, Is.EqualTo(estimatedPos.X).Within(1e-6));
+                        Assert.That(joinedPos.Y, Is.EqualTo(estimatedPos.Y).Within(1e-6));
+                        Assert.That(joinedPos.Z, Is.EqualTo(estimatedPos.Z).Within(1e-6));
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void JoinSurfaces_DifferentDegrees_AutoElevationD()
+        {
+            int degreeV1 = 1;
+            int degreeV2 = 4;
+            int degreeU = 2;
+
+            // Surface1: 3x3 control points
+            var cp1 = new ControlPoint[degreeU + 1][];
+            for (int i = 0; i < degreeU + 1; i++)
+            {
+                cp1[i] = new ControlPoint[degreeV1 + 1];
+                for (int j = 0; j < degreeV1 + 1; j++)
+                {
+                    cp1[i][j] = new ControlPoint(i, j, 0, 1);
+                }
+            }
+
+            // Surface2: 4x3 control points (different V degree, same U degree and CP count)
+            var cp2 = new ControlPoint[degreeU + 1][];
+            for (int i = 0; i < degreeU + 1; i++)
+            {
+                cp2[i] = new ControlPoint[degreeV2 + 1];
+                for (int j = 0; j < degreeV2 + 1; j++)
+                {
+                    cp2[i][j] = new ControlPoint(i, j + degreeV1, 0, 1);
+                }
+            }
+
+            var kvU = KnotVector.GetClampedKnot(degreeU, cp1.Length);
+            var kvV1 = KnotVector.GetClampedKnot(degreeV1, cp1[0].Length);
+            var kvV2 = KnotVector.GetClampedKnot(degreeV2, cp2[0].Length);
+
+            var surface1 = new NurbsSurface(degreeU, degreeV1, kvU, kvV1, cp1);
+            // V end U: (0,degreeV1,0),(1,degreeV1,0),(2,degreeV1,0)
+
+            var surface2 = new NurbsSurface(degreeU, degreeV2, kvU, kvV2, cp2);
+            // V0 U: (0,degreeV1,0),(1,degreeV1,0),(2,degreeV1,0)
+
+            // Join in V direction - should auto-elevate degreeV to 3
+            var joinedSurface = JoinOperator.JoinSurfaces(surface1, surface2, SurfaceDirection.V);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(joinedSurface.DegreeU, Is.EqualTo(degreeU));
+                Assert.That(joinedSurface.DegreeV, Is.EqualTo(Math.Max(degreeV1, degreeV2)));
+            }
+
+
+            // check a few sample points
+            double[] samples_extend_dir = [0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+            double[] samples_other_dir = [0, 0.5, 1];
+            foreach (var v in samples_extend_dir)
+            {
+                foreach (var u in samples_other_dir)
+                {
+                    Vector3Double estimatedPos;
+                    if (v <= 1.0)
+                    {
+                        estimatedPos = surface1.GetPos(u, v);
+                    }
+                    else
+                    {
+                        estimatedPos = surface2.GetPos(u , v- 1.0);
+                    }
+                    var joinedPos = joinedSurface.GetPos(u, v);
+                    using (Assert.EnterMultipleScope())
+                    {
+                        Assert.That(joinedPos.X, Is.EqualTo(estimatedPos.X).Within(1e-6));
+                        Assert.That(joinedPos.Y, Is.EqualTo(estimatedPos.Y).Within(1e-6));
+                        Assert.That(joinedPos.Z, Is.EqualTo(estimatedPos.Z).Within(1e-6));
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void JoinSurfaces_DifferentDegrees_AutoElevationE()
+        {
+            int degreeU1 = 2;
+            int degreeU2 = 3;
+            int degreeV1 = 1;
+            int degreeV2 = 4;
+            
+            // Surface1: 3x3 control points
+            var cp1 = new ControlPoint[degreeU1 + 1][];
+            for (int i = 0; i < degreeU1 + 1; i++)
+            {
+                cp1[i] = new ControlPoint[degreeV1 + 1];
+                for (int j = 0; j < degreeV1 + 1; j++)
+                {
+                    cp1[i][j] = new ControlPoint(i, j, 0, 1);
+                }
+            }
+
+            // Surface2: 4x3 control points (different V degree, same U degree and CP count)
+            var cp2 = new ControlPoint[degreeU2 + 1][];
+            for (int i = 0; i < degreeU2 + 1; i++)
+            {
+                cp2[i] = new ControlPoint[degreeV2 + 1];
+                for (int j = 0; j < degreeV2 + 1; j++)
+                {
+                    cp2[i][j] = new ControlPoint(i, j + degreeV1, 0, 1);
+                }
+            }
+
+            var kvU1 = KnotVector.GetClampedKnot(degreeU1, cp1.Length);
+            var kvU2 = KnotVector.GetClampedKnot(degreeU2, cp2.Length);
+            var kvV1 = KnotVector.GetClampedKnot(degreeV1, cp1[0].Length);
+            var kvV2 = KnotVector.GetClampedKnot(degreeV2, cp2[0].Length);
+
+            var surface1 = new NurbsSurface(degreeU1, degreeV1, kvU1, kvV1, cp1);
+
+            var surface2 = new NurbsSurface(degreeU2, degreeV2, kvU2, kvV2, cp2);
+
+            // Join in U direction
+            Assert.Throws<InvalidOperationException>(() =>
+                JoinOperator.JoinSurfaces(surface1, surface2, SurfaceDirection.U)
+            );
+
+        }
+
 
         [Test]
         public void JoinSurfaces_EdgeMismatch_ThrowsException()

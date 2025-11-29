@@ -30,6 +30,12 @@ namespace NurbsSharp.Evaluation
         {
             Guard.ThrowIfNull(surface, nameof(surface));
 
+            //prameter range check, (clamped knot vector range)
+            if (u < surface.KnotVectorU.Knots[surface.DegreeU] || u > surface.KnotVectorU.Knots[^surface.DegreeU])
+                throw new ArgumentOutOfRangeException(nameof(u),$"Parameter u is out of knot vector range. u:{u} must in [{surface.KnotVectorU.Knots[surface.DegreeU]},{surface.KnotVectorU.Knots[^surface.DegreeU]}]");
+            if (v < surface.KnotVectorV.Knots[surface.DegreeV] || v > surface.KnotVectorV.Knots[^surface.DegreeV])
+                throw new ArgumentOutOfRangeException(nameof(v), $"Parameter v is outof knot vector range. v:{v} must in [{surface.KnotVectorV.Knots[surface.DegreeV]},{surface.KnotVectorV.Knots[^surface.DegreeV]}]");
+
             int degreeU = surface.DegreeU;
             int degreeV = surface.DegreeV;
 
