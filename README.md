@@ -18,14 +18,17 @@ It provides data structures, evaluators, topology operators, I/O and tessellatio
 - [Documentation](#documentation)
 - [Development](#development)
 - [Contributing](#contributing)
-- [Code of Conduct](#code-of-conduct)
 - [License](#license)
 
 ## Features
 
-- Generation and evaluation of NURBS curves and surfaces
-- Topology operators: degree, knot insertion/removal, join/split
-- IO helpers: simple OBJ/STL export for ONLY Mesh, IGES import / export for ONLY NURBS, simple BMP export
+- Generation and evaluation of NURBS curves, surfaces
+- Topology operators: degree elevation/reduction, knot insertion/removal/refinement, join/split
+- Generation capabilities: interpolation, least squares approximation, primitive shapes
+- Intersection calculations: Ray-Box, Ray-Mesh, Curve-Curve, Curve-Surface
+- IO helpers:
+  - Mesh only: OBJ/STL export, simple BMP export
+  - NURBS only: IGES import/export (Point, Curve, Surface entities supported)
 - Tessellation utilities for curves and surfaces
 - Targets: .NET 8 and .NET Standard 2.1
 
@@ -33,10 +36,10 @@ It provides data structures, evaluators, topology operators, I/O and tessellatio
 - **NURBS Surface**: `TrimSurface` is not yet implemented.
 - **Knot Vector**: Currently, only "Clamped" knot vectors are supported (multiplicity = degree + 1).
 - **IGES Support**:
-    - **Import**: Only supports Entity Type 126 (Rational B-spline curve) and 128 (Rational B-spline surface).
-    - **Export**: Only supports NURBS and Point entities. Mesh export is not supported.
+    - **Import**: Only supports Entity Type 126 (Rational B-spline curve), and 128 (Rational B-spline surface).
+    - **Export**: Only supports Point and NURBS entities. Mesh export is not supported.
 - **Mesh Export (OBJ/STL)**: Only supports Mesh objects. Direct export from NURBS is not supported (tessellation required).
-- **Intersection Calculations** : Currently may be unstable depending on initial conditions.
+- **Intersection Calculations**: Currently may be unstable depending on initial conditions. Surface-Surface intersection is not yet implemented.
 
 ## Installation
 
@@ -117,11 +120,14 @@ dotnet test -c Debug
 
 Project layout highlights:
 
-- `src/Core` — numeric helpers and core types
-- `src/Geometry` — `NurbsCurve`, `NurbsSurface`, `Mesh` etc.
-- `src/Evaluation` — curve/surface evaluators
-- `src/Operation` — topology operators (degree, knot, join, split)
-- `src/IO` — `OBJExporter`, `STLExporter`, minimal IGES helpers
+- `src/Core` — numeric helpers and core types (`BoundingBox`, `Ray`, `KnotVector`, `LinAlg`, etc.)
+- `src/Geometry` — `NurbsCurve`, `NurbsSurface`, `NurbsVolume`, `Mesh`, etc.
+- `src/Evaluation` — evaluators (curve/surface/volume)
+- `src/Operation` — topology operators (degree, knot, join, split, surface operators)
+- `src/Generation` — interpolation, least squares approximation, primitive shape generation
+- `src/Intersection` — intersection calculations (Ray-Box, Ray-Mesh, Curve-Curve, Curve-Surface, BVH structures)
+- `src/IO` — `OBJExporter`, `STLExporter`, `BMPExporter`, IGES import/export
+- `src/Tesselation` — tessellation (curve/surface)
 
 ## Contributing
 

@@ -9,6 +9,7 @@ using NurbsSharp.Evaluation;
 
 namespace NurbsSharp.Operation
 {
+    //TODO: add join with continuity options (G1, G2). it may be approximation like lofting.
     /// <summary>
     /// (en) Operator for joining NURBS
     /// (ja) NURBSを結合するためのオペレーター
