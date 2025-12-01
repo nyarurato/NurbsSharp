@@ -4,6 +4,7 @@ using NurbsSharp.Core;
 using NurbsSharp.Geometry;
 using NurbsSharp.Intersection;
 using NUnit.Framework;
+using System.Collections.Generic;
 
 namespace UnitTests.Intersection
 {
@@ -428,8 +429,8 @@ namespace UnitTests.Intersection
         {
             // Create a larger mesh with multiple triangles to test BVH behavior
             const int gridSize = 10;
-            var vertices = new System.Collections.Generic.List<Vector3Double>();
-            var indexes = new System.Collections.Generic.List<int>();
+            var vertices = new List<Vector3Double>();
+            var indexes = new List<int>();
 
             // Create a grid of triangles
             for (int x = 0; x < gridSize; x++)
@@ -478,8 +479,8 @@ namespace UnitTests.Intersection
         {
             // Create multiple horizontal planes at different heights
             const int planeCount = 5;
-            var vertices = new System.Collections.Generic.List<Vector3Double>();
-            var indexes = new System.Collections.Generic.List<int>();
+            var vertices = new List<Vector3Double>();
+            var indexes = new List<int>();
 
             for (int i = 0; i < planeCount; i++)
             {
@@ -524,8 +525,8 @@ namespace UnitTests.Intersection
         {
             // Create a very large mesh to test BVH performance benefit
             const int gridSize = 50; // 5000 triangles
-            var vertices = new System.Collections.Generic.List<Vector3Double>();
-            var indexes = new System.Collections.Generic.List<int>();
+            var vertices = new List<Vector3Double>();
+            var indexes = new List<int>();
 
             for (int x = 0; x < gridSize; x++)
             {
@@ -549,6 +550,7 @@ namespace UnitTests.Intersection
             }
 
             var mesh = new Mesh(vertices.ToArray(), indexes.ToArray());
+            var bvh = BVHBuilder.Build(mesh); // Ensure BVH is built
 
             // Multiple rays to test performance
             var rays = new[]
@@ -563,17 +565,15 @@ namespace UnitTests.Intersection
             
             foreach (var ray in rays)
             {
-                RayMeshIntersector.Intersects(ray, mesh, out _);
+                RayMeshIntersector.Intersects(ray, mesh, out _,bvh);
             }
 
             stopwatch.Stop();
 
-            // Just verify it completes in reasonable time (should be very fast with BVH)
-            // With 5000 triangles and BVH, this should complete in milliseconds
             Assert.That(stopwatch.ElapsedMilliseconds, Is.LessThan(1000), 
                 $"BVH performance test took too long: {stopwatch.ElapsedMilliseconds}ms");
 
-            TestContext.WriteLine($"BVH Performance: {rays.Length} rays vs {indexes.Count / 3} triangles = {stopwatch.ElapsedMilliseconds}ms");
+            TestContext.Out.WriteLine($"BVH Performance: {rays.Length} rays vs {indexes.Count / 3} triangles = {stopwatch.ElapsedMilliseconds}ms");
         }
 
         [Test]

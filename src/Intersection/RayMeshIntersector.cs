@@ -9,6 +9,40 @@ namespace NurbsSharp.Intersection
     /// (en) Provides ray-mesh intersection tests using Möller-Trumbore algorithm
     /// (ja) Möller-Trumboreアルゴリズムを使用したレイ-メッシュ交差判定を提供
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// (en) Usage example for BVH reuse:
+    /// <code>
+    /// // Build BVH once
+    /// BVHNode bvh = BVHBuilder.Build(mesh);
+    /// 
+    /// // Reuse BVH for multiple rays
+    /// foreach (var ray in rays)
+    /// {
+    ///     if (RayMeshIntersector.Intersects(ray, mesh, out var hit, bvh))
+    ///     {
+    ///         // Process hit
+    ///     }
+    /// }
+    /// </code>
+    /// </para>
+    /// <para>
+    /// (ja) BVH再利用の使用例:
+    /// <code>
+    /// // BVHを一度構築
+    /// BVHNode bvh = BVHBuilder.Build(mesh);
+    /// 
+    /// // 複数のレイでBVHを再利用
+    /// foreach (var ray in rays)
+    /// {
+    ///     if (RayMeshIntersector.Intersects(ray, mesh, out var hit, bvh))
+    ///     {
+    ///         // ヒットを処理
+    ///     }
+    /// }
+    /// </code>
+    /// </para>
+    /// </remarks>
     public static class RayMeshIntersector
     {
         /// <summary>
@@ -87,8 +121,15 @@ namespace NurbsSharp.Intersection
         /// <param name="ray">Ray to test</param>
         /// <param name="mesh">Mesh to test against</param>
         /// <param name="intersection">First intersection result (if any)</param>
+        /// <param name="bvh">Pre-built BVH (optional). If null, BVH will be built internally.</param>
         /// <returns>True if the ray intersects the mesh</returns>
-        public static bool Intersects(Ray ray, Mesh mesh, out RayMeshIntersection intersection)
+        /// <remarks>
+        /// (en) For better performance when testing multiple rays against the same mesh,
+        ///      build the BVH once using BVHBuilder.Build(mesh) and pass it to this method.
+        /// (ja) 同じメッシュに対して複数のレイをテストする場合、パフォーマンス向上のため
+        ///      BVHBuilder.Build(mesh)でBVHを一度構築し、このメソッドに渡してください。
+        /// </remarks>
+        public static bool Intersects(Ray ray, Mesh mesh, out RayMeshIntersection intersection, MeshBVHNode? bvh = null)
         {
             intersection = default;
 
@@ -100,8 +141,9 @@ namespace NurbsSharp.Intersection
             if (!RayBoxIntersector.Intersects(ray, mesh.BoundingBox))
                 return false;
 
-            // Build BVH
-            BVHNode bvh = BVHBuilder.Build(mesh);
+            // Build BVH if not provided
+            if (bvh == null)
+                bvh = BVHBuilder.Build(mesh);
 
             // Traverse BVH
             double closestT = double.PositiveInfinity;
@@ -121,7 +163,7 @@ namespace NurbsSharp.Intersection
         /// (en) Traverse BVH tree to find closest ray-mesh intersection
         /// (ja) BVHツリーをトラバースして最近接のレイ-メッシュ交差を見つける
         /// </summary>
-        private static bool IntersectBVH(Ray ray, BVHNode node, Mesh mesh, ref double closestT, ref RayMeshIntersection closestIntersection)
+        private static bool IntersectBVH(Ray ray, MeshBVHNode node, Mesh mesh, ref double closestT, ref RayMeshIntersection closestIntersection)
         {
             // Check if ray intersects node's bounding box
             if (!RayBoxIntersector.Intersects(ray, node.Bounds))
@@ -180,8 +222,15 @@ namespace NurbsSharp.Intersection
         /// </summary>
         /// <param name="ray">Ray to test</param>
         /// <param name="mesh">Mesh to test against</param>
+        /// <param name="bvh">Pre-built BVH (optional). If null, BVH will be built internally.</param>
         /// <returns>List of all intersections, sorted by distance from ray origin</returns>
-        public static List<RayMeshIntersection> IntersectAll(Ray ray, Mesh mesh)
+        /// <remarks>
+        /// (en) For better performance when testing multiple rays against the same mesh,
+        ///      build the BVH once using BVHBuilder.Build(mesh) and pass it to this method.
+        /// (ja) 同じメッシュに対して複数のレイをテストする場合、パフォーマンス向上のため
+        ///      BVHBuilder.Build(mesh)でBVHを一度構築し、このメソッドに渡してください。
+        /// </remarks>
+        public static List<RayMeshIntersection> IntersectAll(Ray ray, Mesh mesh, MeshBVHNode? bvh = null)
         {
             var intersections = new List<RayMeshIntersection>();
 
@@ -193,8 +242,9 @@ namespace NurbsSharp.Intersection
             if (!RayBoxIntersector.Intersects(ray, mesh.BoundingBox))
                 return intersections;
 
-            // Build BVH
-            BVHNode bvh = BVHBuilder.Build(mesh);
+            // Build BVH if not provided
+            if (bvh == null)
+                bvh = BVHBuilder.Build(mesh);
 
             // Traverse BVH
             IntersectBVHAll(ray, bvh, mesh, intersections);
@@ -209,7 +259,7 @@ namespace NurbsSharp.Intersection
         /// (en) Traverse BVH tree to find all ray-mesh intersections
         /// (ja) BVHツリーをトラバースしてすべてのレイ-メッシュ交差を見つける
         /// </summary>
-        private static void IntersectBVHAll(Ray ray, BVHNode node, Mesh mesh, List<RayMeshIntersection> intersections)
+        private static void IntersectBVHAll(Ray ray, MeshBVHNode node, Mesh mesh, List<RayMeshIntersection> intersections)
         {
             // Check if ray intersects node's bounding box
             if (!RayBoxIntersector.Intersects(ray, node.Bounds))
@@ -256,8 +306,15 @@ namespace NurbsSharp.Intersection
         /// </summary>
         /// <param name="ray">Ray to test</param>
         /// <param name="mesh">Mesh to test against</param>
+        /// <param name="bvh">Pre-built BVH (optional). If null, BVH will be built internally.</param>
         /// <returns>True if the ray intersects any triangle in the mesh</returns>
-        public static bool IntersectsAny(Ray ray, Mesh mesh)
+        /// <remarks>
+        /// (en) For better performance when testing multiple rays against the same mesh,
+        ///      build the BVH once using BVHBuilder.Build(mesh) and pass it to this method.
+        /// (ja) 同じメッシュに対して複数のレイをテストする場合、パフォーマンス向上のため
+        ///      BVHBuilder.Build(mesh)でBVHを一度構築し、このメソッドに渡してください。
+        /// </remarks>
+        public static bool IntersectsAny(Ray ray, Mesh mesh, MeshBVHNode? bvh = null)
         {
             // Early out: empty mesh
             if (mesh.Vertices.Length == 0 || mesh.Indexes.Length == 0)
@@ -267,8 +324,9 @@ namespace NurbsSharp.Intersection
             if (!RayBoxIntersector.Intersects(ray, mesh.BoundingBox))
                 return false;
 
-            // Build BVH
-            BVHNode bvh = BVHBuilder.Build(mesh);
+            // Build BVH if not provided
+            if (bvh == null)
+                bvh = BVHBuilder.Build(mesh);
 
             // Traverse BVH with early exit
             return IntersectBVHAny(ray, bvh, mesh);
@@ -278,7 +336,7 @@ namespace NurbsSharp.Intersection
         /// (en) Traverse BVH tree to check if ray intersects any triangle (early exit)
         /// (ja) BVHツリーをトラバースしてレイが任意の三角形と交差するか判定（早期終了）
         /// </summary>
-        private static bool IntersectBVHAny(Ray ray, BVHNode node, Mesh mesh)
+        private static bool IntersectBVHAny(Ray ray, MeshBVHNode node, Mesh mesh)
         {
             // Check if ray intersects node's bounding box
             if (!RayBoxIntersector.Intersects(ray, node.Bounds))

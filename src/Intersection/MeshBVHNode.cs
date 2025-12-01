@@ -18,7 +18,7 @@ namespace NurbsSharp.Intersection
     ///      各ノードは境界ボックスを持ちます。葉ノードは三角形インデックスを含み、内部ノードは
     ///      空間を分割する2つの子ノードを持ちます。
     /// </remarks>
-    internal class BVHNode
+    public class MeshBVHNode
     {
         /// <summary>
         /// (en) Bounding box encompassing all triangles in this node's subtree
@@ -30,13 +30,13 @@ namespace NurbsSharp.Intersection
         /// (en) Left child node (null for leaf nodes)
         /// (ja) 左の子ノード（葉ノードの場合はnull）
         /// </summary>
-        public BVHNode? Left { get; }
+        public MeshBVHNode? Left { get; }
 
         /// <summary>
         /// (en) Right child node (null for leaf nodes)
         /// (ja) 右の子ノード（葉ノードの場合はnull）
         /// </summary>
-        public BVHNode? Right { get; }
+        public MeshBVHNode? Right { get; }
 
         /// <summary>
         /// (en) Triangle indices contained in this leaf node (null for internal nodes)
@@ -56,7 +56,7 @@ namespace NurbsSharp.Intersection
         /// </summary>
         /// <param name="bounds">Bounding box for this leaf</param>
         /// <param name="triangleIndices">Triangle indices contained in this leaf</param>
-        public BVHNode(BoundingBox bounds, int[] triangleIndices)
+        public MeshBVHNode(BoundingBox bounds, int[] triangleIndices)
         {
             Bounds = bounds;
             TriangleIndices = triangleIndices;
@@ -71,7 +71,7 @@ namespace NurbsSharp.Intersection
         /// <param name="bounds">Bounding box encompassing both children</param>
         /// <param name="left">Left child node</param>
         /// <param name="right">Right child node</param>
-        public BVHNode(BoundingBox bounds, BVHNode left, BVHNode right)
+        public MeshBVHNode(BoundingBox bounds, MeshBVHNode left, MeshBVHNode right)
         {
             Bounds = bounds;
             Left = left;
@@ -84,7 +84,7 @@ namespace NurbsSharp.Intersection
     /// (en) Helper class for building BVH trees
     /// (ja) BVHツリー構築用のヘルパークラス
     /// </summary>
-    internal static class BVHBuilder
+    public static class BVHBuilder
     {
         /// <summary>
         /// (en) Maximum number of triangles in a leaf node
@@ -109,12 +109,12 @@ namespace NurbsSharp.Intersection
         /// </summary>
         /// <param name="mesh">Mesh to build BVH for</param>
         /// <returns>Root node of the BVH tree</returns>
-        public static BVHNode Build(Mesh mesh)
+        public static MeshBVHNode Build(Mesh mesh)
         {
             if (mesh.Indexes.Length == 0)
             {
                 // Empty mesh - create a single leaf node with empty bounds
-                return new BVHNode(mesh.BoundingBox, Array.Empty<int>());
+                return new MeshBVHNode(mesh.BoundingBox, Array.Empty<int>());
             }
 
             // Build triangle information
@@ -153,7 +153,7 @@ namespace NurbsSharp.Intersection
         /// (en) Recursively build BVH tree using Surface Area Heuristic
         /// (ja) Surface Area Heuristicを使用してBVHツリーを再帰的に構築
         /// </summary>
-        private static BVHNode BuildRecursive(TriangleInfo[] triangles, int start, int count)
+        private static MeshBVHNode BuildRecursive(TriangleInfo[] triangles, int start, int count)
         {
             // Compute bounding box for this node
             BoundingBox nodeBounds = triangles[start].Bounds;
@@ -170,7 +170,7 @@ namespace NurbsSharp.Intersection
                 {
                     indices[i] = triangles[start + i].Index;
                 }
-                return new BVHNode(nodeBounds, indices);
+                return new MeshBVHNode(nodeBounds, indices);
             }
 
             // Find best split using SAH (Surface Area Heuristic)
@@ -255,10 +255,10 @@ namespace NurbsSharp.Intersection
             }));
 
             // Build child nodes
-            BVHNode left = BuildRecursive(triangles, start, bestSplitIndex);
-            BVHNode right = BuildRecursive(triangles, start + bestSplitIndex, count - bestSplitIndex);
+            MeshBVHNode left = BuildRecursive(triangles, start, bestSplitIndex);
+            MeshBVHNode right = BuildRecursive(triangles, start + bestSplitIndex, count - bestSplitIndex);
 
-            return new BVHNode(nodeBounds, left, right);
+            return new MeshBVHNode(nodeBounds, left, right);
         }
 
         /// <summary>
