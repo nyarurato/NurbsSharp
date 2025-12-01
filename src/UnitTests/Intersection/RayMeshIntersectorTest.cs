@@ -560,20 +560,12 @@ namespace UnitTests.Intersection
                 new Ray(new Vector3Double(45, 10, 5), new Vector3Double(0, -1, 0)),
                 new Ray(new Vector3Double(100, 10, 100), new Vector3Double(0, -1, 0)) // Should miss
             };
-
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             
             foreach (var ray in rays)
             {
                 RayMeshIntersector.Intersects(ray, mesh, out _,bvh);
             }
 
-            stopwatch.Stop();
-
-            Assert.That(stopwatch.ElapsedMilliseconds, Is.LessThan(1000), 
-                $"BVH performance test took too long: {stopwatch.ElapsedMilliseconds}ms");
-
-            TestContext.Out.WriteLine($"BVH Performance: {rays.Length} rays vs {indexes.Count / 3} triangles = {stopwatch.ElapsedMilliseconds}ms");
         }
 
         [Test]

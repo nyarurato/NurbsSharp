@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using NurbsSharp.Core;
 using NurbsSharp.Evaluation;
+using System.Linq;
 using NurbsSharp.Geometry;
+using NurbsSharp.Operation;
+using System.Threading.Tasks;
 
 namespace NurbsSharp.Intersection
 {
@@ -52,24 +55,32 @@ namespace NurbsSharp.Intersection
             double maxU2 = curveB.KnotVector.Knots[^(curveB.Degree+1)];// Last Degree knots
 
 
-            // Sample parameter space to find initial guesses
-            int samples = 100; // Number of samples per curve (increased for better detection)
+            // If curves are long or high resolution, use BVH accelerated search
+            var useBVH = true;
             var candidates = new List<(double u1, double u2, double dist)>();
-
-            for (int i = 0; i <= samples; i++)
+            if (useBVH)
             {
-                double u1 = minU1 + (maxU1 - minU1) * i / samples;
-                Vector3Double p1 = CurveEvaluator.Evaluate(curveA, u1);
-
-                for (int j = 0; j <= samples; j++)
+                candidates = FindIntersectionCandidatesWithBVH(curveA, curveB, tolerance);
+            }
+            else
+            {
+                // Fallback: grid sampling
+                int samples = 100; // Number of samples per curve (increased for better detection)
+                for (int i = 0; i <= samples; i++)
                 {
-                    double u2 = minU2 + (maxU2 - minU2) * j / samples;
-                    Vector3Double p2 = CurveEvaluator.Evaluate(curveB, u2);
+                    double u1 = minU1 + (maxU1 - minU1) * i / samples;
+                    Vector3Double p1 = CurveEvaluator.Evaluate(curveA, u1);
 
-                    double dist = (p1 - p2).magnitude;
-                    if (dist < 0.1) // Use larger tolerance for candidates (0.1 units)
+                    for (int j = 0; j <= samples; j++)
                     {
-                        candidates.Add((u1, u2, dist));
+                        double u2 = minU2 + (maxU2 - minU2) * j / samples;
+                        Vector3Double p2 = CurveEvaluator.Evaluate(curveB, u2);
+
+                        double dist = (p1 - p2).magnitude;
+                        if (dist < 0.1) // Use larger threshold for candidates (0.1 units)
+                        {
+                            candidates.Add((u1, u2, dist));
+                        }
                     }
                 }
             }
@@ -111,6 +122,123 @@ namespace NurbsSharp.Intersection
             }
 
             return refinedIntersections;
+        }
+
+        /// <summary>
+        /// (en) Find intersection candidate parameter pairs using BVH acceleration
+        /// (ja) BVHを使用してカーブの交差候補となるパラメータペアを検索します
+        /// </summary>
+        private static List<(double u1, double u2, double dist)> FindIntersectionCandidatesWithBVH(NurbsCurve A, NurbsCurve B, double tolerance)
+        {
+            var candidates = new List<(double u1, double u2, double dist)>();
+
+            // Build BVH for each curve
+            var bvhA = CurveBVHBuilder.Build(A);
+            var bvhB = CurveBVHBuilder.Build(B);
+
+            // Get intersecting leaf pairs using pair traversal
+            var leafPairs = GetIntersectingLeafPairs(bvhA, bvhB);
+
+            // Local parameters: sample speed
+            const int samplesPerLeaf = 8;
+
+            foreach (var (leafA, leafB) in leafPairs)
+            {
+                double stepA = (leafA.TRange.max - leafA.TRange.min) / Math.Max(1, samplesPerLeaf);
+                for (int i = 0; i <= samplesPerLeaf; i++)
+                {
+                    double ta = leafA.TRange.min + stepA * i;
+                    Vector3Double pA = CurveEvaluator.Evaluate(A, ta);
+                    if (leafB.Bounds.DistanceTo(pA) > Math.Max(0.1, tolerance * 200)) continue;
+                    var (tb, ptB, distB) = FindClosestPointOnCurveInRange(B, leafB.TRange.min, leafB.TRange.max, pA, tolerance);
+                    if (distB < Math.Max(0.1, tolerance * 200)) candidates.Add((ta, tb, distB));
+                }
+
+                double stepB = (leafB.TRange.max - leafB.TRange.min) / Math.Max(1, samplesPerLeaf);
+                for (int i = 0; i <= samplesPerLeaf; i++)
+                {
+                    double tb = leafB.TRange.min + stepB * i;
+                    Vector3Double pB = CurveEvaluator.Evaluate(B, tb);
+                    if (leafA.Bounds.DistanceTo(pB) > Math.Max(0.1, tolerance * 200)) continue;
+                    var (ta, ptA, distA) = FindClosestPointOnCurveInRange(A, leafA.TRange.min, leafA.TRange.max, pB, tolerance);
+                    if (distA < Math.Max(0.1, tolerance * 200)) candidates.Add((ta, tb, distA));
+                }
+            }
+
+            return candidates;
+        }
+
+        /// <summary>
+        /// (en) Find pairs of leaf nodes whose bounds intersect using a BVH pair traversal
+        /// (ja) 交差するBVHの葉ノードペアを取得
+        /// </summary>
+        private static List<(CurveBVHNode, CurveBVHNode)> GetIntersectingLeafPairs(CurveBVHNode rootA, CurveBVHNode rootB)
+        {
+            var result = new List<(CurveBVHNode, CurveBVHNode)>();
+            void Traverse(CurveBVHNode a, CurveBVHNode b)
+            {
+                if (!a.Bounds.Intersects(b.Bounds)) return;
+                if (a.IsLeaf && b.IsLeaf) { result.Add((a, b)); return; }
+                if (a.IsLeaf)
+                {
+                    if (b.Left != null) Traverse(a, b.Left);
+                    if (b.Right != null) Traverse(a, b.Right);
+                }
+                else if (b.IsLeaf)
+                {
+                    if (a.Left != null) Traverse(a.Left, b);
+                    if (a.Right != null) Traverse(a.Right, b);
+                }
+                else
+                {
+                    if (a.Left != null && b.Left != null) Traverse(a.Left, b.Left);
+                    if (a.Left != null && b.Right != null) Traverse(a.Left, b.Right);
+                    if (a.Right != null && b.Left != null) Traverse(a.Right, b.Left);
+                    if (a.Right != null && b.Right != null) Traverse(a.Right, b.Right);
+                }
+            }
+            Traverse(rootA, rootB);
+            return result;
+        }
+
+        /// <summary>
+        /// (en) Find closest point on a curve segment with Newton after grid seed
+        /// (ja) グリッド初期化 + Newton 法で曲線の最短点を求める
+        /// </summary>
+        private static (double t, Vector3Double pt, double dist) FindClosestPointOnCurveInRange(NurbsCurve curve, double minT, double maxT, Vector3Double target, double tolerance)
+        {
+            const int grid = 5;
+            double bestT = minT;
+            var bestPt = CurveEvaluator.Evaluate(curve, minT);
+            double bestDist = (bestPt - target).magnitude;
+            for (int k = 0; k <= grid; k++)
+            {
+                double t = minT + (maxT - minT) * k / grid;
+                var p = CurveEvaluator.Evaluate(curve, t);
+                double d = (p - target).magnitude;
+                if (d < bestDist) { bestDist = d; bestT = t; bestPt = p; }
+            }
+
+            double tRef = bestT;
+            for (int iter = 0; iter < 20; iter++)
+            {
+                var C = CurveEvaluator.Evaluate(curve, tRef);
+                var Cp = CurveEvaluator.EvaluateFirstDerivative(curve, tRef);
+                var Cpp = curve.Degree >= 2 ? CurveEvaluator.EvaluateSecondDerivative(curve, tRef) : Vector3Double.Zero;
+                var diff = C - target;
+                double g = Vector3Double.Dot(diff, Cp);
+                double gprime = Vector3Double.Dot(Cp, Cp) + Vector3Double.Dot(diff, Cpp);
+                if (Math.Abs(gprime) < 1e-12) break;
+                double dt = -g / gprime;
+                tRef += dt;
+                if (tRef < minT) tRef = minT;
+                if (tRef > maxT) tRef = maxT;
+                if (Math.Abs(dt) < tolerance) break;
+            }
+
+            var finalPt = CurveEvaluator.Evaluate(curve, tRef);
+            var finalDist = (finalPt - target).magnitude;
+            return (tRef, finalPt, finalDist);
         }
 
         /// <summary>
@@ -220,6 +348,48 @@ namespace NurbsSharp.Intersection
         {
             var intersections = Intersect(curveA, curveB, tolerance);
             return intersections.Count > 0;
+        }
+
+        /// <summary>
+        /// (en) Fast intersect using BVH; returns boolean only
+        /// (ja) BVH を使った高速な判定（真偽値のみ）
+        /// </summary>
+        public static bool IntersectsWithBVH(NurbsCurve curveA, NurbsCurve curveB, double tolerance = Tolerance)
+        {
+            var candidates = FindIntersectionCandidatesWithBVH(curveA, curveB, tolerance);
+            foreach (var (u1, u2, dist) in candidates)
+            {
+                if (TryRefineIntersection(curveA, curveB, u1, u2, tolerance, out var inter))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// (en) Find all intersections using BVH acceleration for initial candidate detection
+        /// (ja) BVH を利用して交差候補を検出し、Newton-Raphsonで精密化して交点を返します
+        /// </summary>
+        public static List<CurveCurveIntersection> IntersectWithBVH(NurbsCurve curveA, NurbsCurve curveB, double tolerance = Tolerance)
+        {
+            Guard.ThrowIfNull(curveA, nameof(curveA));
+            Guard.ThrowIfNull(curveB, nameof(curveB));
+
+            var candidates = FindIntersectionCandidatesWithBVH(curveA, curveB, tolerance);
+            var intersections = new List<CurveCurveIntersection>();
+
+            foreach (var (u1, u2, dist) in candidates)
+            {
+                if (TryRefineIntersection(curveA, curveB, u1, u2, tolerance, out var inter))
+                {
+                    // dedupe by parameter distance
+                    bool isDuplicate = intersections.Any(e => Math.Abs(e.U1 - inter.U1) < 1e-6 && Math.Abs(e.U2 - inter.U2) < 1e-6);
+                    if (!isDuplicate) intersections.Add(inter);
+                }
+            }
+
+            return intersections;
         }
     }
 

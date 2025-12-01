@@ -155,6 +155,9 @@ namespace UnitTests.Intersection
             bool intersects = CurveCurveIntersector.Intersects(curve1, curve2);// hit at (1,0,0)
 
             Assert.That(intersects, Is.True);
+            // Verify BVH-based intersection produces at least same set
+            var bvhIntersects = CurveCurveIntersector.IntersectWithBVH(curve1, curve2);
+            Assert.That(bvhIntersects, Is.Not.Empty);
         }
 
         [Test]

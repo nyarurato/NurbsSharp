@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
 using NurbsSharp.Core;
 using NurbsSharp.Evaluation;
 using NurbsSharp.Geometry;
@@ -91,6 +93,7 @@ namespace NurbsSharp.Intersection
                         refinedIntersections.Add(intersection);
                     }
                 }
+
             }
 
             return refinedIntersections;
@@ -162,29 +165,54 @@ namespace NurbsSharp.Intersection
         }
 
         /// <summary>
+        /// (en) Get intersecting leaf pairs between curve BVH and surface BVH using pair traversal
+        /// (ja) カーブBVHとサーフェスBVHの葉ノードペアを再帰的にトラバースして取得
+        /// </summary>
+        private static List<(CurveBVHNode, SurfaceBVHNode)> GetIntersectingLeafPairs(CurveBVHNode curveRoot, SurfaceBVHNode surfaceRoot)
+        {
+            var result = new List<(CurveBVHNode, SurfaceBVHNode)>();
+
+            void Traverse(CurveBVHNode a, SurfaceBVHNode b)
+            {
+                if (!a.Bounds.Intersects(b.Bounds)) return;
+                if (a.IsLeaf && b.IsLeaf)
+                {
+                    result.Add((a, b));
+                    return;
+                }
+
+                if (a.IsLeaf)
+                {
+                    if (b.Left != null) Traverse(a, b.Left);
+                    if (b.Right != null) Traverse(a, b.Right);
+                }
+                else if (b.IsLeaf)
+                {
+                    if (a.Left != null) Traverse(a.Left, b);
+                    if (a.Right != null) Traverse(a.Right, b);
+                }
+                else
+                {
+                    if (a.Left != null && b.Left != null) Traverse(a.Left, b.Left);
+                    if (a.Left != null && b.Right != null) Traverse(a.Left, b.Right);
+                    if (a.Right != null && b.Left != null) Traverse(a.Right, b.Left);
+                    if (a.Right != null && b.Right != null) Traverse(a.Right, b.Right);
+                }
+            }
+
+            Traverse(curveRoot, surfaceRoot);
+            return result;
+        }
+
+        /// <summary>
         /// (en) Find intersection candidates using dual BVH acceleration (curve and surface)
         /// (ja) Dual BVH加速(カーブとサーフェス)を使用して交点候補を検索
         /// </summary>
         private static List<(double t, double u, double v, double dist)> FindIntersectionCandidatesWithDualBVH(
             NurbsCurve curve, NurbsSurface surface, CurveBVHNode curveBVH, SurfaceBVHNode surfaceBVH, double tolerance)
         {
-            // Get all curve and surface leaf nodes
-            var curveLeaves = GetAllCurveLeaves(curveBVH);
-            var surfaceLeaves = GetAllSurfaceLeaves(surfaceBVH);
-
-            // Find all curve-surface region pairs that intersect
-            var candidateRegionPairs = new List<(CurveBVHNode curveRegion, SurfaceBVHNode surfaceRegion)>();
-            
-            foreach (var curveRegion in curveLeaves)
-            {
-                foreach (var surfaceRegion in surfaceLeaves)
-                {
-                    if (curveRegion.Bounds.Intersects(surfaceRegion.Bounds))
-                    {
-                        candidateRegionPairs.Add((curveRegion, surfaceRegion));
-                    }
-                }
-            }
+            // Find all curve-surface region pairs that intersect using BVH pair traversal (more efficient)
+            var candidateRegionPairs = GetIntersectingLeafPairs(curveBVH, surfaceBVH);
 
             // If no intersecting pairs found, fallback to standard method
             if (candidateRegionPairs.Count == 0)
@@ -193,10 +221,14 @@ namespace NurbsSharp.Intersection
             }
 
             // Sample curve segments in intersecting regions
-            var candidates = new List<(double t, double u, double v, double dist)>();
             
-            foreach (var (curveRegion, surfaceRegion) in candidateRegionPairs)
+            // Use concurrent bag for thread-safe collection
+            var candidatesBag = new ConcurrentBag<(double t, double u, double v, double dist)>();
+
+            // For improved performance, process leaf pairs in parallel
+            Parallel.ForEach(candidateRegionPairs, pair =>
             {
+                var (curveRegion, surfaceRegion) = pair;
                 // Sample along curve in this region
                 const int samplesPerRegion = 20;
                 double minT = curveRegion.TRange.min;
@@ -209,7 +241,10 @@ namespace NurbsSharp.Intersection
                 {
                     double t = minT + stepSize * i;
                     Vector3Double curvePoint = CurveEvaluator.Evaluate(curve, t);
-
+                    // Quick reject: if curve point far from surface region bbox skip
+                    var dBox = surfaceRegion.Bounds.DistanceTo(curvePoint);
+                    if (dBox > Math.Max(tolerance * 500, 0.1))
+                        continue;
                     // Find closest point on surface within this region
                     double uMid = (surfaceRegion.URange.min + surfaceRegion.URange.max) * 0.5;
                     double vMid = (surfaceRegion.VRange.min + surfaceRegion.VRange.max) * 0.5;
@@ -228,20 +263,8 @@ namespace NurbsSharp.Intersection
                     // Criterion 1: Very close to surface
                     if (current.dist < tolerance * 50)
                     {
-                        // Check if not duplicate
-                        bool isDuplicate = false;
-                        foreach (var existing in candidates)
-                        {
-                            if (Math.Abs(existing.t - current.t) < tolerance * 10)
-                            {
-                                isDuplicate = true;
-                                break;
-                            }
-                        }
-                        if (!isDuplicate)
-                        {
-                            candidates.Add(current);
-                        }
+                        // Add to concurrent bag (dedup later)
+                        candidatesBag.Add(current);
                         continue;
                     }
 
@@ -255,26 +278,18 @@ namespace NurbsSharp.Intersection
                         {
                             if (current.dist < tolerance * 200)
                             {
-                                // Check if not duplicate
-                                bool isDuplicate = false;
-                                foreach (var existing in candidates)
-                                {
-                                    if (Math.Abs(existing.t - current.t) < tolerance * 10)
-                                    {
-                                        isDuplicate = true;
-                                        break;
-                                    }
-                                }
-                                if (!isDuplicate)
-                                {
-                                    candidates.Add(current);
-                                }
+                                // Add candidate (duplicates removed later)
+                                candidatesBag.Add(current);
+                                continue;
                             }
                         }
                     }
                 }
-            }
+            });
 
+            // Deduplicate candidates from concurrent bag
+            var candidatesArray = candidatesBag.ToArray();
+            var candidates = candidatesArray.GroupBy(c => Math.Round(c.t, 6)).Select(g => g.OrderBy(x => x.dist).First()).ToList();
             return candidates;
         }
 
