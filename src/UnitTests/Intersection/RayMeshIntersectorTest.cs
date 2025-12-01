@@ -421,5 +421,195 @@ namespace UnitTests.Intersection
 
             Assert.That(hit, Is.False);
         }
+
+        // BVH-Specific Tests
+        [Test]
+        public void BVH_LargeMesh_CorrectResult()
+        {
+            // Create a larger mesh with multiple triangles to test BVH behavior
+            const int gridSize = 10;
+            var vertices = new System.Collections.Generic.List<Vector3Double>();
+            var indexes = new System.Collections.Generic.List<int>();
+
+            // Create a grid of triangles
+            for (int x = 0; x < gridSize; x++)
+            {
+                for (int z = 0; z < gridSize; z++)
+                {
+                    // Create 2 triangles for each grid cell
+                    int baseIndex = vertices.Count;
+                    
+                    // Quad vertices
+                    vertices.Add(new Vector3Double(x, 0, z));
+                    vertices.Add(new Vector3Double(x + 1, 0, z));
+                    vertices.Add(new Vector3Double(x + 1, 0, z + 1));
+                    vertices.Add(new Vector3Double(x, 0, z + 1));
+
+                    // First triangle
+                    indexes.Add(baseIndex);
+                    indexes.Add(baseIndex + 1);
+                    indexes.Add(baseIndex + 2);
+
+                    // Second triangle
+                    indexes.Add(baseIndex);
+                    indexes.Add(baseIndex + 2);
+                    indexes.Add(baseIndex + 3);
+                }
+            }
+
+            var mesh = new Mesh(vertices.ToArray(), indexes.ToArray());
+
+            // Ray pointing at the center of the grid from above
+            var ray = new Ray(new Vector3Double(5, 10, 5), new Vector3Double(0, -1, 0));
+
+            bool hit = RayMeshIntersector.Intersects(ray, mesh, out RayMeshIntersection intersection);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(hit, Is.True);
+                Assert.That(intersection.Point.Y, Is.EqualTo(0).Within(1e-10));
+                Assert.That(intersection.Point.X, Is.EqualTo(5).Within(1e-10));
+                Assert.That(intersection.Point.Z, Is.EqualTo(5).Within(1e-10));
+            }
+        }
+
+        [Test]
+        public void BVH_LargeMesh_IntersectAll()
+        {
+            // Create multiple horizontal planes at different heights
+            const int planeCount = 5;
+            var vertices = new System.Collections.Generic.List<Vector3Double>();
+            var indexes = new System.Collections.Generic.List<int>();
+
+            for (int i = 0; i < planeCount; i++)
+            {
+                double height = i * 2.0;
+                int baseIndex = vertices.Count;
+
+                // Large triangle at this height
+                vertices.Add(new Vector3Double(-10, height, -10));
+                vertices.Add(new Vector3Double(10, height, -10));
+                vertices.Add(new Vector3Double(0, height, 10));
+
+                indexes.Add(baseIndex);
+                indexes.Add(baseIndex + 1);
+                indexes.Add(baseIndex + 2);
+            }
+
+            var mesh = new Mesh(vertices.ToArray(), indexes.ToArray());
+
+            // Ray going up through all planes
+            var ray = new Ray(new Vector3Double(0, -5, 0), new Vector3Double(0, 1, 0));
+
+            var intersections = RayMeshIntersector.IntersectAll(ray, mesh);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(intersections, Has.Count.EqualTo(planeCount));
+                // Verify they are sorted by distance
+                for (int i = 0; i < planeCount - 1; i++)
+                {
+                    Assert.That(intersections[i].T, Is.LessThan(intersections[i + 1].T));
+                }
+                // Verify correct heights
+                for (int i = 0; i < planeCount; i++)
+                {
+                    Assert.That(intersections[i].Point.Y, Is.EqualTo(i * 2.0).Within(1e-10));
+                }
+            }
+        }
+
+        [Test]
+        public void BVH_Performance_LargeMesh()
+        {
+            // Create a very large mesh to test BVH performance benefit
+            const int gridSize = 50; // 5000 triangles
+            var vertices = new System.Collections.Generic.List<Vector3Double>();
+            var indexes = new System.Collections.Generic.List<int>();
+
+            for (int x = 0; x < gridSize; x++)
+            {
+                for (int z = 0; z < gridSize; z++)
+                {
+                    int baseIndex = vertices.Count;
+                    
+                    vertices.Add(new Vector3Double(x, 0, z));
+                    vertices.Add(new Vector3Double(x + 1, 0, z));
+                    vertices.Add(new Vector3Double(x + 1, 0, z + 1));
+                    vertices.Add(new Vector3Double(x, 0, z + 1));
+
+                    indexes.Add(baseIndex);
+                    indexes.Add(baseIndex + 1);
+                    indexes.Add(baseIndex + 2);
+
+                    indexes.Add(baseIndex);
+                    indexes.Add(baseIndex + 2);
+                    indexes.Add(baseIndex + 3);
+                }
+            }
+
+            var mesh = new Mesh(vertices.ToArray(), indexes.ToArray());
+
+            // Multiple rays to test performance
+            var rays = new[]
+            {
+                new Ray(new Vector3Double(25, 10, 25), new Vector3Double(0, -1, 0)),
+                new Ray(new Vector3Double(10, 10, 40), new Vector3Double(0, -1, 0)),
+                new Ray(new Vector3Double(45, 10, 5), new Vector3Double(0, -1, 0)),
+                new Ray(new Vector3Double(100, 10, 100), new Vector3Double(0, -1, 0)) // Should miss
+            };
+
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            
+            foreach (var ray in rays)
+            {
+                RayMeshIntersector.Intersects(ray, mesh, out _);
+            }
+
+            stopwatch.Stop();
+
+            // Just verify it completes in reasonable time (should be very fast with BVH)
+            // With 5000 triangles and BVH, this should complete in milliseconds
+            Assert.That(stopwatch.ElapsedMilliseconds, Is.LessThan(1000), 
+                $"BVH performance test took too long: {stopwatch.ElapsedMilliseconds}ms");
+
+            TestContext.WriteLine($"BVH Performance: {rays.Length} rays vs {indexes.Count / 3} triangles = {stopwatch.ElapsedMilliseconds}ms");
+        }
+
+        [Test]
+        public void BVH_SingleTriangle()
+        {
+            // Edge case: BVH with single triangle should work correctly
+            var vertices = new[]
+            {
+                new Vector3Double(0, 0, 0),
+                new Vector3Double(1, 0, 0),
+                new Vector3Double(0, 1, 0)
+            };
+            var indexes = new[] { 0, 1, 2 };
+            var mesh = new Mesh(vertices, indexes);
+
+            var ray = new Ray(new Vector3Double(0.25, 0.25, 1), new Vector3Double(0, 0, -1));
+            bool hit = RayMeshIntersector.Intersects(ray, mesh, out RayMeshIntersection intersection);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(hit, Is.True);
+                Assert.That(intersection.T, Is.EqualTo(1.0).Within(1e-10));
+                Assert.That(intersection.TriangleIndex, Is.EqualTo(0));
+            }
+        }
+
+        [Test]
+        public void BVH_EmptyMesh()
+        {
+            // Edge case: BVH with empty mesh
+            var mesh = new Mesh();
+            var ray = new Ray(new Vector3Double(0, 0, 1), new Vector3Double(0, 0, -1));
+
+            bool hit = RayMeshIntersector.Intersects(ray, mesh, out _);
+
+            Assert.That(hit, Is.False);
+        }
     }
 }

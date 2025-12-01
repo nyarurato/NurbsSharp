@@ -81,8 +81,8 @@ namespace NurbsSharp.Intersection
         }
 
         /// <summary>
-        /// (en) Find the FIRST intersection between a ray and a mesh
-        /// (ja) レイとメッシュの最初の交点を見つける
+        /// (en) Find the FIRST intersection between a ray and a mesh using BVH acceleration
+        /// (ja) BVH加速を使用してレイとメッシュの最初の交点を見つける
         /// </summary>
         /// <param name="ray">Ray to test</param>
         /// <param name="mesh">Mesh to test against</param>
@@ -100,33 +100,13 @@ namespace NurbsSharp.Intersection
             if (!RayBoxIntersector.Intersects(ray, mesh.BoundingBox))
                 return false;
 
-            bool found = false;
+            // Build BVH
+            BVHNode bvh = BVHBuilder.Build(mesh);
+
+            // Traverse BVH
             double closestT = double.PositiveInfinity;
             RayMeshIntersection closestIntersection = default;
-
-            // Test each triangle
-            int triangleCount = mesh.Indexes.Length / 3;
-            for (int i = 0; i < triangleCount; i++)
-            {
-                int idx0 = mesh.Indexes[i * 3];
-                int idx1 = mesh.Indexes[i * 3 + 1];
-                int idx2 = mesh.Indexes[i * 3 + 2];
-
-                Vector3Double v0 = mesh.Vertices[idx0];
-                Vector3Double v1 = mesh.Vertices[idx1];
-                Vector3Double v2 = mesh.Vertices[idx2];
-
-                if (IntersectsTriangle(ray, v0, v1, v2, out RayMeshIntersection hit))
-                {
-                    if (hit.T < closestT)
-                    {
-                        closestT = hit.T;
-                        closestIntersection = hit;
-                        closestIntersection.TriangleIndex = i;
-                        found = true;
-                    }
-                }
-            }
+            bool found = IntersectBVH(ray, bvh, mesh, ref closestT, ref closestIntersection);
 
             if (found)
             {
@@ -138,8 +118,65 @@ namespace NurbsSharp.Intersection
         }
 
         /// <summary>
-        /// (en) Find all intersections between a ray and a mesh
-        /// (ja) レイとメッシュの全ての交点を見つける
+        /// (en) Traverse BVH tree to find closest ray-mesh intersection
+        /// (ja) BVHツリーをトラバースして最近接のレイ-メッシュ交差を見つける
+        /// </summary>
+        private static bool IntersectBVH(Ray ray, BVHNode node, Mesh mesh, ref double closestT, ref RayMeshIntersection closestIntersection)
+        {
+            // Check if ray intersects node's bounding box
+            if (!RayBoxIntersector.Intersects(ray, node.Bounds))
+                return false;
+
+            if (node.IsLeaf)
+            {
+                // Test all triangles in this leaf
+                bool foundInLeaf = false;
+                if (node.TriangleIndices != null)
+                {
+                    foreach (int triangleIndex in node.TriangleIndices)
+                    {
+                        int idx0 = mesh.Indexes[triangleIndex * 3];
+                        int idx1 = mesh.Indexes[triangleIndex * 3 + 1];
+                        int idx2 = mesh.Indexes[triangleIndex * 3 + 2];
+
+                        Vector3Double v0 = mesh.Vertices[idx0];
+                        Vector3Double v1 = mesh.Vertices[idx1];
+                        Vector3Double v2 = mesh.Vertices[idx2];
+
+                        if (IntersectsTriangle(ray, v0, v1, v2, out RayMeshIntersection hit))
+                        {
+                            if (hit.T < closestT)
+                            {
+                                closestT = hit.T;
+                                closestIntersection = hit;
+                                closestIntersection.TriangleIndex = triangleIndex;
+                                foundInLeaf = true;
+                            }
+                        }
+                    }
+                }
+                return foundInLeaf;
+            }
+            else
+            {
+                // Internal node - traverse both children
+                bool foundLeft = false;
+                bool foundRight = false;
+
+                if (node.Left != null)
+                    foundLeft = IntersectBVH(ray, node.Left, mesh, ref closestT, ref closestIntersection);
+                
+                if (node.Right != null)
+                    foundRight = IntersectBVH(ray, node.Right, mesh, ref closestT, ref closestIntersection);
+
+                return foundLeft || foundRight;
+            }
+        }
+
+
+        /// <summary>
+        /// (en) Find all intersections between a ray and a mesh using BVH acceleration
+        /// (ja) BVH加速を使用してレイとメッシュの全ての交点を見つける
         /// </summary>
         /// <param name="ray">Ray to test</param>
         /// <param name="mesh">Mesh to test against</param>
@@ -156,24 +193,11 @@ namespace NurbsSharp.Intersection
             if (!RayBoxIntersector.Intersects(ray, mesh.BoundingBox))
                 return intersections;
 
-            // Test each triangle
-            int triangleCount = mesh.Indexes.Length / 3;
-            for (int i = 0; i < triangleCount; i++)
-            {
-                int idx0 = mesh.Indexes[i * 3];
-                int idx1 = mesh.Indexes[i * 3 + 1];
-                int idx2 = mesh.Indexes[i * 3 + 2];
+            // Build BVH
+            BVHNode bvh = BVHBuilder.Build(mesh);
 
-                Vector3Double v0 = mesh.Vertices[idx0];
-                Vector3Double v1 = mesh.Vertices[idx1];
-                Vector3Double v2 = mesh.Vertices[idx2];
-
-                if (IntersectsTriangle(ray, v0, v1, v2, out RayMeshIntersection hit))
-                {
-                    hit.TriangleIndex = i;
-                    intersections.Add(hit);
-                }
-            }
+            // Traverse BVH
+            IntersectBVHAll(ray, bvh, mesh, intersections);
 
             // Sort by distance from ray origin
             intersections.Sort((a, b) => a.T.CompareTo(b.T));
@@ -182,8 +206,53 @@ namespace NurbsSharp.Intersection
         }
 
         /// <summary>
-        /// (en) Test if a ray intersects a mesh (boolean only, fastest)
-        /// (ja) レイがメッシュと交差するか判定（真偽値のみ、最速）
+        /// (en) Traverse BVH tree to find all ray-mesh intersections
+        /// (ja) BVHツリーをトラバースしてすべてのレイ-メッシュ交差を見つける
+        /// </summary>
+        private static void IntersectBVHAll(Ray ray, BVHNode node, Mesh mesh, List<RayMeshIntersection> intersections)
+        {
+            // Check if ray intersects node's bounding box
+            if (!RayBoxIntersector.Intersects(ray, node.Bounds))
+                return;
+
+            if (node.IsLeaf)
+            {
+                // Test all triangles in this leaf
+                if (node.TriangleIndices != null)
+                {
+                    foreach (int triangleIndex in node.TriangleIndices)
+                    {
+                        int idx0 = mesh.Indexes[triangleIndex * 3];
+                        int idx1 = mesh.Indexes[triangleIndex * 3 + 1];
+                        int idx2 = mesh.Indexes[triangleIndex * 3 + 2];
+
+                        Vector3Double v0 = mesh.Vertices[idx0];
+                        Vector3Double v1 = mesh.Vertices[idx1];
+                        Vector3Double v2 = mesh.Vertices[idx2];
+
+                        if (IntersectsTriangle(ray, v0, v1, v2, out RayMeshIntersection hit))
+                        {
+                            hit.TriangleIndex = triangleIndex;
+                            intersections.Add(hit);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Internal node - traverse both children
+                if (node.Left != null)
+                    IntersectBVHAll(ray, node.Left, mesh, intersections);
+                
+                if (node.Right != null)
+                    IntersectBVHAll(ray, node.Right, mesh, intersections);
+            }
+        }
+
+
+        /// <summary>
+        /// (en) Test if a ray intersects a mesh using BVH acceleration (boolean only, fastest)
+        /// (ja) BVH加速を使用してレイがメッシュと交差するか判定（真偽値のみ、最速）
         /// </summary>
         /// <param name="ray">Ray to test</param>
         /// <param name="mesh">Mesh to test against</param>
@@ -198,26 +267,57 @@ namespace NurbsSharp.Intersection
             if (!RayBoxIntersector.Intersects(ray, mesh.BoundingBox))
                 return false;
 
-            // Test each triangle, return immediately on first hit
-            int triangleCount = mesh.Indexes.Length / 3;
-            for (int i = 0; i < triangleCount; i++)
+            // Build BVH
+            BVHNode bvh = BVHBuilder.Build(mesh);
+
+            // Traverse BVH with early exit
+            return IntersectBVHAny(ray, bvh, mesh);
+        }
+
+        /// <summary>
+        /// (en) Traverse BVH tree to check if ray intersects any triangle (early exit)
+        /// (ja) BVHツリーをトラバースしてレイが任意の三角形と交差するか判定（早期終了）
+        /// </summary>
+        private static bool IntersectBVHAny(Ray ray, BVHNode node, Mesh mesh)
+        {
+            // Check if ray intersects node's bounding box
+            if (!RayBoxIntersector.Intersects(ray, node.Bounds))
+                return false;
+
+            if (node.IsLeaf)
             {
-                int idx0 = mesh.Indexes[i * 3];
-                int idx1 = mesh.Indexes[i * 3 + 1];
-                int idx2 = mesh.Indexes[i * 3 + 2];
+                // Test all triangles in this leaf
+                if (node.TriangleIndices != null)
+                {
+                    foreach (int triangleIndex in node.TriangleIndices)
+                    {
+                        int idx0 = mesh.Indexes[triangleIndex * 3];
+                        int idx1 = mesh.Indexes[triangleIndex * 3 + 1];
+                        int idx2 = mesh.Indexes[triangleIndex * 3 + 2];
 
-                Vector3Double v0 = mesh.Vertices[idx0];
-                Vector3Double v1 = mesh.Vertices[idx1];
-                Vector3Double v2 = mesh.Vertices[idx2];
+                        Vector3Double v0 = mesh.Vertices[idx0];
+                        Vector3Double v1 = mesh.Vertices[idx1];
+                        Vector3Double v2 = mesh.Vertices[idx2];
 
-                if (IntersectsTriangle(ray, v0, v1, v2, out _))
-                    return true;
+                        if (IntersectsTriangle(ray, v0, v1, v2, out _))
+                            return true; // Early exit on first hit
+                    }
+                }
+                return false;
             }
+            else
+            {
+                // Internal node - traverse children with early exit
+                if (node.Left != null && IntersectBVHAny(ray, node.Left, mesh))
+                    return true;
+                
+                if (node.Right != null && IntersectBVHAny(ray, node.Right, mesh))
+                    return true;
 
-            return false;
+                return false;
+            }
         }
     }
-    //TODO: Bounding Volume Hierarchy implementation
 
     /// <summary>
     /// (en) Represents a ray-mesh intersection result

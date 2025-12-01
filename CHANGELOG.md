@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
-## [0.1.2] - 2025-XX-XX
+## [0.2.0] - 2025-XX-XX
 ### Added
 - BoundingBox
 - Ray
@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ApproximationOptions with parameterization type and clamped/free ends options
 - IGES Exporter: support for Point and NURBS entities
 - Surface Operator
+- Knot Reduction
+- Bounding Volume Hierarchy (BVH) for ray-mesh intersection
 ### Changed
 - Add boundingbox variable to NURBS, Mesh
 

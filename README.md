@@ -32,7 +32,6 @@ It provides data structures, evaluators, topology operators, I/O and tessellatio
 ## Limitations
 - **NURBS Surface**: `TrimSurface` is not yet implemented.
 - **Knot Vector**: Currently, only "Clamped" knot vectors are supported (multiplicity = degree + 1).
-- **Topology Operations**:  `JoinSurface` are not yet implemented.
 - **IGES Support**:
     - **Import**: Only supports Entity Type 126 (Rational B-spline curve) and 128 (Rational B-spline surface).
     - **Export**: Only supports NURBS and Point entities. Mesh export is not supported.
