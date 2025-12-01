@@ -33,6 +33,7 @@ It provides data structures, evaluators, topology operators, I/O and tessellatio
 - Targets: .NET 8 and .NET Standard 2.1
 
 ## Limitations
+- **Viewer**: This library does not include a 3D model viewer. To inspect model details, a 3D rendering library or file export is required.
 - **NURBS Surface**: `TrimSurface` is not yet implemented.
 - **Knot Vector**: Currently, only "Clamped" knot vectors are supported (multiplicity = degree + 1).
 - **IGES Support**:
