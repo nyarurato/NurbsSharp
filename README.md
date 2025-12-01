@@ -30,7 +30,7 @@ It provides data structures, evaluators, topology operators, I/O and tessellatio
 - Targets: .NET 8 and .NET Standard 2.1
 
 ## Limitations
-
+- **NURBS Surface**: `TrimSurface` is not yet implemented.
 - **Knot Vector**: Currently, only "Clamped" knot vectors are supported (multiplicity = degree + 1).
 - **Topology Operations**:  `JoinSurface` are not yet implemented.
 - **IGES Support**:

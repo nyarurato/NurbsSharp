@@ -1,12 +1,15 @@
+using NurbsSharp.Core;
+using NurbsSharp.Evaluation;
+using NurbsSharp.Geometry;
+using NurbsSharp.Operation;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using NurbsSharp.Core;
-using NurbsSharp.Geometry;
-using NurbsSharp.Evaluation;
-using NurbsSharp.Operation;
+using NurbsSharp.IO.IGES;
+using NurbsSharp.Generation;
 
 namespace UnitTests.Operation
 {
@@ -436,5 +439,469 @@ namespace UnitTests.Operation
             }
         }
 
+        [Test]
+        public void KnotOperator_RemoveKnot_SimpleLine()
+        {
+            // Line with inserted knot
+            int degree = 1;
+            double[] knots = [0, 0, 1, 1];
+            ControlPoint[] controlPoints = [
+                new ControlPoint(0, 0, 0, 1),
+                new ControlPoint(10, 0, 0, 1)
+            ];
+            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
+            
+            // Insert a knot first
+            curve = KnotOperator.InsertKnot(curve, 0.5, 1);// add knot at 0.5
+            int originalCPCount = curve.ControlPoints.Length;
+            
+            // Then remove it
+            var (success, newCurve) = KnotOperator.RemoveKnot(curve, 0.5);
+            
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(success, Is.True);
+                Assert.That(newCurve, Is.Not.Null);
+                Assert.That(newCurve!.ControlPoints, Has.Length.EqualTo(originalCPCount - 1));
+                Assert.That(newCurve.KnotVector.Knots, Has.Length.EqualTo(curve.KnotVector.Knots.Length - 1));
+            }
+            
+            // Verify shape preservation
+            double[] samples = [0.0, 0.25, 0.5, 0.75, 1.0];
+            foreach (var u in samples)
+            {
+                var pos_original = curve.GetPos(u);
+                var pos_removed = newCurve!.GetPos(u);
+                
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(pos_removed.X, Is.EqualTo(pos_original.X).Within(1e-6));
+                    Assert.That(pos_removed.Y, Is.EqualTo(pos_original.Y).Within(1e-6));
+                    Assert.That(pos_removed.Z, Is.EqualTo(pos_original.Z).Within(1e-6));
+                }
+            }
+        }
+
+        [Test]
+        public void KnotOperator_RemoveKnot_EndpointFails()
+        {
+            int degree = 2;
+            double[] knots = [0, 0, 0, 0.5, 1, 1, 1];
+            ControlPoint[] controlPoints = [
+                new ControlPoint(0, 0, 0),
+                new ControlPoint(1, 1, 0),
+                new ControlPoint(2, 1, 0),
+                new ControlPoint(3, 0, 0)
+            ];
+            
+            // Try to remove endpoint knot (should fail)
+            var (success, _, _) = KnotOperator.RemoveKnot(degree, knots, controlPoints, 0.0);
+            
+            Assert.That(success, Is.False);
+        }
+
+        [Test]
+        public void KnotOperator_RemoveKnot_NonexistentKnotFails()
+        {
+            int degree = 2;
+            double[] knots = [0, 0, 0, 0.5, 1, 1, 1];
+            ControlPoint[] controlPoints = [
+                new ControlPoint(0, 0, 0),
+                new ControlPoint(1, 1, 0),
+                new ControlPoint(2, 1, 0),
+                new ControlPoint(3, 0, 0)
+            ];
+            
+            var (success, _, _) = KnotOperator.RemoveKnot(degree, knots, controlPoints, 0.75);  // Doesn't exist
+            
+            Assert.That(success, Is.False);
+        }
+
+        [Test]
+        public void KnotOperator_RemoveKnot_Degree3Curve()
+        {
+            int degree = 3;
+            double[] knots = [0, 0, 0, 0, 0.5, 1, 1, 1, 1];
+            ControlPoint[] controlPoints = [
+                new ControlPoint(0, 0, 0),
+                new ControlPoint(1, 2, 0),
+                new ControlPoint(2, 2, 0),
+                new ControlPoint(3, 0, 0),
+                new ControlPoint(4, -1, 0)
+            ];
+            // Insert knot first
+            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
+            var insert_curve = KnotOperator.InsertKnot(curve, 0.75, 2);// insert knot at 0.75 twice
+            insert_curve = KnotOperator.InsertKnot(insert_curve, 0.1, 2);// insert knot at 0.25 twice
+            // knot length: +4, cp length: +4
+
+            // Now remove it
+            var (success, newCurve) = KnotOperator.RemoveKnot(insert_curve, 0.75);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(success, Is.True);
+                Assert.That(newCurve, Is.Not.Null);
+                Assert.That(newCurve!.ControlPoints, Has.Length.EqualTo(insert_curve.ControlPoints.Length - 1));
+                Assert.That(newCurve.KnotVector.Knots, Has.Length.EqualTo(insert_curve.KnotVector.Knots.Length - 1));
+            }
+
+            // Verify shape preservation
+            double[] samples = [0.0, 0.25, 0.5, 0.75, 1.0];
+            foreach (var u in samples)
+            {
+                var pos_original = curve.GetPos(u);
+                var pos_removed = newCurve!.GetPos(u);
+                
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(pos_removed.X, Is.EqualTo(pos_original.X).Within(1e-6));
+                    Assert.That(pos_removed.Y, Is.EqualTo(pos_original.Y).Within(1e-6));
+                    Assert.That(pos_removed.Z, Is.EqualTo(pos_original.Z).Within(1e-6));
+                }
+            }
+
+        }
+
+        [Test]
+        public void KnotOperator_RemoveKnot_Circle()
+        {
+            double R = 2.0;
+            var curve = PrimitiveFactory.CreateCircle(R);
+
+            // Insert knots first
+            var refinedCurve = KnotOperator.RefineKnot(curve, [0.125, 0.375, 0.625, 0.875]);
+
+            //remove knots
+            double[] knotsToRemove = [0.125, 0.375, 0.625, 0.875];
+            double[] samplePoints = [0, 0.05, 0.125, 0.2, 0.3, 0.375, 0.45, 0.5, 0.6, 0.625, 0.7, 0.75, 0.8, 0.875, 0.95, 1.0];
+
+            foreach (var u in knotsToRemove)
+            {
+                var (success, newCurve) = KnotOperator.RemoveKnot(refinedCurve, u, 1E-06);
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(success, Is.True);
+                    Assert.That(newCurve, Is.Not.Null);
+
+                }
+
+                foreach(var s in samplePoints)
+                {
+                    var pos_original = curve.GetPos(s);
+                    var pos_new = newCurve!.GetPos(s);
+                    using (Assert.EnterMultipleScope())
+                    {
+                        Assert.That(pos_new.X, Is.EqualTo(pos_original.X).Within(1e-6));
+                        Assert.That(pos_new.Y, Is.EqualTo(pos_original.Y).Within(1e-6));
+                        Assert.That(pos_new.Z, Is.EqualTo(pos_original.Z).Within(1e-6));
+                    }
+                }
+
+                refinedCurve = newCurve!;
+            }
+
+            var remove_curve = KnotOperator.RemoveKnot(refinedCurve, 0.5, 1E-06);
+            Assert.That(remove_curve.success, Is.True);
+
+            foreach (var s in samplePoints)
+            {
+                var pos_original = curve.GetPos(s);
+                var pos_new = remove_curve.curve!.GetPos(s);
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(pos_new.X, Is.EqualTo(pos_original.X).Within(0.2));//looser tolerance after lost original shape
+                    Assert.That(pos_new.Y, Is.EqualTo(pos_original.Y).Within(0.2));
+                    Assert.That(pos_new.Z, Is.EqualTo(pos_original.Z).Within(0.2));
+                }
+            }
+        }
+
+        [Test]
+        public void KnotOperator_RemoveKnot_PlaneSurf(){
+            Vector3Double p0 = new Vector3Double(0,0,0);
+            Vector3Double p1 = new Vector3Double(10,0,0);
+            Vector3Double p2 = new Vector3Double(0,10,0);
+            Vector3Double p3 = new Vector3Double(10,10,0);
+
+            var surf = PrimitiveFactory.CreateFace(p0, p1, p2, p3);
+            //insert knots first
+            var refinedSurf = KnotOperator.RefineKnot(surf, [0.25,0.5,0.75], SurfaceDirection.U);
+
+            //remove knots
+            double[] knotsToRemove = [0.25,0.5,0.75];
+            double[] uSamples = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0];
+            double[] vSamples = [0.0, 0.3, 0.5, 0.7, 1.0];
+            foreach(var u in knotsToRemove){
+                var (success, newSurf) = KnotOperator.RemoveKnot(refinedSurf, u, SurfaceDirection.U, 1E-06);
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(success, Is.True);
+                    Assert.That(newSurf, Is.Not.Null);
+                }
+                foreach (var su in uSamples)
+                {
+                    foreach (var sv in vSamples)
+                    {
+                        var pos_original = surf.GetPos(su, sv);
+                        var pos_new = newSurf!.GetPos(su, sv);
+                        using (Assert.EnterMultipleScope())
+                        {
+                            Assert.That(pos_new.X, Is.EqualTo(pos_original.X).Within(1e-6));
+                            Assert.That(pos_new.Y, Is.EqualTo(pos_original.Y).Within(1e-6));
+                            Assert.That(pos_new.Z, Is.EqualTo(pos_original.Z).Within(1e-6));
+                        }
+                    }
+                }
+                refinedSurf = newSurf!;
+            }
+        }
+
+        [Test]
+        public void KnotOperator_RemoveKnot_Sphere()
+        {
+            var surf = PrimitiveFactory.CreateSphere(10.0);
+
+            //remove knots
+            double[] knotsToRemove = [ 0.5 ];
+            double[] uSamples = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0];
+            double[] vSamples = [0.0, 0.3, 0.5, 0.7, 1.0];
+
+            foreach (var u in knotsToRemove)
+            {
+                var (success, newSurf) = KnotOperator.RemoveKnot(surf, u, SurfaceDirection.U, 1E-06);
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(success, Is.True);
+                    Assert.That(newSurf, Is.Not.Null);
+                }
+                foreach (var su in uSamples)
+                {
+                    foreach (var sv in vSamples)
+                    {
+                        var pos_original = surf.GetPos(su, sv);
+                        var pos_new = newSurf!.GetPos(su, sv);
+                        using (Assert.EnterMultipleScope())
+                        {
+                            Assert.That(pos_new.X, Is.EqualTo(pos_original.X).Within(1));// looser tolerance because sphere shape approximation
+                            Assert.That(pos_new.Y, Is.EqualTo(pos_original.Y).Within(1));
+                            Assert.That(pos_new.Z, Is.EqualTo(pos_original.Z).Within(1));
+                        }
+                    }
+                }
+                surf = newSurf!;
+            }
+        }
+
+        [Test]
+        public void KnotOperator_RemoveKnot_Cylinder()
+        {
+            double R = 5.0;
+            var surf = PrimitiveFactory.CreateCylinder(R, 10.0).First();
+
+            //remove knots
+            double[] knotsToRemove = [ 0.5,0.75 ];
+            double[] uSamples = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0];
+            double[] vSamples = [0.0, 0.3, 0.5, 0.7, 1.0];
+            foreach (var u in knotsToRemove)
+            {
+                var (success, newSurf) = KnotOperator.RemoveKnot(surf, u, SurfaceDirection.V, 1E-06);
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(success, Is.True);
+                    Assert.That(newSurf, Is.Not.Null);
+                }
+                foreach (var su in uSamples)
+                {
+                    foreach (var sv in vSamples)
+                    {
+                        var pos_original = surf.GetPos(su, sv);
+                        var pos_new = newSurf!.GetPos(su, sv);
+                        using (Assert.EnterMultipleScope())
+                        {
+                            Assert.That(pos_new.X, Is.EqualTo(pos_original.X).Within(1));// looser tolerance because cylinder shape approximation
+                            Assert.That(pos_new.Y, Is.EqualTo(pos_original.Y).Within(1));
+                            Assert.That(pos_new.Z, Is.EqualTo(pos_original.Z).Within(1));
+                        }
+                    }
+                }
+                surf = newSurf!;
+            }
+        }
+
+        [Test]
+        public void RefineKnot_Surface_UDirection()
+        {
+            // Create a simple planar surface
+            Vector3Double p0 = new Vector3Double(0, 0, 0);
+            Vector3Double p1 = new Vector3Double(10, 0, 0);
+            Vector3Double p2 = new Vector3Double(0, 10, 0);
+            Vector3Double p3 = new Vector3Double(10, 10, 0);
+
+            var surf = PrimitiveFactory.CreateFace(p0, p1, p2, p3);
+            int origKnotCountU = surf.KnotVectorU.Knots.Length;
+            int origKnotCountV = surf.KnotVectorV.Knots.Length;
+            int origCPCountU = surf.ControlPoints.Length;
+            int origCPCountV = surf.ControlPoints[0].Length;
+
+            // Refine in U direction
+            double[] refineKnots = [0.25, 0.5, 0.75];
+            var refinedSurf = KnotOperator.RefineKnot(surf, refineKnots, SurfaceDirection.U);
+
+            // Check knot vector length increased in U direction
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(refinedSurf.KnotVectorU.Knots, Has.Length.EqualTo(origKnotCountU + 3));
+                Assert.That(refinedSurf.KnotVectorV.Knots, Has.Length.EqualTo(origKnotCountV)); // V unchanged
+                Assert.That(refinedSurf.ControlPoints, Has.Length.EqualTo(origCPCountU + 3));
+                Assert.That(refinedSurf.ControlPoints[0], Has.Length.EqualTo(origCPCountV)); // V unchanged
+            }
+
+            // Shape preservation: sample points
+            double[] uSamples = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0];
+            double[] vSamples = [0.0, 0.3, 0.5, 0.7, 1.0];
+
+            foreach (var u in uSamples)
+            {
+                foreach (var v in vSamples)
+                {
+                    var pos0 = surf.GetPos(u, v);
+                    var pos1 = refinedSurf.GetPos(u, v);
+                    using (Assert.EnterMultipleScope())
+                    {
+                        Assert.That(pos0.X, Is.EqualTo(pos1.X).Within(1e-8));
+                        Assert.That(pos0.Y, Is.EqualTo(pos1.Y).Within(1e-8));
+                        Assert.That(pos0.Z, Is.EqualTo(pos1.Z).Within(1e-8));
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void RefineKnot_Surface_VDirection()
+        {
+            // Create a simple planar surface
+            Vector3Double p0 = new Vector3Double(0, 0, 0);
+            Vector3Double p1 = new Vector3Double(10, 0, 0);
+            Vector3Double p2 = new Vector3Double(0, 10, 0);
+            Vector3Double p3 = new Vector3Double(10, 10, 0);
+
+            var surf = PrimitiveFactory.CreateFace(p0, p1, p2, p3);
+            int origKnotCountU = surf.KnotVectorU.Knots.Length;
+            int origKnotCountV = surf.KnotVectorV.Knots.Length;
+            int origCPCountU = surf.ControlPoints.Length;
+            int origCPCountV = surf.ControlPoints[0].Length;
+
+            // Refine in V direction
+            double[] refineKnots = [0.25, 0.5, 0.75];
+            var refinedSurf = KnotOperator.RefineKnot(surf, refineKnots, SurfaceDirection.V);
+
+            // Check knot vector length increased in V direction
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(refinedSurf.KnotVectorU.Knots, Has.Length.EqualTo(origKnotCountU)); // U unchanged
+                Assert.That(refinedSurf.KnotVectorV.Knots, Has.Length.GreaterThan(origKnotCountV));
+                Assert.That(refinedSurf.ControlPoints, Has.Length.EqualTo(origCPCountU)); // U unchanged
+                Assert.That(refinedSurf.ControlPoints[0], Has.Length.GreaterThan(origCPCountV));
+            }
+
+            // Shape preservation: sample points
+            double[] uSamples = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0];
+            double[] vSamples = [0.0, 0.3, 0.5, 0.7, 1.0];
+
+            foreach (var u in uSamples)
+            {
+                foreach (var v in vSamples)
+                {
+                    var pos0 = surf.GetPos(u, v);
+                    var pos1 = refinedSurf.GetPos(u, v);
+                    using (Assert.EnterMultipleScope())
+                    {
+                        Assert.That(pos0.X, Is.EqualTo(pos1.X).Within(1e-8));
+                        Assert.That(pos0.Y, Is.EqualTo(pos1.Y).Within(1e-8));
+                        Assert.That(pos0.Z, Is.EqualTo(pos1.Z).Within(1e-8));
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void RefineKnot_Surface_WithDuplicates()
+        {
+            // Create a simple planar surface
+            Vector3Double p0 = new Vector3Double(0, 0, 0);
+            Vector3Double p1 = new Vector3Double(10, 0, 0);
+            Vector3Double p2 = new Vector3Double(0, 10, 0);
+            Vector3Double p3 = new Vector3Double(10, 10, 0);
+
+            var surf = PrimitiveFactory.CreateFace(p0, p1, p2, p3);
+
+            // Refine with duplicates and endpoints (should be handled correctly)
+            double[] refineKnots = [0.5, 0.5, 0.5, 0.0, 1.0, 0.25, 0.75];
+            var refinedSurf = KnotOperator.RefineKnot(surf, refineKnots, SurfaceDirection.U);
+
+            // Shape preservation
+            double[] uSamples = [0.0, 0.25, 0.5, 0.75, 1.0];
+            double[] vSamples = [0.0, 0.5, 1.0];
+
+            foreach (var u in uSamples)
+            {
+                foreach (var v in vSamples)
+                {
+                    var pos0 = surf.GetPos(u, v);
+                    var pos1 = refinedSurf.GetPos(u, v);
+                    using (Assert.EnterMultipleScope())
+                    {
+                        Assert.That(pos0.X, Is.EqualTo(pos1.X).Within(1e-8));
+                        Assert.That(pos0.Y, Is.EqualTo(pos1.Y).Within(1e-8));
+                        Assert.That(pos0.Z, Is.EqualTo(pos1.Z).Within(1e-8));
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void RefineKnot_Surface_Sphere()
+        {
+            var surf = PrimitiveFactory.CreateSphere(5.0);
+
+            // Refine knots in U and V directions
+            double[] refineKnotsU = [0.1, 0.3, 0.5, 0.7, 0.9];
+            double[] refineKnotsV = [0.2, 0.4, 0.6, 0.8];
+            var refinedU = KnotOperator.RefineKnot(surf, refineKnotsU, SurfaceDirection.U);
+            var refinedUV = KnotOperator.RefineKnot(refinedU, refineKnotsV, SurfaceDirection.V);
+
+
+            // Shape preservation
+            double[] uSamples = [0.0, 0.25, 0.5, 0.75, 1.0];
+            double[] vSamples = [0.0, 0.5, 1.0];
+
+            foreach (var u in uSamples)
+            {
+                foreach (var v in vSamples)
+                {
+                    var pos0 = surf.GetPos(u, v);
+                    var pos1 = refinedUV.GetPos(u, v);
+                    using (Assert.EnterMultipleScope())
+                    {
+                        Assert.That(pos0.X, Is.EqualTo(pos1.X).Within(1e-8));
+                        Assert.That(pos0.Y, Is.EqualTo(pos1.Y).Within(1e-8));
+                        Assert.That(pos0.Z, Is.EqualTo(pos1.Z).Within(1e-8));
+                    }
+                }
+            }
+
+        }
+
+        static async Task TestOutIGES(List<NurbsSurface> geometries, string filePath = "testknot.igs")
+        {
+            using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
+            await IGESExporter.ExportAsync(geometries, stream);
+        }
+
+        static async Task TestOutIGES(List<NurbsCurve> geometry, string filePath = "testknot.igs")
+        {
+            using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
+            await IGESExporter.ExportAsync(geometry, stream);
+        }
     }
 }

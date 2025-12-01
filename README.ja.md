@@ -27,7 +27,7 @@ NURBS Sharpは.NET向けの依存関係なしのNURBS（非一様有理 B-スプ
 - 対応ターゲット：.NET 8、 .NET Standard 2.1
 
 ## 制限事項
-
+- **NURBSサーフェス**: `TrimSurface`は未実装です。
 - **ノットベクトル (Knot Vector)**: 現在、"Clamped" ノットベクトルのみサポートしています（多重度 = 次数 + 1）。
 - **トポロジー操作**: `RemoveKnot`は未実装です。
 - **IGESサポート**:
