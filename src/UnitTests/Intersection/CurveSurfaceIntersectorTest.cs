@@ -24,25 +24,23 @@ namespace UnitTests.Intersection
                 new ControlPoint(0.5, 0.5, -1),
                 new ControlPoint(0.5, 0.5, 1)
             };
-            var curveKnots = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
+            var curveKnots = new KnotVector([0, 0, 1, 1], 1);
             var curve = new NurbsCurve(1, curveKnots, curveCp);
 
             // Create a horizontal plane at z=0
             var surfaceCp = new ControlPoint[][]
             {
-                new ControlPoint[]
-                {
+                [
                     new ControlPoint(0, 0, 0),
                     new ControlPoint(0, 1, 0)
-                },
-                new ControlPoint[]
-                {
+                ],
+                [
                     new ControlPoint(1, 0, 0),
                     new ControlPoint(1, 1, 0)
-                }
+                ]
             };
-            var knotsU = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
-            var knotsV = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
+            var knotsU = new KnotVector([0, 0, 1, 1], 1);
+            var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
             var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
@@ -67,25 +65,23 @@ namespace UnitTests.Intersection
                 new ControlPoint(0, 0, 1),
                 new ControlPoint(1, 0, 1)
             };
-            var curveKnots = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
+            var curveKnots = new KnotVector([0, 0, 1, 1], 1);
             var curve = new NurbsCurve(1, curveKnots, curveCp);
 
             // Create a horizontal plane at z=0
             var surfaceCp = new ControlPoint[][]
             {
-                new ControlPoint[]
-                {
+                [
                     new ControlPoint(0, 0, 0),
                     new ControlPoint(0, 1, 0)
-                },
-                new ControlPoint[]
-                {
+                ],
+                [
                     new ControlPoint(1, 0, 0),
                     new ControlPoint(1, 1, 0)
-                }
+                ]
             };
-            var knotsU = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
-            var knotsV = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
+            var knotsU = new KnotVector([0, 0, 1, 1], 1);
+            var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
             var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
@@ -102,25 +98,23 @@ namespace UnitTests.Intersection
                 new ControlPoint(10, 10, 10),
                 new ControlPoint(11, 10, 10)
             };
-            var curveKnots = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
+            var curveKnots = new KnotVector([0, 0, 1, 1], 1);
             var curve = new NurbsCurve(1, curveKnots, curveCp);
 
             // Create a plane at origin
             var surfaceCp = new ControlPoint[][]
             {
-                new ControlPoint[]
-                {
+                [
                     new ControlPoint(0, 0, 0),
                     new ControlPoint(0, 1, 0)
-                },
-                new ControlPoint[]
-                {
+                ],
+                [
                     new ControlPoint(1, 0, 0),
                     new ControlPoint(1, 1, 0)
-                }
+                ]
             };
-            var knotsU = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
-            var knotsV = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
+            var knotsU = new KnotVector([0, 0, 1, 1], 1);
+            var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
             var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
@@ -138,25 +132,23 @@ namespace UnitTests.Intersection
                 new ControlPoint(0.5, 0.5, 1),
                 new ControlPoint(1, 0, -1)
             };
-            var curveKnots = new KnotVector(new double[] { 0, 0, 0, 1, 1, 1 }, 2);
+            var curveKnots = new KnotVector([0, 0, 0, 1, 1, 1], 2);
             var curve = new NurbsCurve(2, curveKnots, curveCp);
 
             // Horizontal plane at z=0
             var surfaceCp = new ControlPoint[][]
             {
-                new ControlPoint[]
-                {
+                [
                     new ControlPoint(0, 0, 0),
                     new ControlPoint(0, 1, 0)
-                },
-                new ControlPoint[]
-                {
+                ],
+                [
                     new ControlPoint(1, 0, 0),
                     new ControlPoint(1, 1, 0)
-                }
+                ]
             };
-            var knotsU = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
-            var knotsV = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
+            var knotsU = new KnotVector([0, 0, 1, 1], 1);
+            var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
             var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
@@ -183,33 +175,30 @@ namespace UnitTests.Intersection
                 new ControlPoint(0.5, 0.5, -1),
                 new ControlPoint(0.5, 0.5, 1)
             };
-            var curveKnots = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
+            var curveKnots = new KnotVector([0, 0, 1, 1], 1);
             var curve = new NurbsCurve(1, curveKnots, curveCp);
 
             // Create a curved surface (saddle shape)
             var surfaceCp = new ControlPoint[][]
             {
-                new ControlPoint[]
-                {
+                [
                     new ControlPoint(0, 0, -0.5),
                     new ControlPoint(0, 0.5, 0),
                     new ControlPoint(0, 1, 0.5)
-                },
-                new ControlPoint[]
-                {
+                ],
+                [
                     new ControlPoint(0.5, 0, 0),
                     new ControlPoint(0.5, 0.5, 0),
                     new ControlPoint(0.5, 1, 0)
-                },
-                new ControlPoint[]
-                {
+                ],
+                [
                     new ControlPoint(1, 0, 0.5),
                     new ControlPoint(1, 0.5, 0),
                     new ControlPoint(1, 1, -0.5)
-                }
+                ]
             };
-            var knotsU = new KnotVector(new double[] { 0, 0, 0, 1, 1, 1 }, 2);
-            var knotsV = new KnotVector(new double[] { 0, 0, 0, 1, 1, 1 }, 2);
+            var knotsU = new KnotVector([0, 0, 0, 1, 1, 1], 2);
+            var knotsV = new KnotVector([0, 0, 0, 1, 1, 1], 2);
             var surface = new NurbsSurface(2, 2, knotsU, knotsV, surfaceCp);
 
             var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
@@ -234,24 +223,22 @@ namespace UnitTests.Intersection
                 new ControlPoint(0.5, 0.5, -1),
                 new ControlPoint(0.5, 0.5, 1)
             };
-            var curveKnots = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
+            var curveKnots = new KnotVector([0, 0, 1, 1], 1);
             var curve = new NurbsCurve(1, curveKnots, curveCp);
 
             var surfaceCp = new ControlPoint[][]
             {
-                new ControlPoint[]
-                {
+                [
                     new ControlPoint(0, 0, 0),
                     new ControlPoint(0, 1, 0)
-                },
-                new ControlPoint[]
-                {
+                ],
+                [
                     new ControlPoint(1, 0, 0),
                     new ControlPoint(1, 1, 0)
-                }
+                ]
             };
-            var knotsU = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
-            var knotsV = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
+            var knotsU = new KnotVector([0, 0, 1, 1], 1);
+            var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
             bool intersects = CurveSurfaceIntersector.Intersects(curve, surface);
@@ -268,24 +255,22 @@ namespace UnitTests.Intersection
                 new ControlPoint(0, 0, 1),
                 new ControlPoint(1, 0, 1)
             };
-            var curveKnots = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
+            var curveKnots = new KnotVector([0, 0, 1, 1], 1);
             var curve = new NurbsCurve(1, curveKnots, curveCp);
 
             var surfaceCp = new ControlPoint[][]
             {
-                new ControlPoint[]
-                {
+                [
                     new ControlPoint(0, 0, 0),
                     new ControlPoint(0, 1, 0)
-                },
-                new ControlPoint[]
-                {
+                ],
+                [
                     new ControlPoint(1, 0, 0),
                     new ControlPoint(1, 1, 0)
-                }
+                ]
             };
-            var knotsU = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
-            var knotsV = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
+            var knotsU = new KnotVector([0, 0, 1, 1], 1);
+            var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
             bool intersects = CurveSurfaceIntersector.Intersects(curve, surface);
@@ -294,7 +279,6 @@ namespace UnitTests.Intersection
         }
 
         [Test]
-        [Ignore("Complex cubic-quadratic intersection - geometry may not actually intersect")]
         public void CubicCurveIntersectingQuadraticSurface()
         {
             // Create a cubic curve
@@ -305,33 +289,30 @@ namespace UnitTests.Intersection
                 new ControlPoint(0.7, 0.5, -0.5),
                 new ControlPoint(1, 0.5, 1)
             };
-            var curveKnots = new KnotVector(new double[] { 0, 0, 0, 0, 1, 1, 1, 1 }, 3);
+            var curveKnots = new KnotVector([0, 0, 0, 0, 1, 1, 1, 1], 3);
             var curve = new NurbsCurve(3, curveKnots, curveCp);
 
             // Create a quadratic surface
             var surfaceCp = new ControlPoint[][]
             {
-                new ControlPoint[]
-                {
+                [
                     new ControlPoint(0, 0, 0),
                     new ControlPoint(0, 0.5, 0.2),
                     new ControlPoint(0, 1, 0)
-                },
-                new ControlPoint[]
-                {
+                ],
+                [
                     new ControlPoint(0.5, 0, 0.2),
                     new ControlPoint(0.5, 0.5, 0),
                     new ControlPoint(0.5, 1, 0.2)
-                },
-                new ControlPoint[]
-                {
+                ],
+                [
                     new ControlPoint(1, 0, 0),
                     new ControlPoint(1, 0.5, 0.2),
                     new ControlPoint(1, 1, 0)
-                }
+                ]
             };
-            var knotsU = new KnotVector(new double[] { 0, 0, 0, 1, 1, 1 }, 2);
-            var knotsV = new KnotVector(new double[] { 0, 0, 0, 1, 1, 1 }, 2);
+            var knotsU = new KnotVector([0, 0, 0, 1, 1, 1], 2);
+            var knotsV = new KnotVector([0, 0, 0, 1, 1, 1], 2);
             var surface = new NurbsSurface(2, 2, knotsU, knotsV, surfaceCp);
 
             var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
@@ -358,25 +339,23 @@ namespace UnitTests.Intersection
                 new ControlPoint(0, 0, 0),
                 new ControlPoint(1, 1, 1)
             };
-            var curveKnots = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
+            var curveKnots = new KnotVector([0, 0, 1, 1], 1);
             var curve = new NurbsCurve(1, curveKnots, curveCp);
 
             // Create a tilted plane z = x + y - 1
             var surfaceCp = new ControlPoint[][]
             {
-                new ControlPoint[]
-                {
+                [
                     new ControlPoint(0, 0, -1),
                     new ControlPoint(0, 1, 0)
-                },
-                new ControlPoint[]
-                {
+                ],
+                [
                     new ControlPoint(1, 0, 0),
                     new ControlPoint(1, 1, 1)
-                }
+                ]
             };
-            var knotsU = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
-            var knotsV = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
+            var knotsU = new KnotVector([0, 0, 1, 1], 1);
+            var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
             var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
@@ -401,25 +380,23 @@ namespace UnitTests.Intersection
                 new ControlPoint(0.5, 0.5, -1),
                 new ControlPoint(0.5, 0.5, 1)
             };
-            var curveKnots = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
+            var curveKnots = new KnotVector([0, 0, 1, 1], 1);
             var curve = new NurbsCurve(1, curveKnots, curveCp);
 
             // Create a horizontal plane at z=0
             var surfaceCp = new ControlPoint[][]
             {
-                new ControlPoint[]
-                {
+                [
                     new ControlPoint(0, 0, 0),
                     new ControlPoint(0, 1, 0)
-                },
-                new ControlPoint[]
-                {
+                ],
+                [
                     new ControlPoint(1, 0, 0),
                     new ControlPoint(1, 1, 0)
-                }
+                ]
             };
-            var knotsU = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
-            var knotsV = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
+            var knotsU = new KnotVector([0, 0, 1, 1], 1);
+            var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
             var intersections = CurveSurfaceIntersector.IntersectWithBVH(curve, surface);
@@ -446,25 +423,23 @@ namespace UnitTests.Intersection
                 new ControlPoint(0.5, 0.5, 1),
                 new ControlPoint(1, 0, -1)
             };
-            var curveKnots = new KnotVector(new double[] { 0, 0, 0, 1, 1, 1 }, 2);
+            var curveKnots = new KnotVector([0, 0, 0, 1, 1, 1], 2);
             var curve = new NurbsCurve(2, curveKnots, curveCp);
 
             // Create a horizontal plane at z=0
             var surfaceCp = new ControlPoint[][]
             {
-                new ControlPoint[]
-                {
+                [
                     new ControlPoint(0, 0, 0),
                     new ControlPoint(0, 1, 0)
-                },
-                new ControlPoint[]
-                {
+                ],
+                [
                     new ControlPoint(1, 0, 0),
                     new ControlPoint(1, 1, 0)
-                }
+                ]
             };
-            var knotsU = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
-            var knotsV = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
+            var knotsU = new KnotVector([0, 0, 1, 1], 1);
+            var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
             var intersections = CurveSurfaceIntersector.IntersectWithBVH(curve, surface);
@@ -488,25 +463,23 @@ namespace UnitTests.Intersection
                 new ControlPoint(0, 0, 0),
                 new ControlPoint(1, 1, 1)
             };
-            var curveKnots = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
+            var curveKnots = new KnotVector([0, 0, 1, 1], 1);
             var curve = new NurbsCurve(1, curveKnots, curveCp);
 
             // Create a tilted plane z = x + y - 1
             var surfaceCp = new ControlPoint[][]
             {
-                new ControlPoint[]
-                {
+                [
                     new ControlPoint(0, 0, -1),
                     new ControlPoint(0, 1, 0)
-                },
-                new ControlPoint[]
-                {
+                ],
+                [
                     new ControlPoint(1, 0, 0),
                     new ControlPoint(1, 1, 1)
-                }
+                ]
             };
-            var knotsU = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
-            var knotsV = new KnotVector(new double[] { 0, 0, 1, 1 }, 1);
+            var knotsU = new KnotVector([0, 0, 1, 1], 1);
+            var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
             var intersections = CurveSurfaceIntersector.IntersectWithBVH(curve, surface);
@@ -532,33 +505,30 @@ namespace UnitTests.Intersection
                 new ControlPoint(0.7, 0.5, -0.5),
                 new ControlPoint(1, 0.5, 1)
             };
-            var curveKnots = new KnotVector(new double[] { 0, 0, 0, 0, 1, 1, 1, 1 }, 3);
+            var curveKnots = new KnotVector([0, 0, 0, 0, 1, 1, 1, 1], 3);
             var curve = new NurbsCurve(3, curveKnots, curveCp);
 
             // Create a quadratic surface
             var surfaceCp = new ControlPoint[][]
             {
-                new ControlPoint[]
-                {
+                [
                     new ControlPoint(0, 0, 0),
                     new ControlPoint(0, 0.5, 0.2),
                     new ControlPoint(0, 1, 0)
-                },
-                new ControlPoint[]
-                {
+                ],
+                [
                     new ControlPoint(0.5, 0, 0.2),
                     new ControlPoint(0.5, 0.5, 0),
                     new ControlPoint(0.5, 1, 0.2)
-                },
-                new ControlPoint[]
-                {
+                ],
+                [
                     new ControlPoint(1, 0, 0),
                     new ControlPoint(1, 0.5, 0.2),
                     new ControlPoint(1, 1, 0)
-                }
+                ]
             };
-            var knotsU = new KnotVector(new double[] { 0, 0, 0, 1, 1, 1 }, 2);
-            var knotsV = new KnotVector(new double[] { 0, 0, 0, 1, 1, 1 }, 2);
+            var knotsU = new KnotVector([0, 0, 0, 1, 1, 1], 2);
+            var knotsV = new KnotVector([0, 0, 0, 1, 1, 1], 2);
             var surface = new NurbsSurface(2, 2, knotsU, knotsV, surfaceCp);
 
             var standardIntersections = CurveSurfaceIntersector.Intersect(curve, surface);
@@ -586,6 +556,84 @@ namespace UnitTests.Intersection
             }
         }
 
+        [Test]
+        public void p3Surface_p3Curve()
+        {
+            int degreeU = 3;
+            int degreeV = 3;
+
+            ControlPoint[][] controlPoints =
+            [
+                [
+                new ControlPoint(0.0, 0.0, 0.0, 1),  //U0 V0
+                new ControlPoint(1.0, 0.0, 0.0, 1),  //U0 V1
+                new ControlPoint(2.0, 0.0, 0.0, 1),  //U0 V2
+                new ControlPoint(3.0, 0.0, 0.0, 1),  //U0 V3
+                new ControlPoint(4.0, 0.0, 0.0, 1)   //U0 V4
+                ],
+                [
+                new ControlPoint(0.0, 1.0, 0.5, 1),  //U1 V0
+                new ControlPoint(1.0, 1.0, -1.5, 1), //U1 V1
+                new ControlPoint(2.0, 1.0, 4.0, 1),  //U1 V2
+                new ControlPoint(3.0, 1.0, -3.0, 1), //U1 V3
+                new ControlPoint(4.0, 1.0, 0.5, 1)   //U1 V4
+                ],
+                [
+                new ControlPoint(0.0, 2.0, 1.5, 1),  //U2 V0
+                new ControlPoint(1.0, 2.0, 2.5, 1),  //U2 V1
+                new ControlPoint(2.0, 2.0, 3.5, 0.7),//U2 V2
+                new ControlPoint(3.0, 2.0, 3.0, 1),  //U2 V3
+                new ControlPoint(4.0, 2.0, 0.0, 1)   //U2 V4
+                ],
+                [
+                new ControlPoint(0.0, 3.0, 0.5, 1),  //U3 V0
+                new ControlPoint(1.5, 3.0, -1.5, 1), //U3 V1
+                new ControlPoint(2.5, 3.0, 2.0 ,1),  //U3 V2
+                new ControlPoint(3.5, 3.0, -1.5, 1), //U3 V3
+                new ControlPoint(4.5, 3.0, -1.0, 1)  //U3 V4
+                ],
+                [
+                new ControlPoint(0.0, 4.0, 0.5, 1),  //U4 V0
+                new ControlPoint(1.0, 4.0, 0.5, 1),  //U4 V1
+                new ControlPoint(2.0, 4.0, 0.0, 1),  //U4 V2
+                new ControlPoint(3.0, 4.0, 0.0, 1),  //U4 V3
+                new ControlPoint(4.0, 4.0, 0.0, 1)   //U4 V4
+                ],
+            ]; // 5x5 control points U x V
+
+            var knotVectorU = KnotVector.GetClampedKnot(degreeU, controlPoints.Length);
+            var knotVectorV = KnotVector.GetClampedKnot(degreeV, controlPoints[0].Length);
+
+            var surface = new NurbsSurface(degreeU, degreeV, knotVectorU, knotVectorV, controlPoints);
+
+            int degree = 3;
+            double[] knots = [0, 0, 0, 0, 0.25, 0.5, 0.75, 1, 1, 1, 1];
+            KnotVector knotVector = new KnotVector(knots, degree);
+
+            var cp = new ControlPoint[]
+            {
+            new ControlPoint(-1.0, 0.5, 2.0, 1.0),
+            new ControlPoint(0.5, 1.0, 3.0, 1.0),
+            new ControlPoint(1.5, 1.5, 1.5, 1.0),
+            new ControlPoint(2.5, 2.5, -1.5, 1.0),
+            new ControlPoint(3.0, 2.8, -1.0, 1.0),
+            new ControlPoint(3.5, 3.2, -0.5, 1.0),
+            new ControlPoint(5.0, 3.5, 1.5, 1.0)
+            };
+
+            var curve = new NurbsCurve(degree, knotVector, cp);
+
+            var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(intersections, Has.Count.EqualTo(2));
+                foreach (var intersection in intersections)
+                {
+                    Assert.That(intersection.Distance, Is.LessThan(CurveSurfaceIntersector.Tolerance * 10));
+                }
+            }
+
+        }
 
         static async Task TestOutIGES(List<NurbsSurface> geometries, string filePath = "test.igs")
         {

@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using NurbsSharp.Core;
 using NurbsSharp.Evaluation;
 using NurbsSharp.Geometry;
+using NurbsSharp.Operation;
 
 namespace NurbsSharp.Intersection
 {
+    // TODO: Optimization
+
     /// <summary>
     /// (en) Intersector for NURBS curve and surface using marching method and Newton-Raphson iteration.
     /// Implementation strategy: 
@@ -382,31 +386,42 @@ namespace NurbsSharp.Intersection
         private static (double u, double v, Vector3Double point, double distance) FindClosestPointOnSurfaceWithBVH(
             NurbsSurface surface, Vector3Double target, SurfaceBVHNode bvhRoot, double tolerance)
         {
-            // Search in all leaf nodes and find the best
-            var leaves = GetAllLeaves(bvhRoot);
-            
-            double bestU = 0, bestV = 0;
-            Vector3Double bestPoint = Vector3Double.Zero;
-            double bestDist = double.MaxValue;
+            // Use moderate grid search only when BVH is used (more complex cases)
+            return Operation.SurfaceOperator.FindClosestPoint(surface, target, tolerance, gridDivisions: 3);
+        }
 
-            foreach (var region in leaves)
-            {
-                double uMid = (region.URange.min + region.URange.max) * 0.5;
-                double vMid = (region.VRange.min + region.VRange.max) * 0.5;
+        /// <summary>
+        /// (en) Find the closest point on surface to a given 3D point (fast version with initial guess)
+        /// (ja) 初期推定値を使用した高速な最近接点探索
+        /// </summary>
+        private static (double u, double v, Vector3Double point, double distance) FindClosestPointOnSurface(
+            NurbsSurface surface, Vector3Double target, double initialU, double initialV, double tolerance)
+        {
+            // Use single initial point for speed (no grid search)
+            return Operation.SurfaceOperator.FindClosestPoint(surface, target, initialU, initialV, tolerance);
+        }
 
-                var (u, v, point, dist) = FindClosestPointOnSurfaceInRegion(
-                    surface, target, region, uMid, vMid, tolerance);
+        /// <summary>
+        /// (en) Find the closest point on surface using grid search (accurate but slower)
+        /// (ja) グリッド探索を使用した最近接点探索（正確だが低速）
+        /// </summary>
+        private static (double u, double v, Vector3Double point, double distance) FindClosestPointOnSurfaceWithGridSearch(
+            NurbsSurface surface, Vector3Double target, double tolerance, int gridDivisions = 3)
+        {
+            // Use grid search for better accuracy when initial guess is unknown
+            return Operation.SurfaceOperator.FindClosestPoint(surface, target, tolerance, gridDivisions);
+        }
 
-                if (dist < bestDist)
-                {
-                    bestU = u;
-                    bestV = v;
-                    bestPoint = point;
-                    bestDist = dist;
-                }
-            }
-
-            return (bestU, bestV, bestPoint, bestDist);
+        /// <summary>
+        /// (en) Find closest point on surface within specific parameter region
+        /// (ja) 特定のパラメータ領域内でサーフェス上の最近接点を検索
+        /// </summary>
+        private static (double u, double v, Vector3Double point, double distance) FindClosestPointOnSurfaceInRegion(
+            NurbsSurface surface, Vector3Double target, SurfaceBVHNode region, 
+            double initialU, double initialV, double tolerance)
+        {
+            // Use initial guess from region center for speed
+            return Operation.SurfaceOperator.FindClosestPoint(surface, target, initialU, initialV, tolerance);
         }
 
         /// <summary>
@@ -431,24 +446,10 @@ namespace NurbsSharp.Intersection
         }
 
         /// <summary>
-        /// (en) Find closest point on surface within a specific parameter region
-        /// (ja) 特定のパラメータ領域内でサーフェス上の最近接点を検索
-        /// </summary>
-        private static (double u, double v, Vector3Double point, double distance) FindClosestPointOnSurfaceInRegion(
-            NurbsSurface surface, Vector3Double target, SurfaceBVHNode region, 
-            double initialU, double initialV, double tolerance)
-        {
-            // Use the standard closest point finder without region constraints
-            // The region is only used for initial guess
-            return FindClosestPointOnSurface(surface, target, initialU, initialV, tolerance);
-        }
-
-        /// <summary>
         /// (en) Find intersection candidates using marching method along the curve
         /// (ja) 曲線に沿ったマーチング法で交点候補を検索
         /// </summary>
-        private static List<(double t, double u, double v, double dist)> FindIntersectionCandidatesUsingMarching(
-            NurbsCurve curve, NurbsSurface surface, double tolerance)
+        private static List<(double t, double u, double v, double dist)> FindIntersectionCandidatesUsingMarching(NurbsCurve curve, NurbsSurface surface, double tolerance)
         {
             var candidates = new List<(double t, double u, double v, double dist)>();
 
@@ -460,126 +461,167 @@ namespace NurbsSharp.Intersection
             double minV = surface.KnotVectorV.Knots[surface.DegreeV];
             double maxV = surface.KnotVectorV.Knots[surface.KnotVectorV.Length - surface.DegreeV - 1];
 
-            // First pass: collect all distance samples
+            // First pass: forward sampling using continuity initial guess
             double stepSize = (maxT - minT) / MarchingSteps;
-            var samples = new List<(double t, double u, double v, double dist)>();
-            (double u, double v) previousClosest = ((minU + maxU) / 2, (minV + maxV) / 2);
+            var forward = new List<(double t, double u, double v, double dist)>();
+
+            double prevU = (minU + maxU) * 0.5;
+            double prevV = (minV + maxV) * 0.5;
 
             for (int i = 0; i <= MarchingSteps; i++)
             {
                 double t = minT + stepSize * i;
                 Vector3Double curvePoint = CurveEvaluator.Evaluate(curve, t);
 
-                // Find closest point on surface
                 var (u, v, surfacePoint, dist) = FindClosestPointOnSurface(
-                    surface, curvePoint, previousClosest.u, previousClosest.v, tolerance);
+                    surface, curvePoint, prevU, prevV, tolerance);
 
-                samples.Add((t, u, v, dist));
-                previousClosest = (u, v);
+                forward.Add((t, u, v, dist));
+                prevU = u;
+                prevV = v;
             }
 
-            // Second pass: detect candidates
+            // Second pass: reverse sampling to reduce basin-of-attraction dependency
+            var reverse = new List<(double t, double u, double v, double dist)>();
+            prevU = (minU + maxU) * 0.5;
+            prevV = (minV + maxV) * 0.5;
+
+            for (int i = 0; i <= MarchingSteps; i++)
+            {
+                double t = maxT - stepSize * i;
+                Vector3Double curvePoint = CurveEvaluator.Evaluate(curve, t);
+
+                var (u, v, surfacePoint, dist) = FindClosestPointOnSurface(
+                    surface, curvePoint, prevU, prevV, tolerance);
+
+                reverse.Add((t, u, v, dist));
+                prevU = u;
+                prevV = v;
+            }
+
+            // Merge forward and reverse: prefer lower distance for same t (rounded)
+            var mergedDict = new Dictionary<double, (double t, double u, double v, double dist)>();
+            Action<(double t, double u, double v, double dist)> addOrReplace = sample =>
+            {
+                double key = Math.Round(sample.t, 8);
+                if (!mergedDict.TryGetValue(key, out var exist) || sample.dist < exist.dist)
+                    mergedDict[key] = sample;
+            };
+
+            foreach (var s in forward) addOrReplace(s);
+            foreach (var s in reverse) addOrReplace(s);
+
+            var samples = mergedDict.Values.OrderBy(s => s.t).ToList();
+
+            // Adaptive local resampling:
+            // If adjacent samples show large distance change, sign change in derivative,
+            // or large jump in (u,v), then resample the interval densely.
+            var augmented = new List<(double t, double u, double v, double dist)>(samples);
+
+            for (int i = 0; i < samples.Count - 1; i++)
+            {
+                var a = samples[i];
+                var b = samples[i + 1];
+
+                // criteria for refinement
+                bool largeDistChange = Math.Abs(b.dist - a.dist) > Math.Max(1e-3, Math.Min(a.dist, b.dist) * 0.5);
+                double du = Math.Abs(a.u - b.u);
+                double dv = Math.Abs(a.v - b.v);
+                bool largeUVJump = du > 0.1 * (maxU - minU) || dv > 0.1 * (maxV - minV);
+                double d1 = (i > 0) ? (a.dist - samples[i - 1].dist) : 0.0;
+                double d2 = b.dist - a.dist;
+                bool signChange = d1 * d2 < 0;
+
+                if (largeDistChange || largeUVJump || signChange)
+                {
+                    const int subSteps = 10;
+                    for (int k = 1; k < subSteps; k++)
+                    {
+                        double tt = a.t + (b.t - a.t) * (k / (double)subSteps);
+                        Vector3Double cp = CurveEvaluator.Evaluate(curve, tt);
+
+                        // Use grid search for better chance to find correct basin
+                        var (uu, vv, sp, d) = Operation.SurfaceOperator.FindClosestPoint(surface, cp, tolerance, gridDivisions: 3);
+
+                        augmented.Add((tt, uu, vv, d));
+                    }
+                }
+            }
+
+            // Rebuild sample list sorted by t after augmentation
+            samples = augmented.OrderBy(s => s.t).ToList();
+
+            // Candidate detection with expanded criteria
+            double globalMin = samples.Min(s => s.dist);
+
             for (int i = 0; i < samples.Count; i++)
             {
                 var current = samples[i];
 
-                // Criterion 1: Very close to surface
-                if (current.dist < tolerance * 50)
+                // High-priority: very close
+                if (current.dist < tolerance * 20)
                 {
                     candidates.Add(current);
                     continue;
                 }
 
-                // Criterion 2: Local minimum (3-point check)
+                // Near global minimum
+                if (current.dist < Math.Max(globalMin * 2.0, tolerance * 100))
+                {
+                    candidates.Add(current);
+                    continue;
+                }
+
+                // Local minimum (3-point)
                 if (i > 0 && i < samples.Count - 1)
                 {
                     var prev = samples[i - 1];
                     var next = samples[i + 1];
-
                     if (current.dist < prev.dist && current.dist < next.dist)
                     {
-                        if (current.dist < tolerance * 200)
-                        {
-                            candidates.Add(current);
-                        }
+                        candidates.Add(current);
+                        continue;
                     }
                 }
 
-                // Criterion 3: Distance drop detection
+                // Large UV jump may indicate crossing different surface patch -> candidate
                 if (i > 0)
                 {
                     var prev = samples[i - 1];
-                    if (prev.dist > tolerance * 100 && current.dist < tolerance * 100)
+                    double duJump = Math.Abs(current.u - prev.u);
+                    double dvJump = Math.Abs(current.v - prev.v);
+                    if (duJump > 0.05 * (maxU - minU) || dvJump > 0.05 * (maxV - minV))
                     {
-                        candidates.Add(prev);
                         candidates.Add(current);
+                        continue;
+                    }
+                }
+
+                // Distance drop detection
+                if (i > 0)
+                {
+                    var prev = samples[i - 1];
+                    if (prev.dist > current.dist * 1.5 && current.dist < Math.Max(tolerance * 200, globalMin * 50))
+                    {
+                        candidates.Add(current);
+                        continue;
                     }
                 }
             }
 
-            return candidates;
-        }
-
-        /// <summary>
-        /// (en) Find the closest point on surface to a given 3D point using Newton-Raphson
-        /// (ja) Newton-Raphson法で指定された3D点に最も近いサーフェス上の点を検索
-        /// </summary>
-        private static (double u, double v, Vector3Double point, double distance) FindClosestPointOnSurface(
-            NurbsSurface surface, Vector3Double target, double initialU, double initialV, double tolerance)
-        {
-            double minU = surface.KnotVectorU.Knots[surface.DegreeU];
-            double maxU = surface.KnotVectorU.Knots[surface.KnotVectorU.Length - surface.DegreeU - 1];
-            double minV = surface.KnotVectorV.Knots[surface.DegreeV];
-            double maxV = surface.KnotVectorV.Knots[surface.KnotVectorV.Length - surface.DegreeV - 1];
-
-            double u = Math.Max(minU, Math.Min(maxU, initialU));
-            double v = Math.Max(minV, Math.Min(maxV, initialV));
-
-            for (int iter = 0; iter < 30; iter++) // More iterations for better accuracy
+            // Final duplicate pruning: keep one sample per small t-interval / uv-cluster
+            var final = new List<(double t, double u, double v, double dist)>();
+            foreach (var c in candidates.OrderBy(c => c.dist))
             {
-                Vector3Double sp = SurfaceEvaluator.Evaluate(surface, u, v);
-                var derivs = SurfaceEvaluator.EvaluateFirstDerivative(surface, u, v);
-                Vector3Double surfDU = derivs.u_deriv;
-                Vector3Double surfDV = derivs.v_deriv;
-
-                Vector3Double delta = sp - target;
-                double dist = delta.magnitude;
-
-                if (dist < tolerance || iter > 15)
-                {
-                    return (u, v, sp, dist);
-                }
-
-                // Minimize ||S(u,v) - target||^2
-                // Gradient: g = [2*delta·surfDU, 2*delta·surfDV]
-                double g1 = 2 * Vector3Double.Dot(delta, surfDU);
-                double g2 = 2 * Vector3Double.Dot(delta, surfDV);
-
-                // Hessian approximation (ignore second derivatives)
-                double h11 = 2 * Vector3Double.Dot(surfDU, surfDU);
-                double h12 = 2 * Vector3Double.Dot(surfDU, surfDV);
-                double h22 = 2 * Vector3Double.Dot(surfDV, surfDV);
-
-                double det = h11 * h22 - h12 * h12;
-                if (Math.Abs(det) < 1e-12)
-                    break;
-
-                double deltaU = -(h22 * g1 - h12 * g2) / det;
-                double deltaV = -(-h12 * g1 + h11 * g2) / det;
-
-                // Apply damping
-                double damping = 0.7;
-                u += damping * deltaU;
-                v += damping * deltaV;
-
-                // Clamp to bounds
-                u = Math.Max(minU, Math.Min(maxU, u));
-                v = Math.Max(minV, Math.Min(maxV, v));
+                bool dup = final.Any(f =>
+                    Math.Abs(f.t - c.t) < stepSize * 0.5 ||
+                    (Math.Abs(f.u - c.u) < 1e-4 && Math.Abs(f.v - c.v) < 1e-4) ||
+                    (Math.Abs(f.t - c.t) < 1e-6 && Math.Abs(f.dist - c.dist) < tolerance * 10)
+                );
+                if (!dup) final.Add(c);
             }
 
-            Vector3Double finalPoint = SurfaceEvaluator.Evaluate(surface, u, v);
-            double finalDist = (finalPoint - target).magnitude;
-            return (u, v, finalPoint, finalDist);
+            return final;
         }
 
         /// <summary>
@@ -670,19 +712,24 @@ namespace NurbsSharp.Intersection
                     return false;
                 }
 
-                // Solve A·d = F using Cramer's rule
+                // Right-hand side should be -F (Newton step solves A * d = -F)
+                double bx = -F.X;
+                double by = -F.Y;
+                double bz = -F.Z;
+
+                // Solve A·d = -F using Cramer's rule
                 // d = [du, dv, dt]
-                double du = (F.X * (a22 * a33 - a23 * a32) -
-                            a12 * (F.Y * a33 - a23 * F.Z) +
-                            a13 * (F.Y * a32 - a22 * F.Z)) / det;
+                double du = (bx * (a22 * a33 - a23 * a32) -
+                            a12 * (by * a33 - a23 * bz) +
+                            a13 * (by * a32 - a22 * bz)) / det;
 
-                double dv = (a11 * (F.Y * a33 - a23 * F.Z) -
-                            F.X * (a21 * a33 - a23 * a31) +
-                            a13 * (a21 * F.Z - F.Y * a31)) / det;
+                double dv = (a11 * (by * a33 - a23 * bz) -
+                            bx * (a21 * a33 - a23 * a31) +
+                            a13 * (a21 * bz - by * a31)) / det;
 
-                double dt = (a11 * (a22 * F.Z - F.Y * a32) -
-                            a12 * (a21 * F.Z - F.Y * a31) +
-                            F.X * (a21 * a32 - a22 * a31)) / det;
+                double dt = (a11 * (a22 * bz - by * a32) -
+                            a12 * (a21 * bz - by * a31) +
+                            bx * (a21 * a32 - a22 * a31)) / det;
 
                 // Check convergence on increments
                 if (Math.Abs(du) <= tolerance && Math.Abs(dv) <= tolerance && Math.Abs(dt) <= tolerance)
@@ -699,16 +746,44 @@ namespace NurbsSharp.Intersection
                     return true;
                 }
 
-                // Update parameters
-                u += du;
-                v += dv;
-                t += dt;
-
-                // Check if parameters went out of bounds
-                if (t < minT || t > maxT || u < minU || u > maxU || v < minV || v > maxV)
+                // Adaptive damping: try full step, if residual increases then halve step up to several times
+                bool accepted = false;
+                double alpha = 1.0;
+                for (int damp = 0; damp < 6; damp++)
                 {
+                    double uNew = u + alpha * du;
+                    double vNew = v + alpha * dv;
+                    double tNew = t + alpha * dt;
+
+                    // Clamp tentative params
+                    uNew = Math.Max(minU, Math.Min(maxU, uNew));
+                    vNew = Math.Max(minV, Math.Min(maxV, vNew));
+                    tNew = Math.Max(minT, Math.Min(maxT, tNew));
+
+                    Vector3Double surfPtNew = SurfaceEvaluator.Evaluate(surface, uNew, vNew);
+                    Vector3Double curvePtNew = CurveEvaluator.Evaluate(curve, tNew);
+                    double newDist = (surfPtNew - curvePtNew).magnitude;
+
+                    if (newDist < dist || newDist < tolerance * 10)
+                    {
+                        // accept step
+                        u = uNew;
+                        v = vNew;
+                        t = tNew;
+                        accepted = true;
+                        break;
+                    }
+
+                    alpha *= 0.5;
+                }
+
+                if (!accepted)
+                {
+                    // Could not decrease residual -> assume failure for this candidate
                     return false;
                 }
+
+                // Optionally continue iterations until convergence
             }
 
             // Did not converge
