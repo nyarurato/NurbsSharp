@@ -1187,5 +1187,191 @@ namespace UnitTests.Core
                     $"Direction {direction} failed normalization");
             }
         }
+
+        /*
+         * 
+         * Plane tests
+         * 
+         */
+
+        [Test]
+        public void PlaneConstructorTest()
+        {
+            // Constructor with normal and distance
+            var normal = new Vector3Double(0, 0, 1);
+            double distance = -5.0;
+            var plane1 = new NurbsSharp.Core.Plane(normal, distance);
+            
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(plane1.Normal, Is.EqualTo(normal));
+                Assert.That(plane1.Distance, Is.EqualTo(distance));
+                Assert.That(plane1.IsNormalized, Is.True);
+            }
+
+            // Constructor with normal and point on plane
+            var pointOnPlane = new Vector3Double(1, 2, 3);
+            var plane2 = new NurbsSharp.Core.Plane(normal, pointOnPlane);
+            
+            Assert.That(plane2.Contains(pointOnPlane, 1e-9), Is.True);
+
+            // Constructor with three points
+            var p1 = new Vector3Double(0, 0, 0);
+            var p2 = new Vector3Double(1, 0, 0);
+            var p3 = new Vector3Double(0, 1, 0);
+            var plane3 = new NurbsSharp.Core.Plane(p1, p2, p3);
+            
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(plane3.Contains(p1, 1e-9), Is.True);
+                Assert.That(plane3.Contains(p2, 1e-9), Is.True);
+                Assert.That(plane3.Contains(p3, 1e-9), Is.True);
+                // XY plane should have normal (0,0,1) or (0,0,-1)
+                Assert.That(Math.Abs(plane3.Normal.Z), Is.EqualTo(1.0).Within(1e-9));
+            }
+        }
+
+        [Test]
+        public void PlaneSignedDistanceTest()
+        {
+            // XY plane (Z = 0)
+            var plane = NurbsSharp.Core.Plane.XY;
+            
+            var pointAbove = new Vector3Double(0, 0, 5);
+            var pointBelow = new Vector3Double(0, 0, -3);
+            var pointOn = new Vector3Double(10, 10, 0);
+            
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(plane.SignedDistanceTo(pointAbove), Is.EqualTo(5.0).Within(1e-9));
+                Assert.That(plane.SignedDistanceTo(pointBelow), Is.EqualTo(-3.0).Within(1e-9));
+                Assert.That(plane.SignedDistanceTo(pointOn), Is.EqualTo(0.0).Within(1e-9));
+            }
+        }
+
+        [Test]
+        public void PlaneProjectionTest()
+        {
+            // XY plane
+            var plane = NurbsSharp.Core.Plane.XY;
+            var point = new Vector3Double(5, 7, 10);
+            var projected = plane.ProjectPoint(point);
+            
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(projected.X, Is.EqualTo(5.0).Within(1e-9));
+                Assert.That(projected.Y, Is.EqualTo(7.0).Within(1e-9));
+                Assert.That(projected.Z, Is.EqualTo(0.0).Within(1e-9));
+                Assert.That(plane.Contains(projected, 1e-9), Is.True);
+            }
+        }
+
+        [Test]
+        public void PlaneRayIntersectionTest()
+        {
+            // XY plane (Z = 0)
+            var plane = NurbsSharp.Core.Plane.XY;
+            
+            // Ray shooting down from above
+            var ray1 = new Ray(new Vector3Double(5, 5, 10), new Vector3Double(0, 0, -1));
+            bool hit1 = plane.Intersect(ray1, out var intersection1);
+            
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(hit1, Is.True);
+                Assert.That(intersection1.X, Is.EqualTo(5.0).Within(1e-9));
+                Assert.That(intersection1.Y, Is.EqualTo(5.0).Within(1e-9));
+                Assert.That(intersection1.Z, Is.EqualTo(0.0).Within(1e-9));
+            }
+
+            // Ray parallel to plane
+            var ray2 = new Ray(new Vector3Double(0, 0, 5), new Vector3Double(1, 0, 0));
+            bool hit2 = plane.Intersect(ray2, out var intersection2);
+            Assert.That(hit2, Is.False);
+
+            // Ray shooting away from plane
+            var ray3 = new Ray(new Vector3Double(0, 0, 5), new Vector3Double(0, 0, 1));
+            bool hit3 = plane.Intersect(ray3, out var intersection3);
+            Assert.That(hit3, Is.False);
+        }
+
+        [Test]
+        public void PlaneFlipTest()
+        {
+            var plane = new NurbsSharp.Core.Plane(new Vector3Double(0, 0, 1), -5.0);
+            var flipped = plane.Flip();
+            
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(flipped.Normal.X, Is.EqualTo(0.0).Within(1e-9));
+                Assert.That(flipped.Normal.Y, Is.EqualTo(0.0).Within(1e-9));
+                Assert.That(flipped.Normal.Z, Is.EqualTo(-1.0).Within(1e-9));
+                Assert.That(flipped.Distance, Is.EqualTo(5.0).Within(1e-9));
+            }
+        }
+
+        [Test]
+        public void PlaneTranslateTest()
+        {
+            // Start with XY plane at Z=0
+            var plane = NurbsSharp.Core.Plane.XY;
+            
+            // Translate by (0, 0, 5) - should move plane up to Z=5
+            var translated = plane.Translate(new Vector3Double(0, 0, 5));
+            
+            var testPoint = new Vector3Double(0, 0, 5);
+            Assert.That(translated.Contains(testPoint, 1e-9), Is.True);
+        }
+
+        [Test]
+        public void PlaneStandardPlanesTest()
+        {
+            // Test standard planes
+            var xy = NurbsSharp.Core.Plane.XY;
+            var yz = NurbsSharp.Core.Plane.YZ;
+            var xz = NurbsSharp.Core.Plane.XZ;
+            
+            using (Assert.EnterMultipleScope())
+            {
+                // XY plane: normal is Z-axis
+                Assert.That(xy.Normal.Z, Is.EqualTo(1.0));
+                Assert.That(xy.Contains(new Vector3Double(1, 1, 0), 1e-9), Is.True);
+                
+                // YZ plane: normal is X-axis
+                Assert.That(yz.Normal.X, Is.EqualTo(1.0));
+                Assert.That(yz.Contains(new Vector3Double(0, 1, 1), 1e-9), Is.True);
+                
+                // XZ plane: normal is Y-axis
+                Assert.That(xz.Normal.Y, Is.EqualTo(1.0));
+                Assert.That(xz.Contains(new Vector3Double(1, 0, 1), 1e-9), Is.True);
+            }
+        }
+
+        [Test]
+        public void PlaneNormalizationTest()
+        {
+            // Create plane with non-normalized normal
+            var unnormalizedNormal = new Vector3Double(3, 4, 0); // magnitude = 5
+            var plane = new NurbsSharp.Core.Plane(unnormalizedNormal, 10.0, normalize: true);
+            
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(plane.Normal.magnitude, Is.EqualTo(1.0).Within(1e-9));
+                // Distance should also be normalized: 10/5 = 2
+                Assert.That(plane.Distance, Is.EqualTo(2.0).Within(1e-9));
+                Assert.That(plane.IsNormalized, Is.True);
+            }
+        }
+
+        [Test]
+        public void PlaneCollinearPointsTest()
+        {
+            // Three collinear points should throw exception
+            var p1 = new Vector3Double(0, 0, 0);
+            var p2 = new Vector3Double(1, 0, 0);
+            var p3 = new Vector3Double(2, 0, 0); // Collinear with p1 and p2
+            
+            Assert.Throws<ArgumentException>(() => new NurbsSharp.Core.Plane(p1, p2, p3));
+        }
     }
 }
