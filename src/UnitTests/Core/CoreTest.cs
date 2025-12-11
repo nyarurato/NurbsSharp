@@ -1364,6 +1364,36 @@ namespace UnitTests.Core
         }
 
         [Test]
+        public void PlaneUnnormalizedBehaviorTest()
+        {
+            // Create a plane with an unnormalized normal and normalize=false
+            var N = new Vector3Double(3, 0, 0); // magnitude 3
+            var pointOnPlane = new Vector3Double(2, 0, 0);
+            var planeUn = new NurbsSharp.Core.Plane(N, pointOnPlane, normalize: false);
+
+            // Equivalent normalized plane
+            var nHat = N.normalized;
+            var planeNorm = new NurbsSharp.Core.Plane(nHat, pointOnPlane, normalize: true);
+
+            // For the same point, SignedDistanceTo should be equal
+            var p = new Vector3Double(5, 0, 0);
+            Assert.That(planeUn.SignedDistanceTo(p), Is.EqualTo(planeNorm.SignedDistanceTo(p)).Within(1e-9));
+
+            // Closest point should be equal
+            var projUn = planeUn.ProjectPoint(p);
+            var projNorm = planeNorm.ProjectPoint(p);
+            Assert.That(projUn.X, Is.EqualTo(projNorm.X).Within(1e-9));
+            Assert.That(projUn.Y, Is.EqualTo(projNorm.Y).Within(1e-9));
+            Assert.That(projUn.Z, Is.EqualTo(projNorm.Z).Within(1e-9));
+
+            // Translate should preserve IsNormalized
+            var translatedUn = planeUn.Translate(new Vector3Double(1, 0, 0));
+            var translatedNorm = planeNorm.Translate(new Vector3Double(1, 0, 0));
+            Assert.That(translatedUn.IsNormalized, Is.False);
+            Assert.That(translatedNorm.IsNormalized, Is.True);
+        }
+
+        [Test]
         public void PlaneCollinearPointsTest()
         {
             // Three collinear points should throw exception

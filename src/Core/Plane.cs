@@ -125,7 +125,9 @@ namespace NurbsSharp.Core
         /// <returns>Signed distance</returns>
         public double SignedDistanceTo(Vector3Double point)
         {
-            return Normal.X * point.X + Normal.Y * point.Y + Normal.Z * point.Z + Distance;
+            double raw = Normal.X * point.X + Normal.Y * point.Y + Normal.Z * point.Z + Distance;
+            // Return true Euclidean signed distance. If normal is not normalized, divide by magnitude.
+            return IsNormalized ? raw : raw / Normal.magnitude;
         }
 
         /// <summary>
@@ -147,8 +149,16 @@ namespace NurbsSharp.Core
         /// <returns>Closest point on the plane</returns>
         public Vector3Double ClosestPoint(Vector3Double point)
         {
-            double signedDist = SignedDistanceTo(point);
-            return point - Normal * signedDist;
+            // Compute using raw dot product and adjust for non-normalized normals.
+            double raw = Normal.X * point.X + Normal.Y * point.Y + Normal.Z * point.Z + Distance;
+            if (IsNormalized)
+            {
+                return point - Normal * raw;
+            }
+
+            // For non-normalized normals, closest point is point - Normal * (raw / |N|^2)
+            double normSq = Normal.magnitude * Normal.magnitude;
+            return point - Normal * (raw / normSq);
         }
 
         /// <summary>
@@ -181,7 +191,7 @@ namespace NurbsSharp.Core
         /// <returns>Flipped plane</returns>
         public Plane Flip()
         {
-            return new Plane(-Normal, -Distance, normalize: false);
+            return new Plane(-Normal, -Distance, normalize: IsNormalized);
         }
 
         /// <summary>
@@ -207,7 +217,7 @@ namespace NurbsSharp.Core
         {
             // When translating, only the distance changes
             double newDistance = Distance - (Normal.X * offset.X + Normal.Y * offset.Y + Normal.Z * offset.Z);
-            return new Plane(Normal, newDistance, normalize: false);
+            return new Plane(Normal, newDistance, normalize: IsNormalized);
         }
 
         /// <summary>
@@ -310,18 +320,18 @@ namespace NurbsSharp.Core
         /// (en) Standard XY plane (Z = 0)
         /// (ja) 標準XY平面 (Z = 0)
         /// </summary>
-        public static Plane XY => new Plane(new Vector3Double(0, 0, 1), 0, normalize: false);
+        public static Plane XY => new Plane(new Vector3Double(0, 0, 1), 0, normalize: true);
 
         /// <summary>
         /// (en) Standard YZ plane (X = 0)
         /// (ja) 標準YZ平面 (X = 0)
         /// </summary>
-        public static Plane YZ => new Plane(new Vector3Double(1, 0, 0), 0, normalize: false);
+        public static Plane YZ => new Plane(new Vector3Double(1, 0, 0), 0, normalize: true);
 
         /// <summary>
         /// (en) Standard XZ plane (Y = 0)
         /// (ja) 標準XZ平面 (Y = 0)
         /// </summary>
-        public static Plane XZ => new Plane(new Vector3Double(0, 1, 0), 0, normalize: false);
+        public static Plane XZ => new Plane(new Vector3Double(0, 1, 0), 0, normalize: true);
     }
 }
