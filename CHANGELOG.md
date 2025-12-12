@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CurveOperator: FindClosestPoint
 - NurbsCurve: FindClosestPoint and FindClosestPointWithInitialGuess
 - NurbsSurface: FindClosestPointWithInitialGuess
+- Ray-Surface Intersector
 
 ### Changed
 
