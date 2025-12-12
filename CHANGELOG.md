@@ -8,9 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Plane
-- Surface-Surface Intersector
-- Surface-Plane Intersector
 
 ### Changed
 
@@ -19,6 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Deprecated
+
+## [0.3.0] - 2025-12-XX
+### Added
+- Plane
+- Surface-Surface Intersector
+- Surface-Plane Intersector
+- Adaptive Tesselation
 
 ## [0.2.0] - 2025-12-01
 ### Added

@@ -41,10 +41,7 @@ It provides data structures, evaluators, topology operators, I/O and tessellatio
     - **Export**: Only supports Point and NURBS entities. Mesh export is not supported.
 - **Mesh Export (OBJ/STL)**: Only supports Mesh objects. Direct export from NURBS is not supported (tessellation required).
 - **Intersection Calculations**: 
-    - Intersection routines are currently **unstable/experimental** and may miss curves or return truncated results, especially for surface-surface cases (e.g., plane-plane).
-    - **Surface-Plane Intersection**: 
-        - Tangent plane detection (single-point contact) may produce false positives due to floating-point precision limits.
-        - The marching algorithm correctly handles regular intersections but cannot reliably distinguish between tangent points and actual curves at numerical precision boundaries.
+    - The current state may be unstable due to its dependence on initial conditions.
 
 ## Installation
 
@@ -141,7 +138,7 @@ Contributions are welcome. Typical workflow:
 1. Fork the repository
 2. Create a branch with a descriptive name
 3. Add tests for new behavior where appropriate
-4. Open a pull request against `main` (or the target branch used in this repo)
+4. Open a pull request against `master` 
 
 
 ## License
