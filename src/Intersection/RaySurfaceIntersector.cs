@@ -363,10 +363,30 @@ namespace NurbsSharp.Intersection
     /// </summary>
     public struct RaySurfaceIntersection(double t, double u, double v, Vector3Double point, int triangleIndex)
     {
+        /// <summary>
+        /// (en)Ray parameter at intersection
+        /// (ja)交差点のレイパラメーター
+        /// </summary>
         public double T { get; set; } = t;
+        /// <summary>
+        /// (en)Surface U parameter at intersection
+        /// (ja)交差点のサーフェスUパラメーター
+        /// </summary>
         public double U { get; set; } = u;
+        /// <summary>
+        /// (en)Surface V parameter at intersection
+        /// (ja)交差点のサーフェスVパラメーター
+        /// </summary>
         public double V { get; set; } = v;
+        /// <summary>
+        /// (en)Intersection point in 3D space
+        /// (ja)3D空間での交差点
+        /// </summary>
         public Vector3Double Point { get; set; } = point;
+        /// <summary>
+        /// (en)Index of the triangle in the tessellated mesh that was intersected
+        /// (ja)交差したテッセレーションメッシュの三角形インデックス
+        /// </summary>
         public int TriangleIndex { get; set; } = triangleIndex;
     }
 }
