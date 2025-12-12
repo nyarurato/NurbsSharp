@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - integrate CurveSurfaceIntersector.IntersectWithBVH to Intersect method
 - rename: SurfaceSurfaceIntersector.IntersectRobust to IntersectWithMarching
+- Default use Parallel for SurfaceSurfaceIntersector.Intersect
 
 ### Fixed
 

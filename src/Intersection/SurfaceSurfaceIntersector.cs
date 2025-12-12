@@ -7,6 +7,7 @@ using NurbsSharp.Geometry;
 using NurbsSharp.Operation;
 using NurbsSharp.Generation.Approximation;
 using NurbsSharp.Generation.Interpolation;
+using System.Threading.Tasks;
 
 namespace NurbsSharp.Intersection
 {
@@ -65,9 +66,15 @@ namespace NurbsSharp.Intersection
         /// (ja) アイソカーブサンプリングを使用した2つのサーフェス間の交差検出
         /// </summary>
         /// <remarks>
-        /// Uses BVH acceleration for curve-surface tests. Automatically falls back to marching if needed.
+        /// Uses BVH acceleration for both surface pre-filtering and curve-surface tests. Automatically falls back to marching if needed.
         /// </remarks>
-        public static List<SurfaceSurfaceIntersection> Intersect(NurbsSurface surfaceA, NurbsSurface surfaceB, double tolerance = Tolerance, int isoDivisions = DefaultIsoDivisions)
+        /// <param name="surfaceA">First surface</param>
+        /// <param name="surfaceB">Second surface</param>
+        /// <param name="tolerance">Convergence tolerance</param>
+        /// <param name="isoDivisions">Number of iso-curve samples</param>
+        /// <param name="useBVH">Enable BVH pre-filtering to skip non-intersecting iso-curves (recommended for complex surfaces)</param>
+        /// <param name="useParallel">Enable parallel iso-curve processing (recommended for many divisions or complex surfaces)</param>
+        public static List<SurfaceSurfaceIntersection> Intersect(NurbsSurface surfaceA, NurbsSurface surfaceB, double tolerance = Tolerance, int isoDivisions = DefaultIsoDivisions, bool useBVH = true, bool useParallel = true)
         {
             Guard.ThrowIfNull(surfaceA, nameof(surfaceA));
             Guard.ThrowIfNull(surfaceB, nameof(surfaceB));
@@ -77,6 +84,10 @@ namespace NurbsSharp.Intersection
             // Early out with bounding box check
             if (!surfaceA.BoundingBox.Intersects(surfaceB.BoundingBox))
                 return results;
+
+            // Build BVH for spatial acceleration if requested
+            SurfaceBVHNode? bvhA = useBVH ? SurfaceBVHBuilder.Build(surfaceA) : null;
+            SurfaceBVHNode? bvhB = useBVH ? SurfaceBVHBuilder.Build(surfaceB) : null;
 
             // Parameter ranges
             double minU_A = surfaceA.KnotVectorU.Knots[surfaceA.DegreeU];
@@ -88,24 +99,40 @@ namespace NurbsSharp.Intersection
             double minV_B = surfaceB.KnotVectorV.Knots[surfaceB.DegreeV];
             double maxV_B = surfaceB.KnotVectorV.Knots[surfaceB.KnotVectorV.Length - surfaceB.DegreeV - 1];
 
-            // Helper: add and deduplicate results
+            // Helper: Check if iso-curve potentially intersects surface using BVH
+            bool ShouldTestIsoCurve(NurbsCurve iso, SurfaceBVHNode? bvh)
+            {
+                if (bvh == null) return true; // No BVH, test all curves
+                // Quick BVH bounds check: get intersecting leaves
+                var intersectingLeaves = SurfaceBVHBuilder.GetIntersectingLeaves(bvh, iso.BoundingBox);
+                return intersectingLeaves.Count > 0;
+            }
+
+            // Helper: add and deduplicate results (thread-safe)
             void AddResult(SurfaceSurfaceIntersection candidate)
             {
-                // Spatial dedup
-                if (results.Any(r => (r.PointA - candidate.PointA).magnitude < tolerance * 5))
-                    return;
-                results.Add(candidate);
+                lock (results)
+                {
+                    // Spatial dedup
+                    if (results.Any(r => (r.PointA - candidate.PointA).magnitude < tolerance * 5))
+                        return;
+                    results.Add(candidate);
+                }
             }
 
             // Sample isocurves on A: fixed U -> curve along V
-            for (int i = 0; i <= isoDivisions; i++)
+            var processIsoCurveA_U = (int i) =>
             {
                 double u = minU_A + (maxU_A - minU_A) * i / isoDivisions;
                 var iso = surfaceA.GetIsoCurveU(u);
                 
                 // Quick bbox check: skip if isocurve bbox doesn't intersect surface B
                 if (!iso.BoundingBox.Intersects(surfaceB.BoundingBox))
-                    continue;
+                    return;
+
+                // BVH pre-filter: skip if no potential intersection with surface B
+                if (!ShouldTestIsoCurve(iso, bvhB))
+                    return;
 
                 var intersections = CurveSurfaceIntersector.Intersect(iso, surfaceB, tolerance);
                 foreach (var inter in intersections)
@@ -122,16 +149,24 @@ namespace NurbsSharp.Intersection
                     };
                     AddResult(entry);
                 }
-            }
+            };
+
+            if (useParallel)
+                Parallel.For(0, isoDivisions + 1, processIsoCurveA_U);
+            else
+                for (int i = 0; i <= isoDivisions; i++) processIsoCurveA_U(i);
 
             // Sample isocurves on A: fixed V -> curve along U
-            for (int i = 0; i <= isoDivisions; i++)
+            var processIsoCurveA_V = (int i) =>
             {
                 double v = minV_A + (maxV_A - minV_A) * i / isoDivisions;
                 var iso = surfaceA.GetIsoCurveV(v);
                 
                 if (!iso.BoundingBox.Intersects(surfaceB.BoundingBox))
-                    continue;
+                    return;
+
+                if (!ShouldTestIsoCurve(iso, bvhB))
+                    return;
 
                 var intersections = CurveSurfaceIntersector.Intersect(iso, surfaceB, tolerance);
                 foreach (var inter in intersections)
@@ -148,16 +183,24 @@ namespace NurbsSharp.Intersection
                     };
                     AddResult(entry);
                 }
-            }
+            };
+
+            if (useParallel)
+                Parallel.For(0, isoDivisions + 1, processIsoCurveA_V);
+            else
+                for (int i = 0; i <= isoDivisions; i++) processIsoCurveA_V(i);
 
             // Also sample isocurves on B and intersect with A
-            for (int i = 0; i <= isoDivisions; i++)
+            var processIsoCurveB_U = (int i) =>
             {
                 double u = minU_B + (maxU_B - minU_B) * i / isoDivisions;
                 var iso = surfaceB.GetIsoCurveU(u);
                 
                 if (!iso.BoundingBox.Intersects(surfaceA.BoundingBox))
-                    continue;
+                    return;
+
+                if (!ShouldTestIsoCurve(iso, bvhA))
+                    return;
 
                 var intersections = CurveSurfaceIntersector.Intersect(iso, surfaceA, tolerance);
                 foreach (var inter in intersections)
@@ -174,15 +217,23 @@ namespace NurbsSharp.Intersection
                     };
                     AddResult(entry);
                 }
-            }
+            };
 
-            for (int i = 0; i <= isoDivisions; i++)
+            if (useParallel)
+                Parallel.For(0, isoDivisions + 1, processIsoCurveB_U);
+            else
+                for (int i = 0; i <= isoDivisions; i++) processIsoCurveB_U(i);
+
+            var processIsoCurveB_V = (int i) =>
             {
                 double v = minV_B + (maxV_B - minV_B) * i / isoDivisions;
                 var iso = surfaceB.GetIsoCurveV(v);
                 
                 if (!iso.BoundingBox.Intersects(surfaceA.BoundingBox))
-                    continue;
+                    return;
+
+                if (!ShouldTestIsoCurve(iso, bvhA))
+                    return;
 
                 var intersections = CurveSurfaceIntersector.Intersect(iso, surfaceA, tolerance);
                 foreach (var inter in intersections)
@@ -199,7 +250,12 @@ namespace NurbsSharp.Intersection
                     };
                     AddResult(entry);
                 }
-            }
+            };
+
+            if (useParallel)
+                Parallel.For(0, isoDivisions + 1, processIsoCurveB_V);
+            else
+                for (int i = 0; i <= isoDivisions; i++) processIsoCurveB_V(i);
 
             return results;
         }
