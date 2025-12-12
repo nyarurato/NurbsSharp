@@ -282,10 +282,15 @@ namespace NurbsSharp.Intersection
 
 			var allPoints = new List<SurfaceSurfaceIntersection>();
 			var visitedSeeds = new bool[seeds.Count];
+			int outerLoopCount = 0;
+			int outerLoopLimit = Math.Max(1000, seeds.Count * 20);
 
 			// Visit all seeds; each loop traces one curve
 			while (visitedSeeds.Any(v => !v))
 			{
+				outerLoopCount++;
+				if (outerLoopCount > outerLoopLimit)
+					break;
 				int seedIdx = Array.IndexOf(visitedSeeds, false);
 				if (seedIdx < 0) break;
 
@@ -365,15 +370,18 @@ namespace NurbsSharp.Intersection
 			double minU_B, double maxU_B, double minV_B, double maxV_B)
 		{
 			var collected = new List<SurfaceSurfaceIntersection>();
-			double uA = start.SurfaceA_U, vA = start.SurfaceA_V;
-			double uB = start.SurfaceB_U, vB = start.SurfaceB_V;
-			var startPt = SurfaceEvaluator.Evaluate(surfA, uA, vA);
+		double uA = start.SurfaceA_U, vA = start.SurfaceA_V;
+		double uB = start.SurfaceB_U, vB = start.SurfaceB_V;
+		var startPt = SurfaceEvaluator.Evaluate(surfA, uA, vA);
 
-			int steps = 0;
-			int stagnantCount = 0;
-			double lastMove = double.MaxValue;
+		int steps = 0;
+		int stagnantCount = 0;
+		double lastMove = double.MaxValue;
+		// Detect repeated parameter tuples to avoid oscillation
+		var seenParams = new HashSet<string>();
+		int repeatCount = 0;
 
-			while (steps < MaxMarchingSteps)
+		while (steps < MaxMarchingSteps)
 			{
 				double prevUA = uA, prevVA = vA, prevUB = uB, prevVB = vB;
 				bool ok = MarchNextPoint(surfA, surfB, ref uA, ref vA, ref uB, ref vB, stepSize, forward, tolerance,
@@ -384,6 +392,22 @@ namespace NurbsSharp.Intersection
 				var ptA = SurfaceEvaluator.Evaluate(surfA, uA, vA);
 				double distStart = (ptA - startPt).magnitude;
 				double move = Math.Abs(uA - prevUA) + Math.Abs(vA - prevVA) + Math.Abs(uB - prevUB) + Math.Abs(vB - prevVB);
+
+				// Repetition detection (use Add() return value to avoid Contains/Add race analyzer warning)
+				string key = string.Format("{0:F12}:{1:F12}:{2:F12}:{3:F12}", uA, vA, uB, vB);
+				if (!seenParams.Add(key))
+				{
+					repeatCount++;
+				}
+				else
+				{
+					repeatCount = 0;
+				}
+
+				// if we see the exact same parameter tuple repeatedly, break to avoid infinite loops
+				// allow more repeats before aborting to avoid premature termination on slow convergence
+				if (repeatCount >= 8)
+					break;
 
 				// stagnation detection
 				if (move < stepSize * 0.1 || move < tolerance * 10)
@@ -450,9 +474,12 @@ namespace NurbsSharp.Intersection
 
 			// Use robust bidirectional marching to get complete intersection points
 			var pts = IntersectRobust(surfaceA, surfaceB, stepSize, tolerance, isoDivisions);
+			if (pts == null)
+				pts = new List<SurfaceSurfaceIntersection>();
+			// (debug logs removed)
 			var curves = new List<NurbsCurve>();
 
-			if (pts.Count == 0)
+			if (pts == null || pts.Count == 0)
 			{
 				bool planar = surfaceA.DegreeU == 1 && surfaceA.DegreeV == 1 && surfaceB.DegreeU == 1 && surfaceB.DegreeV == 1;
 				if (planar)
@@ -525,9 +552,59 @@ namespace NurbsSharp.Intersection
 														  (p.PointA.Y + p.PointB.Y) * 0.5,
 														  (p.PointA.Z + p.PointB.Z) * 0.5)).ToList();
 
-			// Cluster points by proximity into chains
-			double clusterThreshold = Math.Max(1e-3, tolerance * 1000.0);
-			var clusters = ClusterPoints(points.ToArray(), clusterThreshold);
+			// point sample debug logs removed
+
+			// Determine clustering threshold adaptively based on typical spacing between points.
+			// Compute nearest-neighbor distances and use a multiple as threshold to group continuous chains.
+			double clusterThreshold;
+			if (points.Count < 2)
+			{
+				clusterThreshold = Math.Max(1e-3, tolerance * 1000.0);
+			}
+			else
+			{
+				var ptsArr = points.ToArray();
+				var minDists = new List<double>(ptsArr.Length);
+				for (int i = 0; i < ptsArr.Length; i++)
+				{
+					double minD = double.MaxValue;
+					for (int j = 0; j < ptsArr.Length; j++)
+					{
+						if (i == j) continue;
+						double d = (ptsArr[i] - ptsArr[j]).magnitude;
+						if (d < minD) minD = d;
+					}
+					if (minD == double.MaxValue) minD = 0.0;
+					minDists.Add(minD);
+				}
+				double avgMin = minDists.Average();
+				// Use twice the average nearest-neighbor distance, but not smaller than 1e-3
+				clusterThreshold = Math.Max(1e-3, avgMin * 2.0);
+				// Cap overly large thresholds to avoid merging unrelated clusters
+				clusterThreshold = Math.Min(clusterThreshold, Math.Max(0.1, avgMin * 10.0));
+			}
+
+			// Heuristic: if we have many sampled points that already span the parameter range,
+			// avoid fragmenting them into many tiny clusters — treat them as a single chain.
+			double pointsYSpan = points.Max(p => p.Y) - points.Min(p => p.Y);
+			List<List<Vector3Double>> clusters;
+			if (points.Count >= 30 && pointsYSpan > 0.05)
+			{
+				clusters = new List<List<Vector3Double>> { new List<Vector3Double>(points) };
+			}
+			else
+			{
+				clusters = ClusterPoints(points.ToArray(), clusterThreshold);
+			}
+
+			// Prefer clusters with the largest spatial span (Y-range) first so main intersection curves
+			// that cover the largest extent are produced earlier.
+			clusters = clusters
+				.OrderByDescending(c => (c.Max(p => p.Y) - c.Min(p => p.Y)))
+				.ThenByDescending(c => c.Count)
+				.ToList();
+
+			// cluster debug logs removed
 
 			foreach (var cluster in clusters)
 			{
@@ -758,8 +835,8 @@ namespace NurbsSharp.Intersection
 				uB < minU_B || uB > maxU_B || vB < minV_B || vB > maxV_B)
 				return false;
 
-			// Simple Newton refinement (max 10 iterations)
-			for (int iter = 0; iter < 10; iter++)
+			// Simple Newton refinement (bound by MaxNewtonIterations)
+			for (int iter = 0; iter < MaxNewtonIterations; iter++)
 			{
 				ptA = SurfaceEvaluator.Evaluate(surfA, uA, vA);
 				ptB = SurfaceEvaluator.Evaluate(surfB, uB, vB);
@@ -783,10 +860,29 @@ namespace NurbsSharp.Intersection
 				double corrU_B = -Vector3Double.Dot(diff, duB) / (duB.magnitude * duB.magnitude + 1e-10);
 				double corrV_B = -Vector3Double.Dot(diff, dvB) / (dvB.magnitude * dvB.magnitude + 1e-10);
 
-				uA += corrU_A * 0.5;
-				vA += corrV_A * 0.5;
-				uB += corrU_B * 0.5;
-				vB += corrV_B * 0.5;
+				double deltaUA = corrU_A * 0.5;
+				double deltaVA = corrV_A * 0.5;
+				double deltaUB = corrU_B * 0.5;
+				double deltaVB = corrV_B * 0.5;
+
+				uA += deltaUA;
+				vA += deltaVA;
+				uB += deltaUB;				vB += deltaVB;
+
+				// If corrections are extremely small, consider converged
+				if (Math.Abs(deltaUA) + Math.Abs(deltaVA) + Math.Abs(deltaUB) + Math.Abs(deltaVB) < 1e-12)
+					break;
+
+				// Divergence guard: if parameters jump outside reasonable bounds massively, abort
+				double spanA_U = maxU_A - minU_A;
+				double spanA_V = maxV_A - minV_A;
+				double spanB_U = maxU_B - minU_B;
+				double spanB_V = maxV_B - minV_B;
+				if (Math.Abs(deltaUA) > Math.Max(1.0, spanA_U * 10) || Math.Abs(deltaVA) > Math.Max(1.0, spanA_V * 10) ||
+					Math.Abs(deltaUB) > Math.Max(1.0, spanB_U * 10) || Math.Abs(deltaVB) > Math.Max(1.0, spanB_V * 10))
+				{
+					return false;
+				}
 
 				// Check bounds
 				if (uA < minU_A || uA > maxU_A || vA < minV_A || vA > maxV_A ||
