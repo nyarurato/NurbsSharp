@@ -25,7 +25,7 @@ NURBS Sharpは.NET向けの依存関係なしのNURBS（非一様有理 B-スプ
 - NURBS曲線・サーフェスの生成および評価
 - トポロジー演算：次数変更、ノット挿入/削除/細分化、結合/分割
 - 生成機能：補間、最小二乗近似、プリミティブ形状
-- 交差計算：Ray-Box、Ray-Mesh、Curve-Curve、Curve-Surface
+- 交差計算：Ray-Box、Ray-Mesh、Curve-Curve、Curve-Surface, Surface-Surface, Surface-Plane
 - 入出力ヘルパー：
   - メッシュのみ：`OBJ`/`STL`出力、`BMP`出力（簡易）
   - NURBSのみ：`IGES`入出力（Point、Curve、Surfaceエンティティ対応）

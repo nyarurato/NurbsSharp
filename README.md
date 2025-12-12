@@ -25,7 +25,7 @@ It provides data structures, evaluators, topology operators, I/O and tessellatio
 - Generation and evaluation of NURBS curves, surfaces
 - Topology operators: degree elevation/reduction, knot insertion/removal/refinement, join/split
 - Generation capabilities: interpolation, least squares approximation, primitive shapes
-- Intersection calculations: Ray-Box, Ray-Mesh, Curve-Curve, Curve-Surface
+- Intersection calculations: Ray-Box, Ray-Mesh, Curve-Curve, Curve-Surface, Surface-Surface, Surface-Plane
 - IO helpers:
   - Mesh only: OBJ/STL export, simple BMP export
   - NURBS only: IGES import/export (Point, Curve, Surface entities supported)

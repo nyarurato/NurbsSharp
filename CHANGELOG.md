@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
-## [0.3.0] - 2025-12-XX
+## [0.3.0] - 2025-12-12
 ### Added
 - Plane
 - Surface-Surface Intersector
