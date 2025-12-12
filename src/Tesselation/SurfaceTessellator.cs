@@ -18,11 +18,11 @@ namespace NurbsSharp.Tesselation
         /// (en)Tessellate NURBS surface into triangle mesh
         /// (ja)NURBSサーフェスを三角形メッシュにする
         /// </summary>
-        /// <param name="surface"></param>
-        /// <param name="numPointsU"></param>
-        /// <param name="numPointsV"></param>
-        /// <returns></returns>
-        public static Mesh Tessellate(NurbsSurface surface,int numPointsU,int numPointsV)
+        /// <param name="surface">NURBS surface to tessellate</param>
+        /// <param name="numPointsU">Number of sample points in U direction</param>
+        /// <param name="numPointsV">Number of sample points in V direction</param>
+        /// <returns>Tessellated triangle mesh</returns>
+        public static Mesh Tessellate(NurbsSurface surface, int numPointsU, int numPointsV)
         {
             Vector3Double[] vertices = new Vector3Double[numPointsU * numPointsV];
             int[] indexes = new int[(numPointsU - 1) * (numPointsV - 1) * 6];
@@ -30,16 +30,33 @@ namespace NurbsSharp.Tesselation
             double uEnd = surface.KnotVectorU.Knots[surface.KnotVectorU.Knots.Length - surface.DegreeU - 1];
             double vStart = surface.KnotVectorV.Knots[surface.DegreeV];
             double vEnd = surface.KnotVectorV.Knots[surface.KnotVectorV.Knots.Length - surface.DegreeV - 1];
+            bool useParallel = numPointsU * numPointsV >= 20000; // threshold for parallelization
 
-            //TODO: Parallelize these loop
-            for (int i = 0; i < numPointsU; i++)
+            // Generate vertices (parallelized for performance)
+            if (useParallel)
             {
-                double u = uStart + (uEnd - uStart) * i / (numPointsU - 1);
-                for (int j = 0; j < numPointsV; j++)
+                Parallel.For(0, numPointsU, i =>
                 {
-                    double v = vStart + (vEnd - vStart) * j / (numPointsV - 1);
-                    var point = surface.GetPos(u, v);
-                    vertices[i * numPointsV + j] = point;
+                    double u = uStart + (uEnd - uStart) * i / (numPointsU - 1);
+                    for (int j = 0; j < numPointsV; j++)
+                    {
+                        double v = vStart + (vEnd - vStart) * j / (numPointsV - 1);
+                        var point = surface.GetPos(u, v);
+                        vertices[i * numPointsV + j] = point;
+                    }
+                });
+            }
+            else
+            {
+                for (int i = 0; i < numPointsU; i++)
+                {
+                    double u = uStart + (uEnd - uStart) * i / (numPointsU - 1);
+                    for (int j = 0; j < numPointsV; j++)
+                    {
+                        double v = vStart + (vEnd - vStart) * j / (numPointsV - 1);
+                        var point = surface.GetPos(u, v);
+                        vertices[i * numPointsV + j] = point;
+                    }
                 }
             }
 
@@ -70,10 +87,10 @@ namespace NurbsSharp.Tesselation
         /// (en)Adaptive tessellation for NURBS surfaces using curvature-based subdivision.
         /// (ja)曲率ベースの細分化を使用したNURBSサーフェスの適応テッセレーション
         /// </summary>
-        /// <param name="surface"></param>
+        /// <param name="surface">NURBS surface to tessellate</param>
         /// <param name="tolerance">(en)Maximum curvature threshold (1/radius). Subdivides when max principal curvature exceeds this value; (ja)最大曲率の閾値（1/半径）。主曲率がこの値を超えると細分化</param>
         /// <param name="maxDepth">(en)Maximum recursion depth for subdivision; (ja)細分化の最大深さ</param>
-        /// <returns></returns>
+        /// <returns>Adaptively tessellated triangle mesh</returns>
         public static Mesh TessellateAdaptive(NurbsSurface surface, double tolerance, int maxDepth = 8)
         {
             Guard.ThrowIfNull(surface, nameof(surface));
@@ -84,22 +101,28 @@ namespace NurbsSharp.Tesselation
             double vStart = surface.KnotVectorV.Knots[surface.DegreeV];
             double vEnd = surface.KnotVectorV.Knots[surface.KnotVectorV.Knots.Length - surface.DegreeV - 1];
 
-            var vertices = new List<Vector3Double>();
-            var indexes = new List<int>();
-            var indexMap = new Dictionary<string, int>();
+            // Pre-allocate with estimated capacity for better performance
+            int estimatedVertexCount = (int)Math.Pow(4, Math.Min(maxDepth, 6)); // Conservative estimate
+            var vertices = new List<Vector3Double>(estimatedVertexCount);
+            var indexes = new List<int>(estimatedVertexCount * 6);
+            var indexMap = new Dictionary<string, int>(estimatedVertexCount);
+            var lockObj = new object(); // For thread-safe operations if parallel
 
             string GetKey(double u, double v) => $"{u:R},{v:R}";
 
             int AddVertex(double u, double v)
             {
                 var key = GetKey(u, v);
-                if (indexMap.TryGetValue(key, out var idx))
+                lock (lockObj)
+                {
+                    if (indexMap.TryGetValue(key, out var idx))
+                        return idx;
+                    var p = surface.GetPos(u, v);
+                    idx = vertices.Count;
+                    vertices.Add(p);
+                    indexMap[key] = idx;
                     return idx;
-                var p = surface.GetPos(u, v);
-                idx = vertices.Count;
-                vertices.Add(p);
-                indexMap[key] = idx;
-                return idx;
+                }
             }
 
             void AddTriangleByParams((double u, double v) a, (double u, double v) b, (double u, double v) c)
@@ -107,9 +130,12 @@ namespace NurbsSharp.Tesselation
                 var ia = AddVertex(a.u, a.v);
                 var ib = AddVertex(b.u, b.v);
                 var ic = AddVertex(c.u, c.v);
-                indexes.Add(ia);
-                indexes.Add(ib);
-                indexes.Add(ic);
+                lock (lockObj)
+                {
+                    indexes.Add(ia);
+                    indexes.Add(ib);
+                    indexes.Add(ic);
+                }
             }
 
             void Subdivide(double u0, double u1, double v0, double v1, int depth)
@@ -174,6 +200,7 @@ namespace NurbsSharp.Tesselation
             }
 
             Subdivide(uStart, uEnd, vStart, vEnd, 0);
+
             return new Mesh(vertices.ToArray(), indexes.ToArray());
         }
     }
