@@ -237,6 +237,33 @@ namespace NurbsSharp.Geometry
         }
 
         /// <summary>
+        /// (en) Find the closest point on this surface to a given 3D point using grid search and Newton-Raphson
+        /// (ja) グリッド探索とNewton-Raphson法で指定された3D点に最も近いサーフェス上の点を検索します
+        /// </summary>
+        /// <param name="target">Target 3D point</param>
+        /// <param name="tolerance">Convergence tolerance (default: 1e-6)</param>
+        /// <param name="gridDivisions">Number of grid divisions for initial point search (default: 5)</param>
+        /// <returns>Tuple of (u parameter, v parameter, point on surface, distance to target)</returns>
+        public (double u, double v, Vector3Double point, double distance) FindClosestPoint(Vector3Double target, double tolerance = 1e-6, int gridDivisions = 5)
+        {
+            return Operation.SurfaceOperator.FindClosestPoint(this, target, tolerance, gridDivisions);
+        }
+
+        /// <summary>
+        /// (en) Find the closest point on this surface from a single initial guess (faster if you have a good initial guess)
+        /// (ja) 単一の初期推定値から最近接点を検索します（適切な初期値がある場合高速）
+        /// </summary>
+        /// <param name="target">Target 3D point</param>
+        /// <param name="initialU">Initial guess for U parameter</param>
+        /// <param name="initialV">Initial guess for V parameter</param>
+        /// <param name="tolerance">Convergence tolerance (default: 1e-6)</param>
+        /// <returns>Tuple of (u parameter, v parameter, point on surface, distance to target)</returns>
+        public (double u, double v, Vector3Double point, double distance) FindClosestPointWithInitialGuess(Vector3Double target, double initialU, double initialV, double tolerance = 1e-6)
+        {
+            return Operation.SurfaceOperator.FindClosestPoint(this, target, initialU, initialV, tolerance);
+        }
+
+        /// <summary>
         /// (en) Translate the whole surface by delta (in-place).
         /// (ja) サーフェスの全制御点を並進移動する（破壊的）。
         /// </summary>

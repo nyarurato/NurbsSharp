@@ -160,6 +160,31 @@ namespace NurbsSharp.Geometry
         }
 
         /// <summary>
+        /// (en) Find the closest point on this curve to a given 3D point
+        /// (ja) 指定された3D点に最も近い曲線上の点を検索します
+        /// </summary>
+        /// <param name="target">Target 3D point</param>
+        /// <param name="tolerance">Convergence tolerance (default: 1e-6)</param>
+        /// <returns>Tuple of (t parameter, point on curve, distance to target)</returns>
+        public (double t, Vector3Double point, double distance) FindClosestPoint(Vector3Double target, double tolerance = 1e-6)
+        {
+            return Operation.CurveOperator.FindClosestPoint(this, target, tolerance: tolerance);
+        }
+
+        /// <summary>
+        /// (en) Find the closest point on this curve from a single initial guess (faster if you have a good initial guess)
+        /// (ja) 単一の初期推定値から最近接点を検索します（適切な初期値がある場合高速）
+        /// </summary>
+        /// <param name="target">Target 3D point</param>
+        /// <param name="initialT">Initial guess for t parameter</param>
+        /// <param name="tolerance">Convergence tolerance (default: 1e-6)</param>
+        /// <returns>Tuple of (t parameter, point on curve, distance to target)</returns>
+        public (double t, Vector3Double point, double distance) FindClosestPointWithInitialGuess(Vector3Double target, double initialT, double tolerance = 1e-6)
+        {
+            return Operation.CurveOperator.FindClosestPoint(this, target, initialT, tolerance);
+        }
+
+        /// <summary>
         /// (en) Translate the whole curve by delta (in-place).
         /// (ja) 曲線の全制御点を並進移動する（破壊的）。
         /// </summary>
