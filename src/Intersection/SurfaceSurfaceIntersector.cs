@@ -281,6 +281,8 @@ namespace NurbsSharp.Intersection
 			}
 
 			var allPoints = new List<SurfaceSurfaceIntersection>();
+			// Precompute seed surface points to avoid repeated evaluation during tracing
+			var seedPoints = seeds.Select(s => SurfaceEvaluator.Evaluate(surfaceA, s.SurfaceA_U, s.SurfaceA_V)).ToList();
 			var visitedSeeds = new bool[seeds.Count];
 			int outerLoopCount = 0;
 			int outerLoopLimit = Math.Max(1000, seeds.Count * 20);
@@ -297,7 +299,7 @@ namespace NurbsSharp.Intersection
 				var seed = seeds[seedIdx];
 				visitedSeeds[seedIdx] = true;
 
-				var curve = TraceCurveBidirectional(surfaceA, surfaceB, seed, seeds, visitedSeeds, stepSize, tolerance,
+				var curve = TraceCurveBidirectional(surfaceA, surfaceB, seed, seeds, seedPoints, visitedSeeds, stepSize, tolerance,
 					minU_A, maxU_A, minV_A, maxV_A, minU_B, maxU_B, minV_B, maxV_B);
 				allPoints.AddRange(curve);
 			}
@@ -337,6 +339,7 @@ namespace NurbsSharp.Intersection
 			NurbsSurface surfA, NurbsSurface surfB,
 			SurfaceSurfaceIntersection seed,
 			List<SurfaceSurfaceIntersection> allSeeds,
+			List<Vector3Double> seedPoints,
 			bool[] visitedSeeds,
 			double stepSize, double tolerance,
 			double minU_A, double maxU_A, double minV_A, double maxV_A,
@@ -345,10 +348,10 @@ namespace NurbsSharp.Intersection
 			var points = new List<SurfaceSurfaceIntersection> { seed };
 
 			// forward
-			var forward = TraceCurveDirection(surfA, surfB, seed, allSeeds, visitedSeeds, stepSize, tolerance, true,
+			var forward = TraceCurveDirection(surfA, surfB, seed, allSeeds, seedPoints, visitedSeeds, stepSize, tolerance, true,
 				minU_A, maxU_A, minV_A, maxV_A, minU_B, maxU_B, minV_B, maxV_B);
 			// backward
-			var backward = TraceCurveDirection(surfA, surfB, seed, allSeeds, visitedSeeds, stepSize, tolerance, false,
+			var backward = TraceCurveDirection(surfA, surfB, seed, allSeeds, seedPoints, visitedSeeds, stepSize, tolerance, false,
 				minU_A, maxU_A, minV_A, maxV_A, minU_B, maxU_B, minV_B, maxV_B);
 
 			backward.Reverse();
@@ -364,6 +367,7 @@ namespace NurbsSharp.Intersection
 			NurbsSurface surfA, NurbsSurface surfB,
 			SurfaceSurfaceIntersection start,
 			List<SurfaceSurfaceIntersection> allSeeds,
+			List<Vector3Double> seedPoints,
 			bool[] visitedSeeds,
 			double stepSize, double tolerance, bool forward,
 			double minU_A, double maxU_A, double minV_A, double maxV_A,
@@ -424,11 +428,11 @@ namespace NurbsSharp.Intersection
 				if (steps > 10 && distStart < stepSize * 0.5)
 					break;
 
-				// Mark visited seeds
+				// Mark visited seeds using precomputed seed points
 				for (int i = 0; i < allSeeds.Count; i++)
 				{
 					if (visitedSeeds[i]) continue;
-					var seedPt = SurfaceEvaluator.Evaluate(surfA, allSeeds[i].SurfaceA_U, allSeeds[i].SurfaceA_V);
+					var seedPt = seedPoints[i];
 					if ((ptA - seedPt).magnitude < stepSize)
 						visitedSeeds[i] = true;
 				}
@@ -563,24 +567,43 @@ namespace NurbsSharp.Intersection
 			}
 			else
 			{
+				// Estimate typical spacing using bounding-box volume heuristic and use spatial hash to compute
 				var ptsArr = points.ToArray();
+				double cellSize = EstimateCellSize(ptsArr);
+				var (hash, minCorner) = BuildSpatialHash(ptsArr, cellSize);
+
 				var minDists = new List<double>(ptsArr.Length);
 				for (int i = 0; i < ptsArr.Length; i++)
 				{
-					double minD = double.MaxValue;
-					for (int j = 0; j < ptsArr.Length; j++)
+					double nearest = double.MaxValue;
+					var key = GetCellKey(ptsArr[i], minCorner, cellSize);
+					var parts = key.Split('_');
+					int ix = int.Parse(parts[0]);
+					int iy = int.Parse(parts[1]);
+					int iz = int.Parse(parts[2]);
+					// search neighboring cells up to radius 1 (usually sufficient)
+					for (int dx = -1; dx <= 1; dx++)
 					{
-						if (i == j) continue;
-						double d = (ptsArr[i] - ptsArr[j]).magnitude;
-						if (d < minD) minD = d;
+						for (int dy = -1; dy <= 1; dy++)
+						{
+							for (int dz = -1; dz <= 1; dz++)
+							{
+								string nkey = string.Format("{0}_{1}_{2}", ix + dx, iy + dy, iz + dz);
+								if (!hash.TryGetValue(nkey, out var list)) continue;
+								foreach (var j in list)
+								{
+									if (j == i) continue;
+									double d = (ptsArr[i] - ptsArr[j]).magnitude;
+									if (d < nearest) nearest = d;
+								}
+							}
+						}
 					}
-					if (minD == double.MaxValue) minD = 0.0;
-					minDists.Add(minD);
+					if (nearest == double.MaxValue) nearest = 0.0;
+					minDists.Add(nearest);
 				}
-				double avgMin = minDists.Average();
-				// Use twice the average nearest-neighbor distance, but not smaller than 1e-3
+				double avgMin = Math.Max(1e-6, minDists.Average());
 				clusterThreshold = Math.Max(1e-3, avgMin * 2.0);
-				// Cap overly large thresholds to avoid merging unrelated clusters
 				clusterThreshold = Math.Min(clusterThreshold, Math.Max(0.1, avgMin * 10.0));
 			}
 
@@ -645,6 +668,9 @@ namespace NurbsSharp.Intersection
 
 			int n = points.Length;
 			var visited = new bool[n];
+			// Build spatial hash with cell size = threshold for efficient neighbor queries
+			double cellSize = Math.Max(1e-6, threshold);
+			var (hash, minCorner) = BuildSpatialHash(points, cellSize);
 
 			for (int i = 0; i < n; i++)
 			{
@@ -658,13 +684,31 @@ namespace NurbsSharp.Intersection
 				{
 					int idx = queue.Dequeue();
 					cluster.Add(points[idx]);
-					for (int j = 0; j < n; j++)
+					// get cell index for this point
+					var key = GetCellKey(points[idx], minCorner, cellSize);
+					var parts = key.Split('_');
+					int ix = int.Parse(parts[0]);
+					int iy = int.Parse(parts[1]);
+					int iz = int.Parse(parts[2]);
+
+					for (int dx = -1; dx <= 1; dx++)
 					{
-						if (visited[j]) continue;
-						if ((points[j] - points[idx]).magnitude < threshold)
+						for (int dy = -1; dy <= 1; dy++)
 						{
-							visited[j] = true;
-							queue.Enqueue(j);
+							for (int dz = -1; dz <= 1; dz++)
+							{
+								string nkey = string.Format("{0}_{1}_{2}", ix + dx, iy + dy, iz + dz);
+								if (!hash.TryGetValue(nkey, out var list)) continue;
+								foreach (var j in list)
+								{
+									if (visited[j]) continue;
+									if ((points[j] - points[idx]).magnitude < threshold)
+									{
+										visited[j] = true;
+										queue.Enqueue(j);
+									}
+								}
+							}
 						}
 					}
 				}
@@ -672,6 +716,56 @@ namespace NurbsSharp.Intersection
 			}
 
 			return clusters;
+		}
+
+		// Estimate a reasonable cell size for spatial hashing based on point cloud extents
+		private static double EstimateCellSize(Vector3Double[] points)
+		{
+			if (points == null || points.Length == 0) return 1e-3;
+			double minX = points.Min(p => p.X);
+			double maxX = points.Max(p => p.X);
+			double minY = points.Min(p => p.Y);
+			double maxY = points.Max(p => p.Y);
+			double minZ = points.Min(p => p.Z);
+			double maxZ = points.Max(p => p.Z);
+			double dx = Math.Max(1e-6, maxX - minX);
+			double dy = Math.Max(1e-6, maxY - minY);
+			double dz = Math.Max(1e-6, maxZ - minZ);
+			double volume = dx * dy * dz;
+			double est = Math.Pow(volume / Math.Max(1, points.Length), 1.0 / 3.0);
+			// fallback to smallest non-zero extent if degenerate
+			if (double.IsNaN(est) || est <= 0) est = Math.Min(Math.Min(dx, dy), dz);
+			return Math.Max(1e-6, est);
+		}
+
+		// Build a simple spatial hash: cell key -> list of point indices. Returns hash and min corner used for indexing.
+		private static (Dictionary<string, List<int>> hash, Vector3Double minCorner) BuildSpatialHash(Vector3Double[] points, double cellSize)
+		{
+			var hash = new Dictionary<string, List<int>>();
+			if (points == null || points.Length == 0) return (hash, new Vector3Double(0, 0, 0));
+			double minX = points.Min(p => p.X);
+			double minY = points.Min(p => p.Y);
+			double minZ = points.Min(p => p.Z);
+			var minCorner = new Vector3Double(minX, minY, minZ);
+			for (int i = 0; i < points.Length; i++)
+			{
+				var key = GetCellKey(points[i], minCorner, cellSize);
+				if (!hash.TryGetValue(key, out var list))
+				{
+					list = new List<int>();
+					hash[key] = list;
+				}
+				list.Add(i);
+			}
+			return (hash, minCorner);
+		}
+
+		private static string GetCellKey(Vector3Double p, Vector3Double minCorner, double cellSize)
+		{
+			int ix = (int)Math.Floor((p.X - minCorner.X) / cellSize);
+			int iy = (int)Math.Floor((p.Y - minCorner.Y) / cellSize);
+			int iz = (int)Math.Floor((p.Z - minCorner.Z) / cellSize);
+			return string.Format("{0}_{1}_{2}", ix, iy, iz);
 		}
 
 		/// <summary>
