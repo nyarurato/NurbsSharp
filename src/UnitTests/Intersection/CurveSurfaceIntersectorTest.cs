@@ -43,7 +43,7 @@ namespace UnitTests.Intersection
             var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
-            var intersections = CurveSurfaceIntersector.IntersectRobust(curve, surface);
+            var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
 
             using (Assert.EnterMultipleScope())
             {
@@ -84,7 +84,7 @@ namespace UnitTests.Intersection
             var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
-            var intersections = CurveSurfaceIntersector.IntersectRobust(curve, surface);
+            var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
 
             Assert.That(intersections, Is.Empty);
         }
@@ -117,7 +117,7 @@ namespace UnitTests.Intersection
             var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
-            var intersections = CurveSurfaceIntersector.IntersectRobust(curve, surface);
+            var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
 
             Assert.That(intersections, Is.Empty);
         }
@@ -151,7 +151,7 @@ namespace UnitTests.Intersection
             var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
-            var intersections = CurveSurfaceIntersector.IntersectRobust(curve, surface);
+            var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
 
             // Should find 2 intersections (parabola crosses plane twice)
             // Note: Current implementation may merge close intersections
@@ -201,7 +201,7 @@ namespace UnitTests.Intersection
             var knotsV = new KnotVector([0, 0, 0, 1, 1, 1], 2);
             var surface = new NurbsSurface(2, 2, knotsU, knotsV, surfaceCp);
 
-            var intersections = CurveSurfaceIntersector.IntersectRobust(curve, surface);
+            var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
 
             // Should find at least one intersection
             using (Assert.EnterMultipleScope())
@@ -315,7 +315,7 @@ namespace UnitTests.Intersection
             var knotsV = new KnotVector([0, 0, 0, 1, 1, 1], 2);
             var surface = new NurbsSurface(2, 2, knotsU, knotsV, surfaceCp);
 
-            var intersections = CurveSurfaceIntersector.IntersectRobust(curve, surface);
+            var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
             //TestOutIGES([surface]);
             //TestOutIGES([curve], "testcurve.igs");
 
@@ -358,7 +358,7 @@ namespace UnitTests.Intersection
             var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
-            var intersections = CurveSurfaceIntersector.IntersectRobust(curve, surface);
+            var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
 
             using (Assert.EnterMultipleScope())
             {
@@ -366,192 +366,6 @@ namespace UnitTests.Intersection
                 foreach (var intersection in intersections)
                 {
                     Assert.That(intersection.Distance, Is.LessThan(CurveSurfaceIntersector.Tolerance));
-                }
-            }
-        }
-
-        // BVH-accelerated version tests (dual BVH: curve + surface)
-        [Test]
-        public void BVH_LineIntersectingPlane_FindsIntersection()
-        {
-            // Create a vertical line passing through z=0
-            var curveCp = new ControlPoint[]
-            {
-                new ControlPoint(0.5, 0.5, -1),
-                new ControlPoint(0.5, 0.5, 1)
-            };
-            var curveKnots = new KnotVector([0, 0, 1, 1], 1);
-            var curve = new NurbsCurve(1, curveKnots, curveCp);
-
-            // Create a horizontal plane at z=0
-            var surfaceCp = new ControlPoint[][]
-            {
-                [
-                    new ControlPoint(0, 0, 0),
-                    new ControlPoint(0, 1, 0)
-                ],
-                [
-                    new ControlPoint(1, 0, 0),
-                    new ControlPoint(1, 1, 0)
-                ]
-            };
-            var knotsU = new KnotVector([0, 0, 1, 1], 1);
-            var knotsV = new KnotVector([0, 0, 1, 1], 1);
-            var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
-
-            var intersections = CurveSurfaceIntersector.IntersectFast(curve, surface);
-
-            using (Assert.EnterMultipleScope())
-            {
-                Assert.That(intersections, Has.Count.EqualTo(1));
-                var intersection = intersections[0];
-                Assert.That(intersection.CurvePoint.X, Is.EqualTo(0.5).Within(CurveSurfaceIntersector.Tolerance));
-                Assert.That(intersection.CurvePoint.Y, Is.EqualTo(0.5).Within(CurveSurfaceIntersector.Tolerance));
-                Assert.That(intersection.CurvePoint.Z, Is.EqualTo(0.0).Within(CurveSurfaceIntersector.Tolerance));
-                Assert.That(intersection.Distance, Is.LessThan(CurveSurfaceIntersector.Tolerance));
-            }
-        }
-
-        [Test]
-        public void BVH_QuadraticCurveIntersectingPlane()
-        {
-            // Create a parabolic curve that crosses a plane
-            // Same geometry as QuadraticCurveIntersectingPlane test
-            var curveCp = new ControlPoint[]
-            {
-                new ControlPoint(0, 0, -1),
-                new ControlPoint(0.5, 0.5, 1),
-                new ControlPoint(1, 0, -1)
-            };
-            var curveKnots = new KnotVector([0, 0, 0, 1, 1, 1], 2);
-            var curve = new NurbsCurve(2, curveKnots, curveCp);
-
-            // Create a horizontal plane at z=0
-            var surfaceCp = new ControlPoint[][]
-            {
-                [
-                    new ControlPoint(0, 0, 0),
-                    new ControlPoint(0, 1, 0)
-                ],
-                [
-                    new ControlPoint(1, 0, 0),
-                    new ControlPoint(1, 1, 0)
-                ]
-            };
-            var knotsU = new KnotVector([0, 0, 1, 1], 1);
-            var knotsV = new KnotVector([0, 0, 1, 1], 1);
-            var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
-
-            var intersections = CurveSurfaceIntersector.IntersectFast(curve, surface);
-
-            using (Assert.EnterMultipleScope())
-            {
-                Assert.That(intersections, Has.Count.GreaterThanOrEqualTo(1));
-                foreach (var intersection in intersections)
-                {
-                    Assert.That(intersection.Distance, Is.LessThan(CurveSurfaceIntersector.Tolerance));
-                }
-            }
-        }
-
-        [Test]
-        public void BVH_DiagonalLineIntersectingTiltedPlane()
-        {
-            // Create a diagonal line
-            var curveCp = new ControlPoint[]
-            {
-                new ControlPoint(0, 0, 0),
-                new ControlPoint(1, 1, 1)
-            };
-            var curveKnots = new KnotVector([0, 0, 1, 1], 1);
-            var curve = new NurbsCurve(1, curveKnots, curveCp);
-
-            // Create a tilted plane z = x + y - 1
-            var surfaceCp = new ControlPoint[][]
-            {
-                [
-                    new ControlPoint(0, 0, -1),
-                    new ControlPoint(0, 1, 0)
-                ],
-                [
-                    new ControlPoint(1, 0, 0),
-                    new ControlPoint(1, 1, 1)
-                ]
-            };
-            var knotsU = new KnotVector([0, 0, 1, 1], 1);
-            var knotsV = new KnotVector([0, 0, 1, 1], 1);
-            var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
-
-            var intersections = CurveSurfaceIntersector.IntersectFast(curve, surface);
-
-            using (Assert.EnterMultipleScope())
-            {
-                Assert.That(intersections, Has.Count.GreaterThanOrEqualTo(1));
-                foreach (var intersection in intersections)
-                {
-                    Assert.That(intersection.Distance, Is.LessThan(CurveSurfaceIntersector.Tolerance));
-                }
-            }
-        }
-
-        [Test]
-        public void BVH_CompareWithStandardMethod()
-        {
-            // Create a cubic curve
-            var curveCp = new ControlPoint[]
-            {
-                new ControlPoint(0, 0.5, -1),
-                new ControlPoint(0.3, 0.5, 0.5),
-                new ControlPoint(0.7, 0.5, -0.5),
-                new ControlPoint(1, 0.5, 1)
-            };
-            var curveKnots = new KnotVector([0, 0, 0, 0, 1, 1, 1, 1], 3);
-            var curve = new NurbsCurve(3, curveKnots, curveCp);
-
-            // Create a quadratic surface
-            var surfaceCp = new ControlPoint[][]
-            {
-                [
-                    new ControlPoint(0, 0, 0),
-                    new ControlPoint(0, 0.5, 0.2),
-                    new ControlPoint(0, 1, 0)
-                ],
-                [
-                    new ControlPoint(0.5, 0, 0.2),
-                    new ControlPoint(0.5, 0.5, 0),
-                    new ControlPoint(0.5, 1, 0.2)
-                ],
-                [
-                    new ControlPoint(1, 0, 0),
-                    new ControlPoint(1, 0.5, 0.2),
-                    new ControlPoint(1, 1, 0)
-                ]
-            };
-            var knotsU = new KnotVector([0, 0, 0, 1, 1, 1], 2);
-            var knotsV = new KnotVector([0, 0, 0, 1, 1, 1], 2);
-            var surface = new NurbsSurface(2, 2, knotsU, knotsV, surfaceCp);
-
-            var standardIntersections = CurveSurfaceIntersector.IntersectRobust(curve, surface);
-            var bvhIntersections = CurveSurfaceIntersector.IntersectFast(curve, surface);
-
-            // Both methods should find the same number of intersections
-            using (Assert.EnterMultipleScope())
-            {
-                Assert.That(bvhIntersections.Count, Is.EqualTo(standardIntersections.Count),
-                    "BVH and standard methods should find the same number of intersections");
-                
-                // If intersections found, verify they are valid
-                if (bvhIntersections.Count > 0)
-                {
-                    foreach (var intersection in bvhIntersections)
-                    {
-                        Assert.That(intersection.Distance, Is.LessThan(CurveSurfaceIntersector.Tolerance * 10));
-                    }
-                }
-                
-                foreach (var intersection in bvhIntersections)
-                {
-                    Assert.That(intersection.Distance, Is.LessThan(CurveSurfaceIntersector.Tolerance * 10));
                 }
             }
         }
@@ -623,7 +437,7 @@ namespace UnitTests.Intersection
 
             var curve = new NurbsCurve(degree, knotVector, cp);
 
-            var intersections = CurveSurfaceIntersector.IntersectFast(curve, surface);
+            var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
             using (Assert.EnterMultipleScope())
             {
                 Assert.That(intersections, Has.Count.EqualTo(2));

@@ -61,8 +61,12 @@ namespace NurbsSharp.Intersection
 		private const int MaxStagnantSteps = 3;
 
 		/// <summary>
-		/// Find intersections between two surfaces using isocurve sampling and refinement
+		/// (en) Find intersections between two surfaces using isocurve sampling
+		/// (ja) アイソカーブサンプリングを使用した2つのサーフェス間の交差検出
 		/// </summary>
+		/// <remarks>
+		/// Uses BVH acceleration for curve-surface tests. Automatically falls back to marching if needed.
+		/// </remarks>
 		public static List<SurfaceSurfaceIntersection> Intersect(NurbsSurface surfaceA, NurbsSurface surfaceB, double tolerance = Tolerance, int isoDivisions = DefaultIsoDivisions)
 		{
 			Guard.ThrowIfNull(surfaceA, nameof(surfaceA));
@@ -75,7 +79,6 @@ namespace NurbsSharp.Intersection
 				return results;
 
 			// Parameter ranges
-
 			double minU_A = surfaceA.KnotVectorU.Knots[surfaceA.DegreeU];
 			double maxU_A = surfaceA.KnotVectorU.Knots[surfaceA.KnotVectorU.Length - surfaceA.DegreeU - 1];
 			double minV_A = surfaceA.KnotVectorV.Knots[surfaceA.DegreeV];
@@ -99,10 +102,14 @@ namespace NurbsSharp.Intersection
 			{
 				double u = minU_A + (maxU_A - minU_A) * i / isoDivisions;
 				var iso = surfaceA.GetIsoCurveU(u);
-				var intersections = CurveSurfaceIntersector.IntersectFast(iso, surfaceB, tolerance);
+				
+				// Quick bbox check: skip if isocurve bbox doesn't intersect surface B
+				if (!iso.BoundingBox.Intersects(surfaceB.BoundingBox))
+					continue;
+
+				var intersections = CurveSurfaceIntersector.Intersect(iso, surfaceB, tolerance);
 				foreach (var inter in intersections)
 				{
-					// iso curve parameter corresponds to surfaceA.V
 					var entry = new SurfaceSurfaceIntersection
 					{
 						SurfaceA_U = u,
@@ -122,10 +129,13 @@ namespace NurbsSharp.Intersection
 			{
 				double v = minV_A + (maxV_A - minV_A) * i / isoDivisions;
 				var iso = surfaceA.GetIsoCurveV(v);
-				var intersections = CurveSurfaceIntersector.IntersectFast(iso, surfaceB, tolerance);
+				
+				if (!iso.BoundingBox.Intersects(surfaceB.BoundingBox))
+					continue;
+
+				var intersections = CurveSurfaceIntersector.Intersect(iso, surfaceB, tolerance);
 				foreach (var inter in intersections)
 				{
-					// iso curve parameter corresponds to surfaceA.U
 					var entry = new SurfaceSurfaceIntersection
 					{
 						SurfaceA_U = inter.U,
@@ -145,10 +155,13 @@ namespace NurbsSharp.Intersection
 			{
 				double u = minU_B + (maxU_B - minU_B) * i / isoDivisions;
 				var iso = surfaceB.GetIsoCurveU(u);
-				var intersections = CurveSurfaceIntersector.IntersectFast(iso, surfaceA, tolerance);
+				
+				if (!iso.BoundingBox.Intersects(surfaceA.BoundingBox))
+					continue;
+
+				var intersections = CurveSurfaceIntersector.Intersect(iso, surfaceA, tolerance);
 				foreach (var inter in intersections)
 				{
-					// iso curve parameter corresponds to surfaceB.V
 					var entry = new SurfaceSurfaceIntersection
 					{
 						SurfaceA_U = inter.SurfaceU,
@@ -167,10 +180,13 @@ namespace NurbsSharp.Intersection
 			{
 				double v = minV_B + (maxV_B - minV_B) * i / isoDivisions;
 				var iso = surfaceB.GetIsoCurveV(v);
-				var intersections = CurveSurfaceIntersector.IntersectFast(iso, surfaceA, tolerance);
+				
+				if (!iso.BoundingBox.Intersects(surfaceA.BoundingBox))
+					continue;
+
+				var intersections = CurveSurfaceIntersector.Intersect(iso, surfaceA, tolerance);
 				foreach (var inter in intersections)
 				{
-					// iso curve parameter corresponds to surfaceB.U
 					var entry = new SurfaceSurfaceIntersection
 					{
 						SurfaceA_U = inter.SurfaceU,
@@ -261,11 +277,16 @@ namespace NurbsSharp.Intersection
 		}
 
 		/// <summary>
-		/// (en) Robust intersection using bidirectional marching from seed points
-		/// (ja) 初期点から双方向マーチングを用いたロバストな交差計算
-		/// Reference: Kodatuno CalcIntersecPtsNurbsSSearch. Adds hard caps to avoid infinite loops.
+		/// (en) Detailed intersection using bidirectional marching from seed points
+		/// (ja) 初期点から双方向マーチングを用いた詳細交差計算
 		/// </summary>
-		public static List<SurfaceSurfaceIntersection> IntersectRobust(NurbsSurface surfaceA, NurbsSurface surfaceB,
+		/// <remarks>
+		/// This method traces intersection curves by marching along the intersection from seed points.
+		/// Provides more detailed point distribution along intersection curves than simple Intersect().
+		/// Use this when you need dense sampling of intersection curves for visualization or further processing.
+		/// Reference: Kodatuno CalcIntersecPtsNurbsSSearch implementation.
+		/// </remarks>
+		public static List<SurfaceSurfaceIntersection> IntersectWithMarching(NurbsSurface surfaceA, NurbsSurface surfaceB,
 			double stepSize = 0.01, double tolerance = Tolerance, int isoDivisions = DefaultIsoDivisions)
 		{
 			Guard.ThrowIfNull(surfaceA, nameof(surfaceA));
@@ -518,8 +539,8 @@ namespace NurbsSharp.Intersection
 			Guard.ThrowIfNull(surfaceA, nameof(surfaceA));
 			Guard.ThrowIfNull(surfaceB, nameof(surfaceB));
 
-			// Use robust bidirectional marching to get complete intersection points
-			var pts = IntersectRobust(surfaceA, surfaceB, stepSize, tolerance, isoDivisions)?? new List<SurfaceSurfaceIntersection>();
+			// Use bidirectional marching to get complete intersection points
+			var pts = IntersectWithMarching(surfaceA, surfaceB, stepSize, tolerance, isoDivisions)?? new List<SurfaceSurfaceIntersection>();
 			var curves = new List<NurbsCurve>();
 
 			if (pts.Count == 0)

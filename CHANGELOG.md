@@ -14,8 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ray-Surface Intersector
 
 ### Changed
-- rename : CurveSurfaceIntersector.Intersect to CurveSurfaceIntersector.IntersectRobust
-- rename : CurveSurfaceIntersector.IntersectWithBVH to CurveSurfaceIntersector.IntersectFast
+- integrate CurveSurfaceIntersector.IntersectWithBVH to Intersect method
+- rename: SurfaceSurfaceIntersector.IntersectRobust to IntersectWithMarching
 
 ### Fixed
 

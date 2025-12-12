@@ -45,80 +45,18 @@ namespace NurbsSharp.Intersection
         private const int MarchingSteps = 200;
 
         /// <summary>
-        /// (en) Find all intersections using adaptive marching method (robust, handles complex cases)
-        /// (ja) 適応的マーチング法を使用した全交点検索（堅牢、複雑なケースに対応）
+        /// (en) Find all intersections between a NURBS curve and surface
+        /// (ja) NURBS曲線とサーフェス間の全交点検索
         /// </summary>
         /// <param name="curve">Curve to intersect</param>
         /// <param name="surface">Surface to intersect</param>
         /// <param name="tolerance">Convergence tolerance (default: 1e-6)</param>
         /// <returns>List of intersection points</returns>
         /// <remarks>
-        /// This method uses bidirectional marching with adaptive resampling.
-        /// More robust for difficult edge cases but slower than IntersectFast.
-        /// Use this when IntersectFast misses intersections or for validation.
+        /// Uses BVH (Bounding Volume Hierarchy) for efficient candidate detection.
+        /// Automatically falls back to marching method if BVH finds no candidates.
         /// </remarks>
-        public static List<CurveSurfaceIntersection> IntersectRobust(NurbsCurve curve, NurbsSurface surface, double tolerance = Tolerance)
-        {
-            Guard.ThrowIfNull(curve, nameof(curve));
-            Guard.ThrowIfNull(surface, nameof(surface));
-
-            var intersections = new List<CurveSurfaceIntersection>();
-
-            // Early out: check bounding boxes
-            if (!curve.BoundingBox.Intersects(surface.BoundingBox))
-                return intersections;
-
-            // Use marching method to find intersection candidates
-            var candidates = FindIntersectionCandidatesUsingMarching(curve, surface, tolerance);
-
-            // Refine each candidate using Newton-Raphson
-            var refinedIntersections = new List<CurveSurfaceIntersection>();
-            foreach (var candidate in candidates)
-            {
-                if (TryRefineIntersection(curve, surface, candidate.t, candidate.u, candidate.v,
-                    tolerance, out CurveSurfaceIntersection intersection))
-                {
-                    // Check if this intersection is unique (not duplicate)
-                    bool isDuplicate = false;
-                    foreach (var existing in refinedIntersections)
-                    {
-                        double paramDist = Math.Abs(existing.U - intersection.U);
-                        double spatialDist = (existing.CurvePoint - intersection.CurvePoint).magnitude;
-                        
-                        // More lenient spatial check, stricter parameter check
-                        if (paramDist < tolerance * 5 || spatialDist < tolerance * 5)
-                        {
-                            isDuplicate = true;
-                            break;
-                        }
-                    }
-
-                    if (!isDuplicate)
-                    {
-                        refinedIntersections.Add(intersection);
-                    }
-                }
-
-            }
-
-            return refinedIntersections;
-        }
-
-
-        /// <summary>
-        /// (en) Find all intersections between a NURBS curve and surface using BVH acceleration (fast, recommended)
-        /// (ja) BVH加速を使用したNURBS曲線とサーフェス間の全交点検索（高速、推奨）
-        /// </summary>
-        /// <param name="curve">Curve to intersect</param>
-        /// <param name="surface">Surface to intersect</param>
-        /// <param name="tolerance">Convergence tolerance (default: 1e-6)</param>
-        /// <returns>List of intersection points</returns>
-        /// <remarks>
-        /// This method uses BVH (Bounding Volume Hierarchy) for efficient candidate detection.
-        /// Typically 10-30x faster than IntersectRobust with 80-90% less memory allocation.
-        /// Falls back to marching method if BVH finds no candidates.
-        /// </remarks>
-        public static List<CurveSurfaceIntersection> IntersectFast(NurbsCurve curve, NurbsSurface surface, double tolerance = Tolerance)
+        public static List<CurveSurfaceIntersection> Intersect(NurbsCurve curve, NurbsSurface surface, double tolerance = Tolerance)
         {
             Guard.ThrowIfNull(curve, nameof(curve));
             Guard.ThrowIfNull(surface, nameof(surface));
@@ -133,7 +71,7 @@ namespace NurbsSharp.Intersection
             // If no candidates found, fall back to standard marching method
             if (candidates.Count == 0)
             {
-                return IntersectRobust(curve, surface, tolerance);
+                candidates = FindIntersectionCandidatesUsingMarching(curve, surface, tolerance);
             }
 
             // Refine candidates using Newton-Raphson
@@ -826,22 +764,8 @@ namespace NurbsSharp.Intersection
         /// <returns>True if curve intersects surface</returns>
         public static bool Intersects(NurbsCurve curve, NurbsSurface surface, double tolerance = Tolerance)
         {
-            var intersections = IntersectFast(curve, surface, tolerance);
+            var intersections = Intersect(curve, surface, tolerance);
             return intersections.Count > 0;
-        }
-
-        /// <summary>
-        /// (en) Find all intersections between a NURBS curve and surface (obsolete, use IntersectFast or IntersectRobust)
-        /// (ja) NURBS曲線とサーフェス間の全交点を検索（非推奨、IntersectFastまたはIntersectRobustを使用してください）
-        /// </summary>
-        /// <param name="curve">Curve to intersect</param>
-        /// <param name="surface">Surface to intersect</param>
-        /// <param name="tolerance">Convergence tolerance (default: 1e-6)</param>
-        /// <returns>List of intersection points</returns>
-        [Obsolete("Use IntersectFast() for better performance (24x faster) or IntersectRobust() for complex edge cases. IntersectFast() is recommended for most use cases.")]
-        public static List<CurveSurfaceIntersection> Intersect(NurbsCurve curve, NurbsSurface surface, double tolerance = Tolerance)
-        {
-            return IntersectFast(curve, surface, tolerance);
         }
     }
 
