@@ -103,7 +103,7 @@ namespace UnitTests.Intersection
             // Ray along -X through sphere center from outside
             var ray = new Ray(new Vector3Double(radius * 2.0, 0, 0), new Vector3Double(-1, 0, 0));
 
-            var hits = RaySurfaceIntersector.IntersectAllRobust(ray, sphere, tolerance: 1e-6, numSamples: 15);
+            var hits = RaySurfaceIntersector.IntersectAllRobust(ray, sphere, tolerance: 1e-6, tessellationResolution: 30);
             
             Assert.That(hits.Count, Is.GreaterThanOrEqualTo(2), "Should find at least two intersections through sphere");
             
