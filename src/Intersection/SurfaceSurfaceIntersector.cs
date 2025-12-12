@@ -46,6 +46,21 @@ namespace NurbsSharp.Intersection
 		private const int MaxMarchingSteps = 4000;
 
 		/// <summary>
+		/// Number of samples for synthesizing planar intersection lines
+		/// </summary>
+		private const int PlanarLineSamples = 50;
+
+		/// <summary>
+		/// Maximum allowed repeated parameter tuples before aborting marching (oscillation detection)
+		/// </summary>
+		private const int MaxParameterRepeats = 8;
+
+		/// <summary>
+		/// Number of consecutive stagnant steps before aborting marching
+		/// </summary>
+		private const int MaxStagnantSteps = 3;
+
+		/// <summary>
 		/// Find intersections between two surfaces using isocurve sampling and refinement
 		/// </summary>
 		public static List<SurfaceSurfaceIntersection> Intersect(NurbsSurface surfaceA, NurbsSurface surfaceB, double tolerance = Tolerance, int isoDivisions = DefaultIsoDivisions)
@@ -183,6 +198,69 @@ namespace NurbsSharp.Intersection
 		}
 
 		/// <summary>
+		/// Cell key for spatial hashing (more efficient than string keys)
+		/// </summary>
+		private readonly struct CellKey : IEquatable<CellKey>
+		{
+			public readonly int X, Y, Z;
+			public CellKey(int x, int y, int z) { X = x; Y = y; Z = z; }
+			public bool Equals(CellKey other) => X == other.X && Y == other.Y && Z == other.Z;
+			public override bool Equals(object? obj) => obj is CellKey other && Equals(other);
+			public override int GetHashCode() => HashCode.Combine(X, Y, Z);
+		}
+
+		/// <summary>
+		/// Helper: Generate planar intersection line by sampling along Y-axis overlap
+		/// (consolidates duplicate logic from IntersectRobust and IntersectCurves)
+		/// </summary>
+		private static List<SurfaceSurfaceIntersection> GeneratePlanarIntersectionLine(
+			NurbsSurface surfaceA, NurbsSurface surfaceB,
+			List<SurfaceSurfaceIntersection> existingSeeds,
+			double minU_A, double maxU_A, double minV_A, double maxV_A,
+			double minU_B, double maxU_B, double minV_B, double maxV_B)
+		{
+			var bboxA = surfaceA.BoundingBox;
+			var bboxB = surfaceB.BoundingBox;
+			double overlapYMin = Math.Max(bboxA.Min.Y, bboxB.Min.Y);
+			double overlapYMax = Math.Min(bboxA.Max.Y, bboxB.Max.Y);
+			double targetYSpan = overlapYMax - overlapYMin;
+			if (targetYSpan <= 0)
+				return new List<SurfaceSurfaceIntersection>();
+
+			var result = new List<SurfaceSurfaceIntersection>();
+			bool hasSeeds = existingSeeds != null && existingSeeds.Count > 0;
+			double uAConst = hasSeeds ? existingSeeds!.Average(s => s.SurfaceA_U) : (minU_A + maxU_A) * 0.5;
+			double vBConst = hasSeeds ? existingSeeds!.Average(s => s.SurfaceB_V) : (minV_B + maxV_B) * 0.5;
+			int samples = PlanarLineSamples;
+			double spanA_Y = bboxA.Max.Y - bboxA.Min.Y;
+			double spanB_Y = bboxB.Max.Y - bboxB.Min.Y;
+
+			for (int i = 0; i <= samples; i++)
+			{
+				double t = (double)i / samples;
+				double y = overlapYMin + targetYSpan * t;
+				double vA = spanA_Y > 0 ? minV_A + (maxV_A - minV_A) * ((y - bboxA.Min.Y) / spanA_Y) 
+					: (hasSeeds ? existingSeeds![0].SurfaceA_V : (minV_A + maxV_A) * 0.5);
+				double uB = spanB_Y > 0 ? minU_B + (maxU_B - minU_B) * ((y - bboxB.Min.Y) / spanB_Y) 
+					: (hasSeeds ? existingSeeds![0].SurfaceB_U : (minU_B + maxU_B) * 0.5);
+				var pA = SurfaceEvaluator.Evaluate(surfaceA, uAConst, vA);
+				var pB = SurfaceEvaluator.Evaluate(surfaceB, uB, vBConst);
+				result.Add(new SurfaceSurfaceIntersection
+				{
+					SurfaceA_U = uAConst,
+					SurfaceA_V = vA,
+					SurfaceB_U = uB,
+					SurfaceB_V = vBConst,
+					PointA = pA,
+					PointB = pB,
+					Distance = (pA - pB).magnitude
+				});
+			}
+
+			return result;
+		}
+
+		/// <summary>
 		/// (en) Robust intersection using bidirectional marching from seed points
 		/// (ja) 初期点から双方向マーチングを用いたロバストな交差計算
 		/// Reference: Kodatuno CalcIntersecPtsNurbsSSearch. Adds hard caps to avoid infinite loops.
@@ -209,54 +287,16 @@ namespace NurbsSharp.Intersection
 			var seeds = Intersect(surfaceA, surfaceB, tolerance, isoDivisions);
 			if (seeds.Count == 0 && bothPlanar)
 			{
-				return BuildPlanarLine();
+				return GeneratePlanarIntersectionLine(surfaceA, surfaceB, seeds,
+					minU_A, maxU_A, minV_A, maxV_A, minU_B, maxU_B, minV_B, maxV_B);
 			}
 			if (seeds.Count == 0)
 				return new List<SurfaceSurfaceIntersection>();
 
-			List<SurfaceSurfaceIntersection> BuildPlanarLine()
-			{
-				var bboxA = surfaceA.BoundingBox;
-				var bboxB = surfaceB.BoundingBox;
-				double overlapYMin = Math.Max(bboxA.Min.Y, bboxB.Min.Y);
-				double overlapYMax = Math.Min(bboxA.Max.Y, bboxB.Max.Y);
-				double targetYSpan = overlapYMax - overlapYMin;
-				if (targetYSpan <= 0)
-					return new List<SurfaceSurfaceIntersection>();
-
-				var synth = new List<SurfaceSurfaceIntersection>();
-				bool hasSeeds = seeds.Count > 0;
-				double uAConst = hasSeeds ? seeds.Average(s => s.SurfaceA_U) : (minU_A + maxU_A) * 0.5;
-				double vBConst = hasSeeds ? seeds.Average(s => s.SurfaceB_V) : (minV_B + maxV_B) * 0.5;
-				const int samples = 50;
-				double spanA_Y = bboxA.Max.Y - bboxA.Min.Y;
-				double spanB_Y = bboxB.Max.Y - bboxB.Min.Y;
-				for (int i = 0; i <= samples; i++)
-				{
-					double t = (double)i / samples;
-					double y = overlapYMin + targetYSpan * t;
-					double vA = spanA_Y > 0 ? minV_A + (maxV_A - minV_A) * ((y - bboxA.Min.Y) / spanA_Y) : (hasSeeds ? seeds[0].SurfaceA_V : (minV_A + maxV_A) * 0.5);
-					double uB = spanB_Y > 0 ? minU_B + (maxU_B - minU_B) * ((y - bboxB.Min.Y) / spanB_Y) : (hasSeeds ? seeds[0].SurfaceB_U : (minU_B + maxU_B) * 0.5);
-					var pA = SurfaceEvaluator.Evaluate(surfaceA, uAConst, vA);
-					var pB = SurfaceEvaluator.Evaluate(surfaceB, uB, vBConst);
-					synth.Add(new SurfaceSurfaceIntersection
-					{
-						SurfaceA_U = uAConst,
-						SurfaceA_V = vA,
-						SurfaceB_U = uB,
-						SurfaceB_V = vBConst,
-						PointA = pA,
-						PointB = pB,
-						Distance = (pA - pB).magnitude
-					});
-				}
-
-				return synth;
-			}
-
 			if (bothPlanar)
 			{
-				return BuildPlanarLine();
+				return GeneratePlanarIntersectionLine(surfaceA, surfaceB, seeds,
+					minU_A, maxU_A, minV_A, maxV_A, minU_B, maxU_B, minV_B, maxV_B);
 			}
 
 			bool usedSynthetic = false;
@@ -267,7 +307,8 @@ namespace NurbsSharp.Intersection
 			double fullSpanB_U = maxU_B - minU_B;
 			if (fullSpanA_U > 0 && fullSpanB_U > 0 && spanA_U < fullSpanA_U * 0.2 && spanB_U < fullSpanB_U * 0.2)
 			{
-				var synthSeeds = BuildPlanarLine();
+				var synthSeeds = GeneratePlanarIntersectionLine(surfaceA, surfaceB, seeds,
+					minU_A, maxU_A, minV_A, maxV_A, minU_B, maxU_B, minV_B, maxV_B);
 				if (synthSeeds.Count > 0)
 				{
 					seeds = synthSeeds;
@@ -321,7 +362,8 @@ namespace NurbsSharp.Intersection
 
 					if (currentSpan < targetYSpan * 0.8)
 					{
-						var synth = BuildPlanarLine();
+						var synth = GeneratePlanarIntersectionLine(surfaceA, surfaceB, allPoints,
+							minU_A, maxU_A, minV_A, maxV_A, minU_B, maxU_B, minV_B, maxV_B);
 						if (synth.Count > 0)
 							return synth;
 						return seeds;
@@ -410,7 +452,7 @@ namespace NurbsSharp.Intersection
 
 				// if we see the exact same parameter tuple repeatedly, break to avoid infinite loops
 				// allow more repeats before aborting to avoid premature termination on slow convergence
-				if (repeatCount >= 8)
+				if (repeatCount >= MaxParameterRepeats)
 					break;
 
 				// stagnation detection
@@ -419,7 +461,7 @@ namespace NurbsSharp.Intersection
 				else
 					stagnantCount = 0;
 
-				if (stagnantCount >= 3)
+				if (stagnantCount >= MaxStagnantSteps)
 					break;
 
 				lastMove = move;
@@ -477,57 +519,24 @@ namespace NurbsSharp.Intersection
 			Guard.ThrowIfNull(surfaceB, nameof(surfaceB));
 
 			// Use robust bidirectional marching to get complete intersection points
-			var pts = IntersectRobust(surfaceA, surfaceB, stepSize, tolerance, isoDivisions);
-			if (pts == null)
-				pts = new List<SurfaceSurfaceIntersection>();
-			// (debug logs removed)
+			var pts = IntersectRobust(surfaceA, surfaceB, stepSize, tolerance, isoDivisions)?? new List<SurfaceSurfaceIntersection>();
 			var curves = new List<NurbsCurve>();
 
-			if (pts == null || pts.Count == 0)
+			if (pts.Count == 0)
 			{
 				bool planar = surfaceA.DegreeU == 1 && surfaceA.DegreeV == 1 && surfaceB.DegreeU == 1 && surfaceB.DegreeV == 1;
 				if (planar)
 				{
-					var bboxA = surfaceA.BoundingBox;
-					var bboxB = surfaceB.BoundingBox;
-					double overlapYMin = Math.Max(bboxA.Min.Y, bboxB.Min.Y);
-					double overlapYMax = Math.Min(bboxA.Max.Y, bboxB.Max.Y);
-					double targetYSpan = overlapYMax - overlapYMin;
-					if (targetYSpan > 0)
-					{
-						double minU_A = surfaceA.KnotVectorU.Knots[surfaceA.DegreeU];
-						double maxU_A = surfaceA.KnotVectorU.Knots[surfaceA.KnotVectorU.Length - surfaceA.DegreeU - 1];
-						double minV_A = surfaceA.KnotVectorV.Knots[surfaceA.DegreeV];
-						double maxV_A = surfaceA.KnotVectorV.Knots[surfaceA.KnotVectorV.Length - surfaceA.DegreeV - 1];
-						double minU_B = surfaceB.KnotVectorU.Knots[surfaceB.DegreeU];
-						double maxU_B = surfaceB.KnotVectorU.Knots[surfaceB.KnotVectorU.Length - surfaceB.DegreeU - 1];
-						double minV_B = surfaceB.KnotVectorV.Knots[surfaceB.DegreeV];
-						double maxV_B = surfaceB.KnotVectorV.Knots[surfaceB.DegreeV - 1];
-						const int samples = 50;
-						double spanA_Y = bboxA.Max.Y - bboxA.Min.Y;
-						double spanB_Y = bboxB.Max.Y - bboxB.Min.Y;
-						double uAConst = (minU_A + maxU_A) * 0.5;
-						double vBConst = (minV_B + maxV_B) * 0.5;
-						for (int i = 0; i <= samples; i++)
-						{
-							double t = (double)i / samples;
-							double y = overlapYMin + targetYSpan * t;
-							double vA = spanA_Y > 0 ? minV_A + (maxV_A - minV_A) * ((y - bboxA.Min.Y) / spanA_Y) : (minV_A + maxV_A) * 0.5;
-							double uB = spanB_Y > 0 ? minU_B + (maxU_B - minU_B) * ((y - bboxB.Min.Y) / spanB_Y) : (minU_B + maxU_B) * 0.5;
-							var pA = SurfaceEvaluator.Evaluate(surfaceA, uAConst, vA);
-							var pB = SurfaceEvaluator.Evaluate(surfaceB, uB, vBConst);
-							pts.Add(new SurfaceSurfaceIntersection
-							{
-								SurfaceA_U = uAConst,
-								SurfaceA_V = vA,
-								SurfaceB_U = uB,
-								SurfaceB_V = vBConst,
-								PointA = pA,
-								PointB = pB,
-								Distance = (pA - pB).magnitude
-							});
-						}
-					}
+					double minU_A = surfaceA.KnotVectorU.Knots[surfaceA.DegreeU];
+					double maxU_A = surfaceA.KnotVectorU.Knots[surfaceA.KnotVectorU.Length - surfaceA.DegreeU - 1];
+					double minV_A = surfaceA.KnotVectorV.Knots[surfaceA.DegreeV];
+					double maxV_A = surfaceA.KnotVectorV.Knots[surfaceA.KnotVectorV.Length - surfaceA.DegreeV - 1];
+					double minU_B = surfaceB.KnotVectorU.Knots[surfaceB.DegreeU];
+					double maxU_B = surfaceB.KnotVectorU.Knots[surfaceB.KnotVectorU.Length - surfaceB.DegreeU - 1];
+					double minV_B = surfaceB.KnotVectorV.Knots[surfaceB.DegreeV];
+					double maxV_B = surfaceB.KnotVectorV.Knots[surfaceB.KnotVectorV.Length - surfaceB.DegreeV - 1];
+					pts = GeneratePlanarIntersectionLine(surfaceA, surfaceB, new List<SurfaceSurfaceIntersection>(),
+						minU_A, maxU_A, minV_A, maxV_A, minU_B, maxU_B, minV_B, maxV_B);
 				}
 			}
 
@@ -555,9 +564,6 @@ namespace NurbsSharp.Intersection
 			var points = pts.Select(p => new Vector3Double((p.PointA.X + p.PointB.X) * 0.5,
 														  (p.PointA.Y + p.PointB.Y) * 0.5,
 														  (p.PointA.Z + p.PointB.Z) * 0.5)).ToList();
-
-			// point sample debug logs removed
-
 			// Determine clustering threshold adaptively based on typical spacing between points.
 			// Compute nearest-neighbor distances and use a multiple as threshold to group continuous chains.
 			double clusterThreshold;
@@ -577,10 +583,6 @@ namespace NurbsSharp.Intersection
 				{
 					double nearest = double.MaxValue;
 					var key = GetCellKey(ptsArr[i], minCorner, cellSize);
-					var parts = key.Split('_');
-					int ix = int.Parse(parts[0]);
-					int iy = int.Parse(parts[1]);
-					int iz = int.Parse(parts[2]);
 					// search neighboring cells up to radius 1 (usually sufficient)
 					for (int dx = -1; dx <= 1; dx++)
 					{
@@ -588,7 +590,7 @@ namespace NurbsSharp.Intersection
 						{
 							for (int dz = -1; dz <= 1; dz++)
 							{
-								string nkey = string.Format("{0}_{1}_{2}", ix + dx, iy + dy, iz + dz);
+								var nkey = new CellKey(key.X + dx, key.Y + dy, key.Z + dz);
 								if (!hash.TryGetValue(nkey, out var list)) continue;
 								foreach (var j in list)
 								{
@@ -686,10 +688,6 @@ namespace NurbsSharp.Intersection
 					cluster.Add(points[idx]);
 					// get cell index for this point
 					var key = GetCellKey(points[idx], minCorner, cellSize);
-					var parts = key.Split('_');
-					int ix = int.Parse(parts[0]);
-					int iy = int.Parse(parts[1]);
-					int iz = int.Parse(parts[2]);
 
 					for (int dx = -1; dx <= 1; dx++)
 					{
@@ -697,7 +695,7 @@ namespace NurbsSharp.Intersection
 						{
 							for (int dz = -1; dz <= 1; dz++)
 							{
-								string nkey = string.Format("{0}_{1}_{2}", ix + dx, iy + dy, iz + dz);
+								var nkey = new CellKey(key.X + dx, key.Y + dy, key.Z + dz);
 								if (!hash.TryGetValue(nkey, out var list)) continue;
 								foreach (var j in list)
 								{
@@ -739,9 +737,9 @@ namespace NurbsSharp.Intersection
 		}
 
 		// Build a simple spatial hash: cell key -> list of point indices. Returns hash and min corner used for indexing.
-		private static (Dictionary<string, List<int>> hash, Vector3Double minCorner) BuildSpatialHash(Vector3Double[] points, double cellSize)
+		private static (Dictionary<CellKey, List<int>> hash, Vector3Double minCorner) BuildSpatialHash(Vector3Double[] points, double cellSize)
 		{
-			var hash = new Dictionary<string, List<int>>();
+			var hash = new Dictionary<CellKey, List<int>>();
 			if (points == null || points.Length == 0) return (hash, new Vector3Double(0, 0, 0));
 			double minX = points.Min(p => p.X);
 			double minY = points.Min(p => p.Y);
@@ -760,12 +758,12 @@ namespace NurbsSharp.Intersection
 			return (hash, minCorner);
 		}
 
-		private static string GetCellKey(Vector3Double p, Vector3Double minCorner, double cellSize)
+		private static CellKey GetCellKey(Vector3Double p, Vector3Double minCorner, double cellSize)
 		{
 			int ix = (int)Math.Floor((p.X - minCorner.X) / cellSize);
 			int iy = (int)Math.Floor((p.Y - minCorner.Y) / cellSize);
 			int iz = (int)Math.Floor((p.Z - minCorner.Z) / cellSize);
-			return string.Format("{0}_{1}_{2}", ix, iy, iz);
+			return new CellKey(ix, iy, iz);
 		}
 
 		/// <summary>
@@ -987,71 +985,7 @@ namespace NurbsSharp.Intersection
 			return true;
 		}
 
-		/// <summary>
-		/// Solve 3x3 linear system using Gaussian elimination with partial pivoting
-		/// </summary>
-		private static double[] SolveLinearSystem3x3(double[,] A, double[] b)
-		{
-			// Create augmented matrix
-			double[,] aug = new double[3, 4];
-			for (int i = 0; i < 3; i++)
-			{
-				for (int j = 0; j < 3; j++)
-					aug[i, j] = A[i, j];
-				aug[i, 3] = b[i];
-			}
 
-			// Forward elimination with partial pivoting
-			for (int k = 0; k < 3; k++)
-			{
-				// Find pivot
-				int maxRow = k;
-				double maxVal = Math.Abs(aug[k, k]);
-				for (int i = k + 1; i < 3; i++)
-				{
-					if (Math.Abs(aug[i, k]) > maxVal)
-					{
-						maxVal = Math.Abs(aug[i, k]);
-						maxRow = i;
-					}
-				}
-
-				// Swap rows
-				if (maxRow != k)
-				{
-					for (int j = 0; j < 4; j++)
-					{
-						double tmp = aug[k, j];
-						aug[k, j] = aug[maxRow, j];
-						aug[maxRow, j] = tmp;
-					}
-				}
-
-				// Check for singular matrix
-				if (Math.Abs(aug[k, k]) < 1e-12)
-					return null!;
-
-				// Eliminate column
-				for (int i = k + 1; i < 3; i++)
-				{
-					double factor = aug[i, k] / aug[k, k];
-					for (int j = k; j < 4; j++)
-						aug[i, j] -= factor * aug[k, j];
-				}
-			}
-
-			// Back substitution
-			double[] x = new double[3];
-			for (int i = 2; i >= 0; i--)
-			{
-				double sum = aug[i, 3];
-				for (int j = i + 1; j < 3; j++)
-					sum -= aug[i, j] * x[j];
-				x[i] = sum / aug[i, i];
-			}
-
-			return x;
-		}
 	}
 
 	/// <summary>
