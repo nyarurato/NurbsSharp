@@ -37,7 +37,11 @@ namespace NurbsSharp.IO
                 var v2 = mesh.Vertices[mesh.Indexes[i + 1]];
                 var v3 = mesh.Vertices[mesh.Indexes[i + 2]];
                 // Compute normal
-                var normal = Vector3Double.Cross(v2 - v1, v3 - v1).normalized;
+                var normal = Vector3Double.Cross(v2 - v1, v3 - v1);
+                if(normal.magnitude > 0)
+                    normal = normal.normalized;
+                else
+                    normal = new Vector3Double(0, 0, 0);
                 await writer.WriteLineAsync($"facet normal {normal.X} {normal.Y} {normal.Z}");
                 await writer.WriteLineAsync("  outer loop");
                 await writer.WriteLineAsync($"    vertex {v1.X} {v1.Y} {v1.Z}");
