@@ -4,8 +4,6 @@ using System.Linq;
 using NurbsSharp.Core;
 using NurbsSharp.Evaluation;
 using NurbsSharp.Geometry;
-using NurbsSharp.Operation;
-using NurbsSharp.Generation.Approximation;
 using NurbsSharp.Generation.Interpolation;
 
 
@@ -43,6 +41,7 @@ namespace NurbsSharp.Intersection
         /// <remarks>
         /// This method assumes there is at most ONE intersection point between each isocurve and the plane.
         /// If multiple intersections exist, only one will be found per isocurve.
+        /// https://www.nature.com/articles/s41598-025-25765-z
         /// </remarks>
         public static List<NurbsCurve> IntersectFast(NurbsSurface surface, Plane plane, double tolerance = 1e-6, int numIsoCurves = 50, bool? fixU = null)
         {
@@ -70,22 +69,63 @@ namespace NurbsSharp.Intersection
             if (minD > tolerance || maxD < -tolerance)
                 return new List<NurbsCurve>();
             
-            // Determine which direction to fix based on surface aspect ratio (if not specified)
-            if (!fixU.HasValue)
-            {
-                double uRange = surface.KnotVectorU.Knots[^(surface.DegreeU + 1)] - surface.KnotVectorU.Knots[surface.DegreeU];
-                double vRange = surface.KnotVectorV.Knots[^(surface.DegreeV + 1)] - surface.KnotVectorV.Knots[surface.DegreeV];
-                
-                // Fix the direction with larger range to get better sampling
-                fixU = uRange > vRange;
-            }
-            
-            var intersectionPoints = new List<Vector3Double>();
-            
+            // Prepare parameter bounds
             double uMin = surface.KnotVectorU.Knots[surface.DegreeU];
             double uMax = surface.KnotVectorU.Knots[^(surface.DegreeU + 1)];
             double vMin = surface.KnotVectorV.Knots[surface.DegreeV];
             double vMax = surface.KnotVectorV.Knots[^(surface.DegreeV + 1)];
+
+            // Determine which direction to fix when not specified. Use a combined heuristic:
+            // 1) Compare representative surface-direction vectors (how much moving along an isocurve
+            //    changes the point relative to plane normal). Prefer fixing U (i.e., sampling V)
+            //    when the V-direction vector has larger projection on the plane normal.
+            // 2) Fall back to parameter-range heuristic when the vector scores are similar.
+            if (!fixU.HasValue)
+            {
+                double uRange = uMax - uMin;
+                double vRange = vMax - vMin;
+
+                double uMid = 0.5 * (uMin + uMax);
+                double vMid = 0.5 * (vMin + vMax);
+
+                // Representative 3D direction vectors for iso-curves
+                var pU1 = surface.GetPos(uMin, vMid);
+                var pU2 = surface.GetPos(uMax, vMid);
+                var pV1 = surface.GetPos(uMid, vMin);
+                var pV2 = surface.GetPos(uMid, vMax);
+
+                var su = pU2 - pU1; // direction when varying U (fix V)
+                var sv = pV2 - pV1; // direction when varying V (fix U)
+
+                double suNorm = su.magnitude;
+                double svNorm = sv.magnitude;
+
+                double suScore = 0.0;
+                double svScore = 0.0;
+
+                if (suNorm > 1e-12)
+                {
+                    suScore = Math.Abs(su.X * plane.Normal.X + su.Y * plane.Normal.Y + su.Z * plane.Normal.Z) / suNorm;
+                }
+                if (svNorm > 1e-12)
+                {
+                    svScore = Math.Abs(sv.X * plane.Normal.X + sv.Y * plane.Normal.Y + sv.Z * plane.Normal.Z) / svNorm;
+                }
+
+                // If scores differ significantly, prefer the vector-based choice.
+                if (Math.Abs(svScore - suScore) > 0.05)
+                {
+                    // fixU == true means we fix U and vary V (i.e., iso-curves run along V -> sv)
+                    fixU = svScore > suScore;
+                }
+                else
+                {
+                    // Fallback to simple parameter-range heuristic
+                    fixU = uRange > vRange;
+                }
+            }
+
+            var intersectionPoints = new List<Vector3Double>();
             
             if (fixU.Value)
             {
@@ -272,48 +312,253 @@ namespace NurbsSharp.Intersection
             
             var result = new List<NurbsCurve>();
             
-            // Find initial intersection points on surface boundary
+            // Find initial intersection points (boundary + interior)
             var seedPoints = FindBoundarySeedPoints(surface, plane, tolerance);
             
-            if (seedPoints.Count == 0)
-                return result; // No intersection found
-            
-            var visitedPoints = new HashSet<(double u, double v)>();
-            
-            // Trace each intersection curve from seed points
+            // Filter out degenerate seeds and add interior seeds
+            var validSeeds = new List<(double u, double v)>();
             foreach (var seed in seedPoints)
             {
-                var key = (Math.Round(seed.u / tolerance) * tolerance, Math.Round(seed.v / tolerance) * tolerance);
-                if (visitedPoints.Contains(key))
+                var tangent = GetIntersectionCurveTangent(surface, plane, seed.u, seed.v);
+                if (tangent.magnitude > 1e-8)
+                {
+                    validSeeds.Add(seed);
+                }
+            }
+            
+            // Always try interior sampling to find additional seeds
+            var interiorSeeds = FindInteriorSeedPoints(surface, plane, tolerance);
+            foreach (var seed in interiorSeeds)
+            {
+                // Check if not duplicate
+                bool isDuplicate = false;
+                foreach (var existing in validSeeds)
+                {
+                    double dist = Math.Sqrt(Math.Pow(existing.u - seed.u, 2) + Math.Pow(existing.v - seed.v, 2));
+                    if (dist < tolerance * 100)
+                    {
+                        isDuplicate = true;
+                        break;
+                    }
+                }
+                if (!isDuplicate)
+                {
+                    validSeeds.Add(seed);
+                }
+            }
+            
+            if (validSeeds.Count == 0)
+                return result;
+            
+            // Track which seeds have been visited
+            var visitedSeeds = new bool[validSeeds.Count];
+            var allVisited = false;
+            
+            // Trace curves from each unvisited seed
+            int seedIndex = 0;
+            while (!allVisited && seedIndex < validSeeds.Count)
+            {
+                if (visitedSeeds[seedIndex])
+                {
+                    seedIndex++;
                     continue;
+                }
                 
-                var curvePoints = TraceCurve(surface, plane, seed, tolerance, maxIterations, stepSize, visitedPoints);
+                // Trace curve in both directions from this seed
+                var curvePoints = TraceCurveBidirectional(surface, plane, validSeeds[seedIndex], 
+                    tolerance, maxIterations, stepSize, validSeeds, visitedSeeds, seedIndex);
                 
                 if (curvePoints.Count >= 2)
                 {
-                    // Create NURBS curve from traced points using interpolation
                     var curve3DPoints = curvePoints.Select(p => surface.GetPos(p.u, p.v)).ToList();
                     
-                    if (curve3DPoints.Count >= 2)
+                    // Remove duplicate points
+                    var uniquePoints = new List<Vector3Double>();
+                    foreach (var pt in curve3DPoints)
+                    {
+                        bool isDup = false;
+                        foreach (var existing in uniquePoints)
+                        {
+                            if ((pt - existing).magnitude < tolerance * 10)
+                            {
+                                isDup = true;
+                                break;
+                            }
+                        }
+                        if (!isDup) uniquePoints.Add(pt);
+                    }
+                    
+                    if (uniquePoints.Count >= 2)
                     {
                         try
                         {
-                            int degree = Math.Min(3, curve3DPoints.Count - 1);
-                            var intersectionCurve = GlobalInterpolator.InterpolateCurve(curve3DPoints.ToArray(), degree);
-                            result.Add(intersectionCurve);
+                            int degree = Math.Min(3, uniquePoints.Count - 1);
+                            var curve = GlobalInterpolator.InterpolateCurve(uniquePoints.ToArray(), degree);
+                            result.Add(curve);
                         }
                         catch
                         {
-                            // Fallback to linear if interpolation fails
-                            int degree = Math.Min(1, curve3DPoints.Count - 1);
-                            var intersectionCurve = GlobalInterpolator.InterpolateCurve(curve3DPoints.ToArray(), degree);
-                            result.Add(intersectionCurve);
+                            try
+                            {
+                                int degree = Math.Min(1, uniquePoints.Count - 1);
+                                var curve = GlobalInterpolator.InterpolateCurve(uniquePoints.ToArray(), degree);
+                                result.Add(curve);
+                            }
+                            catch { }
                         }
+                    }
+                }
+                
+                seedIndex++;
+                
+                // Check if all seeds visited
+                allVisited = true;
+                for (int i = 0; i < visitedSeeds.Length; i++)
+                {
+                    if (!visitedSeeds[i])
+                    {
+                        allVisited = false;
+                        seedIndex = i;
+                        break;
                     }
                 }
             }
             
             return result;
+        }
+        
+        /// <summary>
+        /// (en) Trace curve bidirectionally from seed point and mark visited seeds
+        /// (ja) 初期点から双方向にカーブをトレースし、訪問済み初期点をマーク
+        /// </summary>
+        private static List<(double u, double v)> TraceCurveBidirectional(NurbsSurface surface, Plane plane, 
+            (double u, double v) seed, double tolerance, int maxIterations, double stepSize,
+            List<(double u, double v)> allSeeds, bool[] visitedSeeds, int currentSeedIndex)
+        {
+            var allPoints = new List<(double u, double v)>();
+            
+            // Mark current seed as visited
+            visitedSeeds[currentSeedIndex] = true;
+            
+            // Trace forward direction
+            var forwardPoints = TraceCurveDirection(surface, plane, seed, 1, tolerance, maxIterations, stepSize, allSeeds, visitedSeeds);
+            
+            // Trace inverse direction
+            var inversePoints = TraceCurveDirection(surface, plane, seed, -1, tolerance, maxIterations, stepSize, allSeeds, visitedSeeds);
+            
+            // Combine: inverse (reversed) + seed + forward
+            for (int i = inversePoints.Count - 1; i >= 0; i--)
+            {
+                allPoints.Add(inversePoints[i]);
+            }
+            allPoints.Add(seed);
+            allPoints.AddRange(forwardPoints);
+            
+            return allPoints;
+        }
+        
+        /// <summary>
+        /// (en) Trace curve in one direction from seed point
+        /// (ja) 初期点から指定方向にカーブをトレース
+        /// </summary>
+        private static List<(double u, double v)> TraceCurveDirection(NurbsSurface surface, Plane plane, 
+            (double u, double v) seed, int direction, double tolerance, int maxIterations, double stepSize,
+            List<(double u, double v)> allSeeds, bool[] visitedSeeds)
+        {
+            var points = new List<(double u, double v)>();
+            
+            double uMin = surface.KnotVectorU.Knots[surface.DegreeU];
+            double uMax = surface.KnotVectorU.Knots[^(surface.DegreeU + 1)];
+            double vMin = surface.KnotVectorV.Knots[surface.DegreeV];
+            double vMax = surface.KnotVectorV.Knots[^(surface.DegreeV + 1)];
+            
+            double uCurrent = seed.u;
+            double vCurrent = seed.v;
+            int consecutiveOutOfBoundsCount = 0;
+            
+            for (int step = 0; step < 10000; step++)
+            {
+                var tangent = GetIntersectionCurveTangent(surface, plane, uCurrent, vCurrent);
+                
+                if (tangent.magnitude < 1e-10)
+                    break;
+                
+                tangent = tangent.normalized;
+                
+                // Step in specified direction
+                double uNext = uCurrent + direction * stepSize * tangent.X;
+                double vNext = vCurrent + direction * stepSize * tangent.Y;
+                
+                // Check if out of bounds
+                if (uNext < uMin || uNext > uMax || vNext < vMin || vNext > vMax)
+                {
+                    consecutiveOutOfBoundsCount++;
+                    
+                    // Clamp to bounds
+                    uNext = Math.Max(uMin, Math.Min(uMax, uNext));
+                    vNext = Math.Max(vMin, Math.Min(vMax, vNext));
+                    
+                    // Break if consistently out of bounds
+                    if (consecutiveOutOfBoundsCount > 5)
+                        break;
+                }
+                else
+                {
+                    consecutiveOutOfBoundsCount = 0;
+                }
+                
+                // Newton-Raphson refinement
+                for (int iter = 0; iter < maxIterations; iter++)
+                {
+                    var pt = surface.GetPos(uNext, vNext);
+                    double dist = plane.SignedDistanceTo(pt);
+                    
+                    if (Math.Abs(dist) < tolerance)
+                        break;
+                    
+                    var deriv = SurfaceEvaluator.EvaluateFirstDerivative(surface, uNext, vNext);
+                    
+                    // Gradient of distance with respect to (u,v)
+                    double dfdu = plane.Normal.X * deriv.u_deriv.X + plane.Normal.Y * deriv.u_deriv.Y + plane.Normal.Z * deriv.u_deriv.Z;
+                    double dfdv = plane.Normal.X * deriv.v_deriv.X + plane.Normal.Y * deriv.v_deriv.Y + plane.Normal.Z * deriv.v_deriv.Z;
+                    
+                    double gradMag = Math.Sqrt(dfdu * dfdu + dfdv * dfdv);
+                    
+                    if (gradMag < 1e-10)
+                        break;
+                    
+                    uNext -= dist * dfdu / (gradMag * gradMag);
+                    vNext -= dist * dfdv / (gradMag * gradMag);
+                }
+                
+                points.Add((uNext, vNext));
+                
+                // Check if reached another seed (loop closure)
+                for (int i = 0; i < allSeeds.Count; i++)
+                {
+                    if (visitedSeeds[i])
+                        continue;
+                        
+                    double dist = Math.Sqrt(Math.Pow(allSeeds[i].u - uNext, 2) + Math.Pow(allSeeds[i].v - vNext, 2));
+                    if (dist < stepSize * 0.5)
+                    {
+                        visitedSeeds[i] = true;
+                    }
+                }
+                
+                // Check loop closure to original seed
+                if (step > 20)
+                {
+                    double distToSeed = Math.Sqrt(Math.Pow(seed.u - uNext, 2) + Math.Pow(seed.v - vNext, 2));
+                    if (distToSeed < stepSize * 0.5)
+                        break;
+                }
+                
+                uCurrent = uNext;
+                vCurrent = vNext;
+            }
+            
+            return points;
         }
 
         /// <summary>
@@ -395,6 +640,72 @@ namespace NurbsSharp.Intersection
         }
 
         /// <summary>
+        /// (en) Find seed points in surface interior where plane intersects
+        /// (ja) サーフェス内部で平面が交差する初期点を探す
+        /// </summary>
+        private static List<(double u, double v)> FindInteriorSeedPoints(NurbsSurface surface, Plane plane, double tolerance)
+        {
+            var seeds = new List<(double u, double v)>();
+            
+            double uMin = surface.KnotVectorU.Knots[surface.DegreeU];
+            double uMax = surface.KnotVectorU.Knots[^(surface.DegreeU + 1)];
+            double vMin = surface.KnotVectorV.Knots[surface.DegreeV];
+            double vMax = surface.KnotVectorV.Knots[^(surface.DegreeV + 1)];
+            
+            int gridSize = 30;
+            double bestDist = double.PositiveInfinity;
+            (double u, double v)? bestCandidate = null;
+            
+            // Sample interior points (skip exact boundaries)
+            for (int i = 1; i < gridSize; i++)
+            {
+                double u = uMin + i * (uMax - uMin) / gridSize;
+                for (int j = 1; j < gridSize; j++)
+                {
+                    double v = vMin + j * (vMax - vMin) / gridSize;
+                    var point = surface.GetPos(u, v);
+                    double dist = Math.Abs(plane.SignedDistanceTo(point));
+                    
+                    if (dist < bestDist)
+                    {
+                        bestDist = dist;
+                        bestCandidate = (u, v);
+                    }
+                    
+                    if (dist < tolerance * 50)
+                    {
+                        var refined = RefineIntersectionPoint(surface, plane, u, v, tolerance, 20);
+                        if (refined.HasValue)
+                        {
+                            var tangent = GetIntersectionCurveTangent(surface, plane, refined.Value.u, refined.Value.v);
+                            if (tangent.magnitude > 1e-8)
+                            {
+                                seeds.Add(refined.Value);
+                                return seeds; // Found one good seed
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // If no close point found, try refining the best candidate
+            if (bestCandidate.HasValue && bestDist < double.PositiveInfinity)
+            {
+                var refined = RefineIntersectionPoint(surface, plane, bestCandidate.Value.u, bestCandidate.Value.v, tolerance, 50);
+                if (refined.HasValue)
+                {
+                    var tangent = GetIntersectionCurveTangent(surface, plane, refined.Value.u, refined.Value.v);
+                    if (tangent.magnitude > 1e-8)
+                    {
+                        seeds.Add(refined.Value);
+                    }
+                }
+            }
+            
+            return seeds;
+        }
+
+        /// <summary>
         /// (en) Check if a boundary segment crosses the plane
         /// (ja) 境界セグメントが平面を横切るかチェック
         /// </summary>
@@ -447,76 +758,6 @@ namespace NurbsSharp.Intersection
                         seeds.Add(refined.Value);
                 }
             }
-        }
-
-        /// <summary>
-        /// (en) Trace intersection curve from seed point using marching method
-        /// (ja) マーチング法で初期点から交差曲線を追跡
-        /// </summary>
-        private static List<(double u, double v)> TraceCurve(NurbsSurface surface, Plane plane,
-            (double u, double v) seed, double tolerance, int maxIterations, double stepSize,
-            HashSet<(double u, double v)> visitedPoints)
-        {
-            var points = new List<(double u, double v)> { seed };
-            
-            double uMin = surface.KnotVectorU.Knots[surface.DegreeU];
-            double uMax = surface.KnotVectorU.Knots[^(surface.DegreeU + 1)];
-            double vMin = surface.KnotVectorV.Knots[surface.DegreeV];
-            double vMax = surface.KnotVectorV.Knots[^(surface.DegreeV + 1)];
-            
-            // March in both directions from seed
-            for (int direction = -1; direction <= 1; direction += 2)
-            {
-                var current = seed;
-                
-                for (int step = 0; step < 1000; step++) // Max steps to prevent infinite loop
-                {
-                    var key = (Math.Round(current.u / tolerance) * tolerance, 
-                               Math.Round(current.v / tolerance) * tolerance);
-                    
-                    if (visitedPoints.Contains(key))
-                        break;
-                    
-                    visitedPoints.Add(key);
-                    
-                    // Get tangent direction along intersection curve
-                    var tangent = GetIntersectionCurveTangent(surface, plane, current.u, current.v);
-                    
-                    if (tangent.magnitude < 1e-10)
-                        break; // Singular point
-                    
-                    // Take step in tangent direction
-                    double du = direction * stepSize * tangent.X;
-                    double dv = direction * stepSize * tangent.Y;
-                    
-                    double uNext = current.u + du;
-                    double vNext = current.v + dv;
-                    
-                    // Check bounds
-                    if (uNext < uMin || uNext > uMax || vNext < vMin || vNext > vMax)
-                        break;
-                    
-                    // Project back to plane intersection using Newton-Raphson
-                    var refined = RefineIntersectionPoint(surface, plane, uNext, vNext, tolerance, maxIterations);
-                    
-                    if (!refined.HasValue)
-                        break;
-                    
-                    if (direction == 1)
-                        points.Add(refined.Value);
-                    else
-                        points.Insert(0, refined.Value);
-                    
-                    current = refined.Value;
-                    
-                    // Check if we've closed the loop
-                    double distToSeed = Math.Sqrt(Math.Pow(current.u - seed.u, 2) + Math.Pow(current.v - seed.v, 2));
-                    if (step > 10 && distToSeed < stepSize * 2)
-                        break;
-                }
-            }
-            
-            return points;
         }
 
         /// <summary>

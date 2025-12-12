@@ -26,3 +26,6 @@ This module manages input and output operations, including reading from and writ
 
 ### Intersection
 This module provides functionality for computing intersections between NURBS curves and surfaces, as well as with other geometric entities.
+
+## Operation
+This module provides topology operation.

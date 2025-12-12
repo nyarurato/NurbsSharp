@@ -40,7 +40,11 @@ It provides data structures, evaluators, topology operators, I/O and tessellatio
     - **Import**: Only supports Entity Type 126 (Rational B-spline curve), and 128 (Rational B-spline surface).
     - **Export**: Only supports Point and NURBS entities. Mesh export is not supported.
 - **Mesh Export (OBJ/STL)**: Only supports Mesh objects. Direct export from NURBS is not supported (tessellation required).
-- **Intersection Calculations**: Currently may be unstable depending on initial conditions. Surface-Surface intersection is not yet implemented.
+- **Intersection Calculations**: 
+    - Intersection routines are currently **unstable/experimental** and may miss curves or return truncated results, especially for surface-surface cases (e.g., plane-plane).
+    - **Surface-Plane Intersection**: 
+        - Tangent plane detection (single-point contact) may produce false positives due to floating-point precision limits.
+        - The marching algorithm correctly handles regular intersections but cannot reliably distinguish between tangent points and actual curves at numerical precision boundaries.
 
 ## Installation
 
