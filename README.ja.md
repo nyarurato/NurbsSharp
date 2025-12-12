@@ -142,6 +142,13 @@ PRの典型的なワークフロー：
 3. 必要に応じて新しいテストを追加
 4. プルリクエストを `master`へ送る
 
+## 謝辞
+
+このプロジェクトは、初期段階において **Kodatuno** と **geomdl (NURBS-Python)** から多大な影響を受けています。これらのプロジェクトの設計やアルゴリズムは、本ライブラリのデータ構造や評価ロジックの設計に大きな示唆を与えてくれました。両プロジェクトのメンテナや貢献者の皆様に感謝します。
+
+- Kodatuno: http://www-mm.hm.t.kanazawa-u.ac.jp/research/kodatuno/
+- geomdl (NURBS-Python): https://github.com/orbingol/NURBS-Python
+
 ## ライセンス
 
 MIT License

@@ -141,6 +141,16 @@ Contributions are welcome. Typical workflow:
 4. Open a pull request against `master` 
 
 
+## Acknowledgements
+
+This project was significantly influenced by **Kodatuno** and **geomdl (NURBS-Python)** during its early stages.  
+The design and algorithms of these projects provided substantial inspiration for the data structures and evaluation logic design of this library.  
+We extend our gratitude to the maintainers and contributors of both projects.
+
+- Kodatuno: http://www-mm.hm.t.kanazawa-u.ac.jp/research/kodatuno/
+- geomdl (NURBS-Python): https://github.com/orbingol/NURBS-Python
+
+
 ## License
 
 MIT License
