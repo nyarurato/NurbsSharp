@@ -99,7 +99,7 @@ namespace NurbsSharp.Intersection
 			{
 				double u = minU_A + (maxU_A - minU_A) * i / isoDivisions;
 				var iso = surfaceA.GetIsoCurveU(u);
-				var intersections = CurveSurfaceIntersector.Intersect(iso, surfaceB, tolerance);
+				var intersections = CurveSurfaceIntersector.IntersectFast(iso, surfaceB, tolerance);
 				foreach (var inter in intersections)
 				{
 					// iso curve parameter corresponds to surfaceA.V
@@ -122,7 +122,7 @@ namespace NurbsSharp.Intersection
 			{
 				double v = minV_A + (maxV_A - minV_A) * i / isoDivisions;
 				var iso = surfaceA.GetIsoCurveV(v);
-				var intersections = CurveSurfaceIntersector.Intersect(iso, surfaceB, tolerance);
+				var intersections = CurveSurfaceIntersector.IntersectFast(iso, surfaceB, tolerance);
 				foreach (var inter in intersections)
 				{
 					// iso curve parameter corresponds to surfaceA.U
@@ -145,7 +145,7 @@ namespace NurbsSharp.Intersection
 			{
 				double u = minU_B + (maxU_B - minU_B) * i / isoDivisions;
 				var iso = surfaceB.GetIsoCurveU(u);
-				var intersections = CurveSurfaceIntersector.Intersect(iso, surfaceA, tolerance);
+				var intersections = CurveSurfaceIntersector.IntersectFast(iso, surfaceA, tolerance);
 				foreach (var inter in intersections)
 				{
 					// iso curve parameter corresponds to surfaceB.V
@@ -167,7 +167,7 @@ namespace NurbsSharp.Intersection
 			{
 				double v = minV_B + (maxV_B - minV_B) * i / isoDivisions;
 				var iso = surfaceB.GetIsoCurveV(v);
-				var intersections = CurveSurfaceIntersector.Intersect(iso, surfaceA, tolerance);
+				var intersections = CurveSurfaceIntersector.IntersectFast(iso, surfaceA, tolerance);
 				foreach (var inter in intersections)
 				{
 					// iso curve parameter corresponds to surfaceB.U

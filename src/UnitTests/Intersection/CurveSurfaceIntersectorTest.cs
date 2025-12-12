@@ -43,7 +43,7 @@ namespace UnitTests.Intersection
             var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
-            var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
+            var intersections = CurveSurfaceIntersector.IntersectRobust(curve, surface);
 
             using (Assert.EnterMultipleScope())
             {
@@ -84,7 +84,7 @@ namespace UnitTests.Intersection
             var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
-            var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
+            var intersections = CurveSurfaceIntersector.IntersectRobust(curve, surface);
 
             Assert.That(intersections, Is.Empty);
         }
@@ -117,7 +117,7 @@ namespace UnitTests.Intersection
             var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
-            var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
+            var intersections = CurveSurfaceIntersector.IntersectRobust(curve, surface);
 
             Assert.That(intersections, Is.Empty);
         }
@@ -151,7 +151,7 @@ namespace UnitTests.Intersection
             var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
-            var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
+            var intersections = CurveSurfaceIntersector.IntersectRobust(curve, surface);
 
             // Should find 2 intersections (parabola crosses plane twice)
             // Note: Current implementation may merge close intersections
@@ -201,7 +201,7 @@ namespace UnitTests.Intersection
             var knotsV = new KnotVector([0, 0, 0, 1, 1, 1], 2);
             var surface = new NurbsSurface(2, 2, knotsU, knotsV, surfaceCp);
 
-            var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
+            var intersections = CurveSurfaceIntersector.IntersectRobust(curve, surface);
 
             // Should find at least one intersection
             using (Assert.EnterMultipleScope())
@@ -315,7 +315,7 @@ namespace UnitTests.Intersection
             var knotsV = new KnotVector([0, 0, 0, 1, 1, 1], 2);
             var surface = new NurbsSurface(2, 2, knotsU, knotsV, surfaceCp);
 
-            var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
+            var intersections = CurveSurfaceIntersector.IntersectRobust(curve, surface);
             //TestOutIGES([surface]);
             //TestOutIGES([curve], "testcurve.igs");
 
@@ -358,7 +358,7 @@ namespace UnitTests.Intersection
             var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
-            var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
+            var intersections = CurveSurfaceIntersector.IntersectRobust(curve, surface);
 
             using (Assert.EnterMultipleScope())
             {
@@ -399,7 +399,7 @@ namespace UnitTests.Intersection
             var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
-            var intersections = CurveSurfaceIntersector.IntersectWithBVH(curve, surface);
+            var intersections = CurveSurfaceIntersector.IntersectFast(curve, surface);
 
             using (Assert.EnterMultipleScope())
             {
@@ -442,7 +442,7 @@ namespace UnitTests.Intersection
             var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
-            var intersections = CurveSurfaceIntersector.IntersectWithBVH(curve, surface);
+            var intersections = CurveSurfaceIntersector.IntersectFast(curve, surface);
 
             using (Assert.EnterMultipleScope())
             {
@@ -482,7 +482,7 @@ namespace UnitTests.Intersection
             var knotsV = new KnotVector([0, 0, 1, 1], 1);
             var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
 
-            var intersections = CurveSurfaceIntersector.IntersectWithBVH(curve, surface);
+            var intersections = CurveSurfaceIntersector.IntersectFast(curve, surface);
 
             using (Assert.EnterMultipleScope())
             {
@@ -531,8 +531,8 @@ namespace UnitTests.Intersection
             var knotsV = new KnotVector([0, 0, 0, 1, 1, 1], 2);
             var surface = new NurbsSurface(2, 2, knotsU, knotsV, surfaceCp);
 
-            var standardIntersections = CurveSurfaceIntersector.Intersect(curve, surface);
-            var bvhIntersections = CurveSurfaceIntersector.IntersectWithBVH(curve, surface);
+            var standardIntersections = CurveSurfaceIntersector.IntersectRobust(curve, surface);
+            var bvhIntersections = CurveSurfaceIntersector.IntersectFast(curve, surface);
 
             // Both methods should find the same number of intersections
             using (Assert.EnterMultipleScope())
@@ -623,7 +623,7 @@ namespace UnitTests.Intersection
 
             var curve = new NurbsCurve(degree, knotVector, cp);
 
-            var intersections = CurveSurfaceIntersector.Intersect(curve, surface);
+            var intersections = CurveSurfaceIntersector.IntersectFast(curve, surface);
             using (Assert.EnterMultipleScope())
             {
                 Assert.That(intersections, Has.Count.EqualTo(2));
