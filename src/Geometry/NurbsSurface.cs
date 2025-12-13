@@ -271,14 +271,7 @@ namespace NurbsSharp.Geometry
         /// <exception cref="ArgumentNullException"></exception>"
         public void Translate(Vector3Double delta)
         {
-            //Guard.ThrowIfNull(delta, nameof(delta));
-            foreach (var row in ControlPoints)
-            {
-                foreach(var cp in row)
-                {
-                    cp.Translate(delta);
-                }
-            }
+            Operation.TransformOperator.TranslateInPlace(this, delta);
         }
 
         /// <summary>
@@ -287,13 +280,53 @@ namespace NurbsSharp.Geometry
         /// </summary>
         public void Translate(double dx, double dy, double dz)
         {
-            foreach (var row in ControlPoints)
-            {
-                foreach (var cp in row)
-                {
-                    cp.Translate(dx,dy,dz);
-                }
-            }
+            Operation.TransformOperator.TranslateInPlace(this, dx, dy, dz);
+        }
+
+        /// <summary>
+        /// (en) Rotate the surface around an axis (in-place).
+        /// (ja) サーフェスを軸周りに回転する（破壊的）。
+        /// </summary>
+        /// <param name="axis">Rotation axis (will be normalized)</param>
+        /// <param name="angle">Angle in radians</param>
+        /// <param name="center">Center of rotation (default: origin)</param>
+        public void Rotate(Vector3Double axis, double angle, Vector3Double? center = null)
+        {
+            Operation.TransformOperator.RotateInPlace(this, axis, angle, center);
+        }
+
+        /// <summary>
+        /// (en) Scale the surface uniformly (in-place).
+        /// (ja) サーフェスを一様にスケールする（破壊的）。
+        /// </summary>
+        /// <param name="scale">Scale factor</param>
+        /// <param name="center">Center of scaling (default: origin)</param>
+        public void Scale(double scale, Vector3Double? center = null)
+        {
+            Operation.TransformOperator.ScaleInPlace(this, scale, center);
+        }
+
+        /// <summary>
+        /// (en) Scale the surface non-uniformly (in-place).
+        /// (ja) サーフェスを非一様にスケールする（破壊的）。
+        /// </summary>
+        /// <param name="sx">X scale factor</param>
+        /// <param name="sy">Y scale factor</param>
+        /// <param name="sz">Z scale factor</param>
+        /// <param name="center">Center of scaling (default: origin)</param>
+        public void Scale(double sx, double sy, double sz, Vector3Double? center = null)
+        {
+            Operation.TransformOperator.ScaleInPlace(this, sx, sy, sz, center);
+        }
+
+        /// <summary>
+        /// (en) Transform the surface using a transformation matrix (in-place).
+        /// (ja) 変換行列を使用してサーフェスを変換する（破壊的）。
+        /// </summary>
+        /// <param name="matrix">Transformation matrix</param>
+        public void Transform(Matrix4x4 matrix)
+        {
+            Operation.TransformOperator.TransformInPlace(this, matrix);
         }
 
         /// <summary>

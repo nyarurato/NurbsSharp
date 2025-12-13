@@ -192,11 +192,7 @@ namespace NurbsSharp.Geometry
         /// <exception cref="ArgumentNullException"></exception>"
         public void Translate(Vector3Double delta)
         {
-            //Guard.ThrowIfNull(delta, nameof(delta));
-            foreach (var cp in ControlPoints)
-            {
-                cp.Translate(delta);
-            }
+            Operation.TransformOperator.TranslateInPlace(this, delta);
         }
 
         /// <summary>
@@ -205,10 +201,53 @@ namespace NurbsSharp.Geometry
         /// </summary>
         public void Translate(double dx, double dy, double dz)
         {
-            foreach (var cp in ControlPoints)
-            {
-                cp.Translate(dx,dy,dz);
-            }
+            Operation.TransformOperator.TranslateInPlace(this, dx, dy, dz);
+        }
+
+        /// <summary>
+        /// (en) Rotate the curve around an axis (in-place).
+        /// (ja) 曲線を軸周りに回転する（破壊的）。
+        /// </summary>
+        /// <param name="axis">Rotation axis (will be normalized)</param>
+        /// <param name="angle">Angle in radians</param>
+        /// <param name="center">Center of rotation (default: origin)</param>
+        public void Rotate(Vector3Double axis, double angle, Vector3Double? center = null)
+        {
+            Operation.TransformOperator.RotateInPlace(this, axis, angle, center);
+        }
+
+        /// <summary>
+        /// (en) Scale the curve uniformly (in-place).
+        /// (ja) 曲線を一様にスケールする（破壊的）。
+        /// </summary>
+        /// <param name="scale">Scale factor</param>
+        /// <param name="center">Center of scaling (default: origin)</param>
+        public void Scale(double scale, Vector3Double? center = null)
+        {
+            Operation.TransformOperator.ScaleInPlace(this, scale, center);
+        }
+
+        /// <summary>
+        /// (en) Scale the curve non-uniformly (in-place).
+        /// (ja) 曲線を非一様にスケールする（破壊的）。
+        /// </summary>
+        /// <param name="sx">X scale factor</param>
+        /// <param name="sy">Y scale factor</param>
+        /// <param name="sz">Z scale factor</param>
+        /// <param name="center">Center of scaling (default: origin)</param>
+        public void Scale(double sx, double sy, double sz, Vector3Double? center = null)
+        {
+            Operation.TransformOperator.ScaleInPlace(this, sx, sy, sz, center);
+        }
+
+        /// <summary>
+        /// (en) Transform the curve using a transformation matrix (in-place).
+        /// (ja) 変換行列を使用して曲線を変換する（破壊的）。
+        /// </summary>
+        /// <param name="matrix">Transformation matrix</param>
+        public void Transform(Matrix4x4 matrix)
+        {
+            Operation.TransformOperator.TransformInPlace(this, matrix);
         }
 
         /// <summary>

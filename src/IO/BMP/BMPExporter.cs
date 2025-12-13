@@ -281,24 +281,24 @@ namespace NurbsSharp.IO.BMP
         /// (en) Create view matrix from camera position looking at origin
         /// (ja) カメラ位置から原点を見るビュー行列を作成
         /// </summary>
-        private static Matrix4x4 CreateViewMatrix(Vector3Double position)
+        private static System.Numerics.Matrix4x4 CreateViewMatrix(Vector3Double position)
         {
             var pos = position.ToVector3();
             var target = Vector3.Zero;  // Always look at origin
             var up = new Vector3(0, 0, 1);  // Z-axis up
-            return Matrix4x4.CreateLookAt(pos, target, up);
+            return System.Numerics.Matrix4x4.CreateLookAt(pos, target, up);
         }
 
         /// <summary>
         /// (en) Create orthographic projection matrix
         /// (ja) 正投影行列を作成
         /// </summary>
-        private static Matrix4x4 CreateOrthographicMatrix(
+        private static System.Numerics.Matrix4x4 CreateOrthographicMatrix(
             double left, double right,
             double bottom, double top,
             double near, double far)
         {
-            return Matrix4x4.CreateOrthographic(
+            return System.Numerics.Matrix4x4.CreateOrthographic(
                 (float)(right - left),
                 (float)(top - bottom),
                 (float)near,
@@ -312,7 +312,7 @@ namespace NurbsSharp.IO.BMP
         /// </summary>
         private static (int x, int y) Transform3DTo2D(
             Vector3Double point,
-            Matrix4x4 viewProjectionMatrix,
+            System.Numerics.Matrix4x4 viewProjectionMatrix,
             int width,
             int height)
         {

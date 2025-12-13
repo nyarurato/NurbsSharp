@@ -114,5 +114,70 @@ namespace NurbsSharp.Geometry
                 throw new InvalidOperationException("Invalid NURBS surface: W knot vector length does not match control points and degree.");
             }
         }
+
+        /// <summary>
+        /// (en) Translate the whole volume by delta (in-place).
+        /// (ja) ボリュームの全制御点を並進移動する（破壊的）。
+        /// </summary>
+        /// <param name="delta"></param>
+        public void Translate(Vector3Double delta)
+        {
+            Operation.TransformOperator.TranslateInPlace(this, delta);
+        }
+
+        /// <summary>
+        /// (en) Translate by components (in-place).
+        /// (ja) 成分指定でボリュームを並進移動する（破壊的）。
+        /// </summary>
+        public void Translate(double dx, double dy, double dz)
+        {
+            Operation.TransformOperator.TranslateInPlace(this, dx, dy, dz);
+        }
+
+        /// <summary>
+        /// (en) Rotate the volume around an axis (in-place).
+        /// (ja) ボリュームを軸周りに回転する（破壊的）。
+        /// </summary>
+        /// <param name="axis">Rotation axis (will be normalized)</param>
+        /// <param name="angle">Angle in radians</param>
+        /// <param name="center">Center of rotation (default: origin)</param>
+        public void Rotate(Vector3Double axis, double angle, Vector3Double? center = null)
+        {
+            Operation.TransformOperator.RotateInPlace(this, axis, angle, center);
+        }
+
+        /// <summary>
+        /// (en) Scale the volume uniformly (in-place).
+        /// (ja) ボリュームを一様にスケールする（破壊的）。
+        /// </summary>
+        /// <param name="scale">Scale factor</param>
+        /// <param name="center">Center of scaling (default: origin)</param>
+        public void Scale(double scale, Vector3Double? center = null)
+        {
+            Operation.TransformOperator.ScaleInPlace(this, scale, center);
+        }
+
+        /// <summary>
+        /// (en) Scale the volume non-uniformly (in-place).
+        /// (ja) ボリュームを非一様にスケールする（破壊的）。
+        /// </summary>
+        /// <param name="sx">X scale factor</param>
+        /// <param name="sy">Y scale factor</param>
+        /// <param name="sz">Z scale factor</param>
+        /// <param name="center">Center of scaling (default: origin)</param>
+        public void Scale(double sx, double sy, double sz, Vector3Double? center = null)
+        {
+            Operation.TransformOperator.ScaleInPlace(this, sx, sy, sz, center);
+        }
+
+        /// <summary>
+        /// (en) Transform the volume using a transformation matrix (in-place).
+        /// (ja) 変換行列を使用してボリュームを変換する（破壊的）。
+        /// </summary>
+        /// <param name="matrix">Transformation matrix</param>
+        public void Transform(Matrix4x4 matrix)
+        {
+            Operation.TransformOperator.TransformInPlace(this, matrix);
+        }
     }
 }
