@@ -1,15 +1,7 @@
 name: Build and and deploy nuget packages to Github Packages
 on:
   workflow_dispatch:
-    inputs:
-      target:
-        description: "Deployment target"
-        required: true
-        default: "dev"
-        type: choice
-        options:
-            - dev
-            - prod
+    
 jobs:
   test:
     uses: ./.github/workflows/test.yml
