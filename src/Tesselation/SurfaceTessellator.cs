@@ -101,28 +101,27 @@ namespace NurbsSharp.Tesselation
             double vStart = surface.KnotVectorV.Knots[surface.DegreeV];
             double vEnd = surface.KnotVectorV.Knots[surface.KnotVectorV.Knots.Length - surface.DegreeV - 1];
 
-            // Pre-allocate with estimated capacity for better performance
-            int estimatedVertexCount = (int)Math.Pow(4, Math.Min(maxDepth, 6)); // Conservative estimate
+            // Pre-allocate with estimated capacity for better performance.
+            // Upper bound grows as ~4^depth; keep it conservative to avoid huge allocations.
+            int estimatedVertexCount = (int)Math.Pow(4, Math.Min(maxDepth, 6));
             var vertices = new List<Vector3Double>(estimatedVertexCount);
             var indexes = new List<int>(estimatedVertexCount * 6);
-            var indexMap = new Dictionary<string, int>(estimatedVertexCount);
-            var lockObj = new object(); // For thread-safe operations if parallel
 
-            string GetKey(double u, double v) => $"{u:R},{v:R}";
+            // Avoid string keys/allocations: use bitwise-equality on (u,v) doubles.
+            // Subdivision uses repeated midpoints, so exact-bit keys are reliable and fast.
+            var indexMap = new Dictionary<ParamKey, int>(estimatedVertexCount, ParamKeyComparer.Instance);
+            var curvatureCache = new Dictionary<ParamKey, double>(estimatedVertexCount, ParamKeyComparer.Instance);
 
             int AddVertex(double u, double v)
             {
-                var key = GetKey(u, v);
-                lock (lockObj)
-                {
-                    if (indexMap.TryGetValue(key, out var idx))
-                        return idx;
-                    var p = surface.GetPos(u, v);
-                    idx = vertices.Count;
-                    vertices.Add(p);
-                    indexMap[key] = idx;
+                var key = new ParamKey(u, v);
+                if (indexMap.TryGetValue(key, out var idx))
                     return idx;
-                }
+                var p = surface.GetPos(u, v);
+                idx = vertices.Count;
+                vertices.Add(p);
+                indexMap.Add(key, idx);
+                return idx;
             }
 
             void AddTriangleByParams((double u, double v) a, (double u, double v) b, (double u, double v) c)
@@ -130,12 +129,9 @@ namespace NurbsSharp.Tesselation
                 var ia = AddVertex(a.u, a.v);
                 var ib = AddVertex(b.u, b.v);
                 var ic = AddVertex(c.u, c.v);
-                lock (lockObj)
-                {
-                    indexes.Add(ia);
-                    indexes.Add(ib);
-                    indexes.Add(ic);
-                }
+                indexes.Add(ia);
+                indexes.Add(ib);
+                indexes.Add(ic);
             }
 
             void Subdivide(double u0, double u1, double v0, double v1, int depth)
@@ -143,13 +139,17 @@ namespace NurbsSharp.Tesselation
                 double um = (u0 + u1) / 2.0;
                 double vm = (v0 + v1) / 2.0;
 
-                // Helper to safely get max absolute curvature, returning 0 on failure
-                double GetMaxCurvatureSafe(double u, double v)
+                double GetMaxCurvatureCached(double u, double v)
                 {
+                    var key = new ParamKey(u, v);
+                    if (curvatureCache.TryGetValue(key, out var cached))
+                        return cached;
+
+                    double value;
                     try
                     {
                         var (k1, k2) = surface.GetPrincipalCurvatures(u, v);
-                        return Math.Max(Math.Abs(k1), Math.Abs(k2));
+                        value = Math.Max(Math.Abs(k1), Math.Abs(k2));
                     }
                     catch
                     {
@@ -157,22 +157,25 @@ namespace NurbsSharp.Tesselation
                         try
                         {
                             var (mean, gaussian) = surface.GetMeanAndGaussianCurvatures(u, v);
-                            return Math.Abs(gaussian) > 0 ? Math.Sqrt(Math.Abs(gaussian)) : Math.Abs(mean);
+                            value = Math.Abs(gaussian) > 0 ? Math.Sqrt(Math.Abs(gaussian)) : Math.Abs(mean);
                         }
                         catch
                         {
                             // If even that fails (e.g., degenerate surface), assume flat
-                            return 0.0;
+                            value = 0.0;
                         }
                     }
+
+                    curvatureCache[key] = value;
+                    return value;
                 }
 
                 // Sample curvature at center and edge midpoints
-                double maxCurvatureCenter = GetMaxCurvatureSafe(um, vm);
-                double maxCurvatureU0 = GetMaxCurvatureSafe(um, v0);
-                double maxCurvatureU1 = GetMaxCurvatureSafe(um, v1);
-                double maxCurvatureV0 = GetMaxCurvatureSafe(u0, vm);
-                double maxCurvatureV1 = GetMaxCurvatureSafe(u1, vm);
+                double maxCurvatureCenter = GetMaxCurvatureCached(um, vm);
+                double maxCurvatureU0 = GetMaxCurvatureCached(um, v0);
+                double maxCurvatureU1 = GetMaxCurvatureCached(um, v1);
+                double maxCurvatureV0 = GetMaxCurvatureCached(u0, vm);
+                double maxCurvatureV1 = GetMaxCurvatureCached(u1, vm);
 
                 double maxCurvature = Math.Max(maxCurvatureCenter,
                     Math.Max(Math.Max(maxCurvatureU0, maxCurvatureU1),
@@ -202,6 +205,38 @@ namespace NurbsSharp.Tesselation
             Subdivide(uStart, uEnd, vStart, vEnd, 0);
 
             return new Mesh(vertices.ToArray(), indexes.ToArray());
+        }
+
+        private readonly struct ParamKey
+        {
+            public readonly long UBits;
+            public readonly long VBits;
+
+            public ParamKey(double u, double v)
+            {
+                UBits = BitConverter.DoubleToInt64Bits(u);
+                VBits = BitConverter.DoubleToInt64Bits(v);
+            }
+        }
+
+        private sealed class ParamKeyComparer : IEqualityComparer<ParamKey>
+        {
+            public static readonly ParamKeyComparer Instance = new ParamKeyComparer();
+
+            public bool Equals(ParamKey x, ParamKey y)
+            {
+                return x.UBits == y.UBits && x.VBits == y.VBits;
+            }
+
+            public int GetHashCode(ParamKey obj)
+            {
+                unchecked
+                {
+                    int hash = (int)obj.UBits ^ (int)(obj.UBits >> 32);
+                    hash = (hash * 397) ^ ((int)obj.VBits ^ (int)(obj.VBits >> 32));
+                    return hash;
+                }
+            }
         }
     }
 }

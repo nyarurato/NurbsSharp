@@ -114,7 +114,6 @@ namespace NurbsSharp.Core
                 new Vector3Double(maxX, maxY, maxZ)
             );
         }
-        //TODO: Add Precise bounding box calculation method
 
         /// <summary>
         /// (en) Create a bounding box from control points

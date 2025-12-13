@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using NurbsSharp.IO;
 using System.IO;
 using NUnit.Framework.Internal;
+using NurbsSharp.Operation;
 
 namespace UnitTests.Tesselation
 {
@@ -24,6 +25,24 @@ namespace UnitTests.Tesselation
             var p10 = new Vector3Double(0, 10, 0);
             var p11 = new Vector3Double(10, 10, 0);
             var face = PrimitiveFactory.CreateFace(p00, p01, p10, p11);
+            var mesh = SurfaceTessellator.TessellateAdaptive(face, 1e-8);
+            // planar bilinear face should produce exactly two triangles with no subdivisions
+            Assert.That(mesh.Indexes.Length, Is.EqualTo(6));
+            Assert.That(mesh.Vertices.Length, Is.EqualTo(4));
+        }
+
+        [Test]
+        public void TessellateAdaptive_JoinedQuadFace_PlanarProducesTwoTriangles()
+        {
+            var p00 = new Vector3Double(0, 0, 0);
+            var p01 = new Vector3Double(10, 0, 0);
+            var p10 = new Vector3Double(0, 10, 0);
+            var p11 = new Vector3Double(10, 10, 0);
+            var p20 = new Vector3Double(20, 0, 0);
+            var p21 = new Vector3Double(20, 10, 0);
+            var face1 = PrimitiveFactory.CreateFace(p00, p01, p10, p11);
+            var face2 = PrimitiveFactory.CreateFace(p01, p20, p11, p21);
+            var face = JoinOperator.JoinSurfaces(face1, face2, SurfaceDirection.V);
             var mesh = SurfaceTessellator.TessellateAdaptive(face, 1e-8);
             // planar bilinear face should produce exactly two triangles with no subdivisions
             Assert.That(mesh.Indexes.Length, Is.EqualTo(6));
