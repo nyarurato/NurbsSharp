@@ -12,6 +12,17 @@ namespace NurbsSharp.Analysis
     public class CurveAnalyzer: BasicAnalyzer
     {
         /// <summary>
+        /// (en) Build arc-length parameterization helper between parameter u and arc-length s.
+        /// (ja) パラメータuと弧長sの間の等弧長パラメータ化ヘルパを構築します。
+        /// </summary>
+        /// <param name="curve">Target curve</param>
+        /// <param name="subdivisionsPerSpan">Subdivisions per non-zero knot span (>= 1)</param>
+        public static CurveArcLengthParameterization BuildArcLengthParameterization(NurbsCurve curve, int subdivisionsPerSpan = 10)
+        {
+            return CurveArcLengthParameterization.Build(curve, subdivisionsPerSpan);
+        }
+
+        /// <summary>
         /// (en) Calc the length of the NURBS curve
         /// (ja) NURBS曲線の長さを計算する
         /// </summary>
