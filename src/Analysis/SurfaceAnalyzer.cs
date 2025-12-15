@@ -273,5 +273,150 @@ namespace NurbsSharp.Analysis
             double gaussianCurvature = (L * N - M * M) / denominator;
             return (meanCurvature, gaussianCurvature);
         }
+
+        /// <summary>
+        /// (en) Find the closest point on surface to a given 3D point using Newton-Raphson with multiple initial points
+        /// (ja) 複数の初期点からNewton-Raphson法で指定された3D点に最も近いサーフェス上の点を検索
+        /// </summary>
+        /// <param name="surface">Target surface</param>
+        /// <param name="target">Target 3D point</param>
+        /// <param name="tolerance">Convergence tolerance (default: 1e-6)</param>
+        /// <param name="gridDivisions">Number of grid divisions for initial point search (default: 5)</param>
+        /// <returns>Tuple of (u parameter, v parameter, point on surface, distance to target)</returns>
+        public static (double u, double v, Vector3Double point, double distance) FindClosestPoint(
+            NurbsSurface surface, 
+            Vector3Double target,
+            double tolerance = 1e-6,
+            int gridDivisions = 5)
+        {
+            Guard.ThrowIfNull(surface, nameof(surface));
+
+            double minU = surface.KnotVectorU.Knots[surface.DegreeU];
+            double maxU = surface.KnotVectorU.Knots[surface.KnotVectorU.Length - surface.DegreeU - 1];
+            double minV = surface.KnotVectorV.Knots[surface.DegreeV];
+            double maxV = surface.KnotVectorV.Knots[surface.KnotVectorV.Length - surface.DegreeV - 1];
+
+            // Perform grid search with multiple initial points
+            double bestU = minU;
+            double bestV = minV;
+            double bestDistance = double.MaxValue;
+            Vector3Double bestPoint = Vector3Double.Zero;
+
+            // Grid search to find best starting point
+            for (int i = 0; i <= gridDivisions; i++)
+            {
+                double u = minU + (maxU - minU) * i / gridDivisions;
+                for (int j = 0; j <= gridDivisions; j++)
+                {
+                    double v = minV + (maxV - minV) * j / gridDivisions;
+                    
+                    // Refine from this initial point
+                    var result = FindClosestPointFromInitial(surface, target, u, v, tolerance, minU, maxU, minV, maxV);
+                    
+                    if (result.distance < bestDistance)
+                    {
+                        bestU = result.u;
+                        bestV = result.v;
+                        bestPoint = result.point;
+                        bestDistance = result.distance;
+                    }
+                }
+            }
+
+            return (bestU, bestV, bestPoint, bestDistance);
+        }
+
+        /// <summary>
+        /// (en) Find the closest point on surface from a single initial guess using Newton-Raphson (fast)
+        /// (ja) 単一の初期推定値からNewton-Raphson法で最近接点を検索（高速）
+        /// </summary>
+        /// <param name="surface">Target surface</param>
+        /// <param name="target">Target 3D point</param>
+        /// <param name="initialU">Initial guess for U parameter</param>
+        /// <param name="initialV">Initial guess for V parameter</param>
+        /// <param name="tolerance">Convergence tolerance (default: 1e-6)</param>
+        /// <returns>Tuple of (u parameter, v parameter, point on surface, distance to target)</returns>
+        public static (double u, double v, Vector3Double point, double distance) FindClosestPoint(
+            NurbsSurface surface, 
+            Vector3Double target,
+            double initialU,
+            double initialV,
+            double tolerance = 1e-6)
+        {
+            Guard.ThrowIfNull(surface, nameof(surface));
+
+            double minU = surface.KnotVectorU.Knots[surface.DegreeU];
+            double maxU = surface.KnotVectorU.Knots[surface.KnotVectorU.Length - surface.DegreeU - 1];
+            double minV = surface.KnotVectorV.Knots[surface.DegreeV];
+            double maxV = surface.KnotVectorV.Knots[surface.KnotVectorV.Length - surface.DegreeV - 1];
+
+            return FindClosestPointFromInitial(surface, target, initialU, initialV, tolerance, minU, maxU, minV, maxV);
+        }
+
+        /// <summary>
+        /// (en) Find closest point from a single initial guess using Newton-Raphson
+        /// (ja) 単一の初期点からNewton-Raphson法で最近接点を検索
+        /// </summary>
+        private static (double u, double v, Vector3Double point, double distance) FindClosestPointFromInitial(
+            NurbsSurface surface, 
+            Vector3Double target, 
+            double initialU, 
+            double initialV, 
+            double tolerance,
+            double minU,
+            double maxU,
+            double minV,
+            double maxV)
+        {
+            double u = Math.Max(minU, Math.Min(maxU, initialU));
+            double v = Math.Max(minV, Math.Min(maxV, initialV));
+            const int maxIterations = 100;
+
+            for (int iter = 0; iter < maxIterations; iter++)
+            {
+                Vector3Double sp = SurfaceEvaluator.Evaluate(surface, u, v);
+                var derivs = SurfaceEvaluator.EvaluateFirstDerivative(surface, u, v);
+                Vector3Double surfDU = derivs.u_deriv;
+                Vector3Double surfDV = derivs.v_deriv;
+
+                Vector3Double delta = sp - target;
+                double dist = delta.magnitude;
+
+                if (dist < tolerance)
+                {
+                    return (u, v, sp, dist);
+                }
+
+                // Minimize ||S(u,v) - target||^2
+                // Gradient: g = [2*delta·surfDU, 2*delta·surfDV]
+                double g1 = 2 * Vector3Double.Dot(delta, surfDU);
+                double g2 = 2 * Vector3Double.Dot(delta, surfDV);
+
+                // Hessian approximation (ignore second derivatives)
+                double h11 = 2 * Vector3Double.Dot(surfDU, surfDU);
+                double h12 = 2 * Vector3Double.Dot(surfDU, surfDV);
+                double h22 = 2 * Vector3Double.Dot(surfDV, surfDV);
+
+                double det = h11 * h22 - h12 * h12;
+                if (Math.Abs(det) < 1e-12)
+                    break;
+
+                double deltaU = -(h22 * g1 - h12 * g2) / det;
+                double deltaV = -(-h12 * g1 + h11 * g2) / det;
+
+                // Apply damping
+                double damping = 0.7;
+                u += damping * deltaU;
+                v += damping * deltaV;
+
+                // Clamp to bounds
+                u = Math.Max(minU, Math.Min(maxU, u));
+                v = Math.Max(minV, Math.Min(maxV, v));
+            }
+
+            Vector3Double finalPoint = SurfaceEvaluator.Evaluate(surface, u, v);
+            double finalDist = (finalPoint - target).magnitude;
+            return (u, v, finalPoint, finalDist);
+        }
     }
 }
