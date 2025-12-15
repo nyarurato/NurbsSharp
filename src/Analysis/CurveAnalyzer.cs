@@ -86,7 +86,7 @@ namespace NurbsSharp.Analysis
         /// <param name="curve"></param>
         /// <param name="u"></param>
         /// <returns></returns>
-        public static (Vector3Double tangent, Vector3Double normal) EvaluatTangentNormal(NurbsCurve curve, double u)
+        public static (Vector3Double tangent, Vector3Double normal) EvaluateTangentNormal(NurbsCurve curve, double u)
         {
             Vector3Double T =  CurveEvaluator.EvaluateFirstDerivative(curve, u);
             if (T.magnitude == 0.0)
@@ -112,7 +112,7 @@ namespace NurbsSharp.Analysis
         /// <returns></returns>
         public static Vector3Double EvaluateNormal(NurbsCurve curve, double u)
         {
-           return EvaluatTangentNormal(curve, u).normal;
+           return EvaluateTangentNormal(curve, u).normal;
         }
 
         /// <summary>
@@ -124,7 +124,7 @@ namespace NurbsSharp.Analysis
         /// <returns></returns>
         public static Vector3Double EvaluateTangent(NurbsCurve curve, double u)
         {
-            return EvaluatTangentNormal(curve, u).tangent;
+            return EvaluateTangentNormal(curve, u).tangent;
         }
 
         /// <summary>

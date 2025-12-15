@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NurbsSharp.Core;
 using NurbsSharp.Evaluation;
+using NurbsSharp.Analysis;
 
 namespace NurbsSharp.Geometry
 {
@@ -99,7 +100,7 @@ namespace NurbsSharp.Geometry
             double start_u = KnotVector.Knots[0];
             double end_u = KnotVector.Knots[KnotVector.Length - 1];
 
-            double len = CurveEvaluator.CurveLength(this, start_u,end_u);
+            double len = CurveAnalyzer.CurveLength(this, start_u,end_u);
             return len;
         }
         /// <summary>
@@ -111,7 +112,7 @@ namespace NurbsSharp.Geometry
         /// <returns></returns>
         public double GetLength(double start_u, double end_u)
         {
-            double len = CurveEvaluator.CurveLength(this, start_u, end_u);
+            double len = CurveAnalyzer.CurveLength(this, start_u, end_u);
             return len;
         }
 
@@ -123,7 +124,7 @@ namespace NurbsSharp.Geometry
         /// <returns></returns>
         public double GetCurvature(double u)
         {
-            return CurveEvaluator.EvaluateCurvature(this, u);
+            return CurveAnalyzer.EvaluateCurvature(this, u);
         }
 
         /// <summary>
@@ -134,7 +135,7 @@ namespace NurbsSharp.Geometry
         /// <returns></returns>
         public Vector3Double GetTangent(double u)
         {
-            return CurveEvaluator.EvaluateTangent(this,u);
+            return CurveAnalyzer.EvaluateTangent(this,u);
         }
 
         /// <summary>
@@ -145,7 +146,7 @@ namespace NurbsSharp.Geometry
         /// <returns></returns>
         public Vector3Double GetNormal(double u)
         {
-            return CurveEvaluator.EvaluateNormal(this, u);
+            return CurveAnalyzer.EvaluateNormal(this, u);
         }
 
         /// <summary>
@@ -156,7 +157,7 @@ namespace NurbsSharp.Geometry
         /// <returns></returns>
         public (Vector3Double tangent, Vector3Double normal) GetFrenetFrame(double u)
         {
-            return CurveEvaluator.EvaluatTangentNormal(this, u);
+            return CurveAnalyzer.EvaluateTangentNormal(this, u);
         }
 
         /// <summary>
@@ -168,7 +169,7 @@ namespace NurbsSharp.Geometry
         /// <returns>Tuple of (t parameter, point on curve, distance to target)</returns>
         public (double t, Vector3Double point, double distance) FindClosestPoint(Vector3Double target, double tolerance = 1e-6)
         {
-            return Operation.CurveOperator.FindClosestPoint(this, target, tolerance: tolerance);
+            return CurveAnalyzer.FindClosestPoint(this, target, tolerance: tolerance);
         }
 
         /// <summary>
@@ -181,7 +182,7 @@ namespace NurbsSharp.Geometry
         /// <returns>Tuple of (t parameter, point on curve, distance to target)</returns>
         public (double t, Vector3Double point, double distance) FindClosestPointWithInitialGuess(Vector3Double target, double initialT, double tolerance = 1e-6)
         {
-            return Operation.CurveOperator.FindClosestPoint(this, target, initialT, tolerance);
+            return CurveAnalyzer.FindClosestPoint(this, target, initialT, tolerance);
         }
 
         /// <summary>

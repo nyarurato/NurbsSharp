@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NurbsSharp.Core;
 using NurbsSharp.Evaluation;
+using NurbsSharp.Analysis;
 
 namespace NurbsSharp.Geometry
 {
@@ -125,7 +126,7 @@ namespace NurbsSharp.Geometry
             double endU = KnotVectorU.Knots.Last();
             double startV = KnotVectorV.Knots.First();
             double endV = KnotVectorV.Knots.Last();
-            return SurfaceEvaluator.SurfaceArea(this,startU,endU,startV,endV);
+            return SurfaceAnalyzer.SurfaceArea(this,startU,endU,startV,endV);
         }
 
         /// <summary>
@@ -139,7 +140,7 @@ namespace NurbsSharp.Geometry
         /// <returns></returns>
         public double GetSurfaceArea(double startU, double endU, double startV, double endV)
         {
-            return SurfaceEvaluator.SurfaceArea(this, startU, endU, startV, endV);
+            return SurfaceAnalyzer.SurfaceArea(this, startU, endU, startV, endV);
         }
 
         /// <summary>
@@ -151,7 +152,7 @@ namespace NurbsSharp.Geometry
         /// <returns></returns>
         public (Vector3Double tangentU,Vector3Double tangentV) GetTangent(double u, double v)
         {
-            return SurfaceEvaluator.EvaluateTangents(this, u, v);
+            return SurfaceAnalyzer.EvaluateTangents(this, u, v);
         }
 
         /// <summary>
@@ -163,7 +164,7 @@ namespace NurbsSharp.Geometry
         /// <returns></returns>
         public Vector3Double GetNormal(double u, double v)
         {
-            return SurfaceEvaluator.EvaluateNormal(this, u, v);
+            return SurfaceAnalyzer.EvaluateNormal(this, u, v);
         }
 
         /// <summary>
@@ -175,7 +176,7 @@ namespace NurbsSharp.Geometry
         /// <returns></returns>
         public (double meanCurvature, double gaussianCurvature) GetMeanAndGaussianCurvatures(double u, double v)
         {
-            return SurfaceEvaluator.EvaluateMeanAndGaussianCurvatures(this, u, v);
+            return SurfaceAnalyzer.EvaluateMeanAndGaussianCurvatures(this, u, v);
         }
 
         /// <summary>
@@ -187,7 +188,7 @@ namespace NurbsSharp.Geometry
         /// <returns></returns>
         public double GetMeanCurvature(double u, double v)
         {
-            return SurfaceEvaluator.EvaluateMeanAndGaussianCurvatures(this,u,v).meanCurvature;
+            return SurfaceAnalyzer.EvaluateMeanAndGaussianCurvatures(this,u,v).meanCurvature;
         }
 
         /// <summary>
@@ -199,7 +200,7 @@ namespace NurbsSharp.Geometry
         /// <returns></returns>
         public double GetGaussianCurvature(double u, double v)
         {
-            return SurfaceEvaluator.EvaluateMeanAndGaussianCurvatures(this, u, v).gaussianCurvature;
+            return SurfaceAnalyzer.EvaluateMeanAndGaussianCurvatures(this, u, v).gaussianCurvature;
         }
 
         /// <summary>
@@ -211,7 +212,7 @@ namespace NurbsSharp.Geometry
         /// <returns></returns>
         public (double k1, double k2) GetPrincipalCurvatures(double u, double v)
         {
-            return SurfaceEvaluator.EvaluatePrincipalCurvatures(this, u, v);
+            return SurfaceAnalyzer.EvaluatePrincipalCurvatures(this, u, v);
         }
 
         /// <summary>
@@ -246,7 +247,7 @@ namespace NurbsSharp.Geometry
         /// <returns>Tuple of (u parameter, v parameter, point on surface, distance to target)</returns>
         public (double u, double v, Vector3Double point, double distance) FindClosestPoint(Vector3Double target, double tolerance = 1e-6, int gridDivisions = 5)
         {
-            return Operation.SurfaceOperator.FindClosestPoint(this, target, tolerance, gridDivisions);
+            return SurfaceAnalyzer.FindClosestPoint(this, target, tolerance, gridDivisions);
         }
 
         /// <summary>
@@ -260,7 +261,7 @@ namespace NurbsSharp.Geometry
         /// <returns>Tuple of (u parameter, v parameter, point on surface, distance to target)</returns>
         public (double u, double v, Vector3Double point, double distance) FindClosestPointWithInitialGuess(Vector3Double target, double initialU, double initialV, double tolerance = 1e-6)
         {
-            return Operation.SurfaceOperator.FindClosestPoint(this, target, initialU, initialV, tolerance);
+            return SurfaceAnalyzer.FindClosestPoint(this, target, initialU, initialV, tolerance);
         }
 
         /// <summary>

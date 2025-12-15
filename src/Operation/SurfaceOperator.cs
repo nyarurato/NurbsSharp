@@ -102,45 +102,5 @@ namespace NurbsSharp.Operation
 
             return new NurbsCurve(degree, knotVector, newControlPoints);
         }
-
-        /// <summary>
-        /// (en) Find the closest point on surface to a given 3D point using Newton-Raphson with multiple initial points
-        /// (ja) 複数の初期点からNewton-Raphson法で指定された3D点に最も近いサーフェス上の点を検索
-        /// </summary>
-        /// <param name="surface">Target surface</param>
-        /// <param name="target">Target 3D point</param>
-        /// <param name="tolerance">Convergence tolerance (default: 1e-6)</param>
-        /// <param name="gridDivisions">Number of grid divisions for initial point search (default: 5)</param>
-        /// <returns>Tuple of (u parameter, v parameter, point on surface, distance to target)</returns>
-        [Obsolete("Use Analysis.SurfaceAnalyzer.FindClosestPoint instead.")]
-        public static (double u, double v, Vector3Double point, double distance) FindClosestPoint(
-            NurbsSurface surface, 
-            Vector3Double target,
-            double tolerance = 1e-6,
-            int gridDivisions = 5)
-        {
-            return Analysis.SurfaceAnalyzer.FindClosestPoint(surface, target, tolerance, gridDivisions);
-        }
-
-        /// <summary>
-        /// (en) Find the closest point on surface from a single initial guess using Newton-Raphson (fast)
-        /// (ja) 単一の初期推定値からNewton-Raphson法で最近接点を検索（高速）
-        /// </summary>
-        /// <param name="surface">Target surface</param>
-        /// <param name="target">Target 3D point</param>
-        /// <param name="initialU">Initial guess for U parameter</param>
-        /// <param name="initialV">Initial guess for V parameter</param>
-        /// <param name="tolerance">Convergence tolerance (default: 1e-6)</param>
-        /// <returns>Tuple of (u parameter, v parameter, point on surface, distance to target)</returns>
-        [Obsolete("Use Analysis.SurfaceAnalyzer.FindClosestPoint instead.")]
-        public static (double u, double v, Vector3Double point, double distance) FindClosestPoint(
-            NurbsSurface surface, 
-            Vector3Double target,
-            double initialU,
-            double initialV,
-            double tolerance = 1e-6)
-        {
-            return Analysis.SurfaceAnalyzer.FindClosestPoint(surface, target, initialU, initialV, tolerance);
-        }
     }
 }

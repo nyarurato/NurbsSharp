@@ -4,7 +4,7 @@ using NurbsSharp.Geometry;
 using NurbsSharp.Operation;
 using System;
 
-namespace NurbsSharp.UnitTests.Operation
+namespace UnitTests.Operation
 {
     [TestFixture]
     public class TransformOperatorTests

@@ -218,7 +218,7 @@ namespace NurbsSharp.Evaluation
         [Obsolete("Use CurveAnalyzer.EvaluatTangentNormal instead.")]
         public static (Vector3Double tangent, Vector3Double normal) EvaluatTangentNormal(NurbsCurve curve, double u)
         {
-            return Analysis.CurveAnalyzer.EvaluatTangentNormal(curve, u);
+            return Analysis.CurveAnalyzer.EvaluateTangentNormal(curve, u);
         }
 
         /// <summary>

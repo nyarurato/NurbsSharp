@@ -7,6 +7,7 @@ using NurbsSharp.Core;
 using NurbsSharp.Evaluation;
 using NurbsSharp.Geometry;
 using NurbsSharp.Operation;
+using NurbsSharp.Analysis;
 
 namespace NurbsSharp.Intersection
 {
@@ -351,7 +352,7 @@ namespace NurbsSharp.Intersection
             NurbsSurface surface, Vector3Double target, SurfaceBVHNode bvhRoot, double tolerance)
         {
             // Use moderate grid search only when BVH is used (more complex cases)
-            return Operation.SurfaceOperator.FindClosestPoint(surface, target, tolerance, gridDivisions: 3);
+            return SurfaceAnalyzer.FindClosestPoint(surface, target, tolerance, gridDivisions: 3);
         }
 
         /// <summary>
@@ -362,7 +363,7 @@ namespace NurbsSharp.Intersection
             NurbsSurface surface, Vector3Double target, double initialU, double initialV, double tolerance)
         {
             // Use single initial point for speed (no grid search)
-            return Operation.SurfaceOperator.FindClosestPoint(surface, target, initialU, initialV, tolerance);
+            return SurfaceAnalyzer.FindClosestPoint(surface, target, initialU, initialV, tolerance);
         }
 
         /// <summary>
@@ -373,7 +374,7 @@ namespace NurbsSharp.Intersection
             NurbsSurface surface, Vector3Double target, double tolerance, int gridDivisions = 3)
         {
             // Use grid search for better accuracy when initial guess is unknown
-            return Operation.SurfaceOperator.FindClosestPoint(surface, target, tolerance, gridDivisions);
+            return SurfaceAnalyzer.FindClosestPoint(surface, target, tolerance, gridDivisions);
         }
 
         /// <summary>
@@ -385,7 +386,7 @@ namespace NurbsSharp.Intersection
             double initialU, double initialV, double tolerance)
         {
             // Use initial guess from region center for speed
-            return Operation.SurfaceOperator.FindClosestPoint(surface, target, initialU, initialV, tolerance);
+            return SurfaceAnalyzer.FindClosestPoint(surface, target, initialU, initialV, tolerance);
         }
 
         /// <summary>
@@ -505,7 +506,7 @@ namespace NurbsSharp.Intersection
                         Vector3Double cp = CurveEvaluator.Evaluate(curve, tt);
 
                         // Use grid search for better chance to find correct basin
-                        var (uu, vv, sp, d) = Operation.SurfaceOperator.FindClosestPoint(surface, cp, tolerance, gridDivisions: 3);
+                        var (uu, vv, sp, d) = SurfaceAnalyzer.FindClosestPoint(surface, cp, tolerance, gridDivisions: 3);
 
                         augmented.Add((tt, uu, vv, d));
                     }
