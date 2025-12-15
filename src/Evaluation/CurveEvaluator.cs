@@ -202,62 +202,10 @@ namespace NurbsSharp.Evaluation
         /// <param name="end_u"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
+        [Obsolete("Use CurveAnalyzer.CurveLength instead.")]
         public static double CurveLength(NurbsCurve curve, double start_u, double end_u)
         {
-            Guard.ThrowIfNull(curve, nameof(curve));
-            if (start_u> end_u)
-                throw new ArgumentOutOfRangeException(nameof(start_u), "start_u must be less than or equal to end_u.");
-            if (start_u < curve.KnotVector.Knots[0])
-                throw new ArgumentOutOfRangeException(nameof(start_u), "start_u is out of the knot vector range.");
-            if (end_u > curve.KnotVector.Knots[curve.KnotVector.Length - 1])
-                throw new ArgumentOutOfRangeException(nameof(end_u), "end_u is out of the knot vector range.");
-
-            // Calculate the length of the NURBS curve using 5-point Gaussian quadrature
-
-            int degree = curve.Degree;
-            var knots = curve.KnotVector.Knots;
-            if (knots == null || knots.Length < 2)
-                return 0.0;
-
-            // clamp integration range to valid evaluation domain
-            double uMin = knots[degree];
-            double uMax = knots[knots.Length - degree - 1];
-
-            start_u = Math.Max(start_u, uMin);
-            end_u = Math.Min(end_u, uMax);
-
-            double total = 0.0;
-
-            // integrate over each knot span to better capture local behavior
-            for (int i = 0; i < knots.Length - 1; i++)
-            {
-                double a = Math.Max(start_u, knots[i]);
-                double b = Math.Min(end_u, knots[i + 1]);
-
-                if (b <= a)
-                    continue;
-
-                double half = 0.5 * (b - a);
-                double center = 0.5 * (a + b);
-
-                double spanSum = 0.0;
-                for (int k = 0; k < GaussNode5.Length; k++)
-                {
-                    double xi = GaussNode5[k];
-                    double wi = GaussWeight5[k];
-
-                    double u = center + half * xi;// map from [-1,1] to [a,b] -> u = 1/2*((b-a)*xi + (a+b))
-
-                    // Evaluate first derivative and take its magnitude
-                    Vector3Double d = EvaluateFirstDerivative(curve, u);
-                    double speed = d.magnitude;
-                    spanSum += wi * speed;
-                }
-
-                total += half * spanSum; // multiply by Jacobian 0.5*(b-a)
-            }
-
-            return total;
+            return Analysis.CurveAnalyzer.CurveLength(curve, start_u, end_u);
         }
 
         /// <summary>
@@ -267,21 +215,10 @@ namespace NurbsSharp.Evaluation
         /// <param name="curve"></param>
         /// <param name="u"></param>
         /// <returns></returns>
+        [Obsolete("Use CurveAnalyzer.EvaluatTangentNormal instead.")]
         public static (Vector3Double tangent, Vector3Double normal) EvaluatTangentNormal(NurbsCurve curve, double u)
         {
-            Vector3Double T = EvaluateFirstDerivative(curve, u);
-            if (T.magnitude == 0.0)
-                return (Vector3Double.Zero, Vector3Double.Zero);
-            T = T.normalized;
-            Vector3Double C2 = EvaluateSecondDerivative(curve, u);
-            if (C2.magnitude == 0.0)
-                return (T, Vector3Double.Zero);
-            double proj = Vector3Double.Dot(C2, T);
-            Vector3Double normalVec = C2 - T * proj; // eliminate tangential component of C''
-            if (normalVec.magnitude == 0.0)
-                return (T, Vector3Double.Zero);
-            Vector3Double N = normalVec.normalized;
-            return (T, N);
+            return Analysis.CurveAnalyzer.EvaluatTangentNormal(curve, u);
         }
 
         /// <summary>
@@ -291,17 +228,10 @@ namespace NurbsSharp.Evaluation
         /// <param name="curve"></param>
         /// <param name="u"></param>
         /// <returns></returns>
+        [Obsolete("Use CurveAnalyzer.EvaluateCurvature instead.")]
         public static double EvaluateCurvature(NurbsCurve curve, double u)
         {
-            // κ = |C'(u) × C''(u)| / |C'(u)|^3
-            Vector3Double firstDeriv = EvaluateFirstDerivative(curve, u);
-            var firstDerivMag = firstDeriv.magnitude;
-            if(firstDerivMag == 0)
-                return 0;            
-            Vector3Double secondDeriv = EvaluateSecondDerivative(curve, u);
-
-            Vector3Double cross = Vector3Double.Cross(firstDeriv, secondDeriv);
-            return cross.magnitude / Math.Pow(firstDerivMag,3);
+            return Analysis.CurveAnalyzer.EvaluateCurvature(curve, u);
         }
 
         /// <summary>
@@ -311,9 +241,10 @@ namespace NurbsSharp.Evaluation
         /// <param name="curve"></param>
         /// <param name="u"></param>
         /// <returns></returns>
+        [Obsolete("Use CurveAnalyzer.EvaluateNormal instead.")]
         public static Vector3Double EvaluateNormal(NurbsCurve curve, double u)
         {
-           return EvaluatTangentNormal(curve, u).normal;
+           return Analysis.CurveAnalyzer.EvaluateNormal(curve, u);
         }
 
         /// <summary>
@@ -323,9 +254,10 @@ namespace NurbsSharp.Evaluation
         /// <param name="curve"></param>
         /// <param name="u"></param>
         /// <returns></returns>
+        [Obsolete("Use CurveAnalyzer.EvaluateTangent instead.")]
         public static Vector3Double EvaluateTangent(NurbsCurve curve, double u)
         {
-            return EvaluatTangentNormal(curve, u).tangent;
+            return Analysis.CurveAnalyzer.EvaluateTangent(curve, u);
         }
 
 
