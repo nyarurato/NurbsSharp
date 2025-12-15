@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - integrate CurveSurfaceIntersector.IntersectWithBVH to Intersect method
 - rename: SurfaceSurfaceIntersector.IntersectRobust to IntersectWithMarching
 - Default use Parallel for SurfaceSurfaceIntersector.Intersect
+- move CurveLength, EvaluatTangentNormal, EvaluateTangent, EvaluateNormal, EvaluateCurvature from CurveEvaluator to CurveAnalyzer
+- move SurfaceArea, EvaluatTangentNormal, EvaluateTangents, EvaluateNormal, EvaluatePrincipalCurvatures, EvaluateMeanAndGaussianCurvatures from SurfaceEvaluator to SurfaceAnalyzer
 
 ### Fixed
 
