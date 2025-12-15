@@ -131,6 +131,7 @@ dotnet test -c Debug
 - `src/Intersection` — 交差計算（Ray-Box、Ray-Mesh、Curve-Curve、Curve-Surface、BVH構造）
 - `src/IO` — `OBJExporter`、`STLExporter`、`BMPExporter`、IGES入出力
 - `src/Tesselation` — テッセレーション（曲線/サーフェス）
+- `src/Analysis` - 解析 (曲率, 弧長、面積など)
 
 ## コントリビュート
 

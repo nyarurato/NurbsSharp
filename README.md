@@ -130,6 +130,7 @@ Project layout highlights:
 - `src/Intersection` — intersection calculations (Ray-Box, Ray-Mesh, Curve-Curve, Curve-Surface, BVH structures)
 - `src/IO` — `OBJExporter`, `STLExporter`, `BMPExporter`, IGES import/export
 - `src/Tesselation` — tessellation (curve/surface)
+- `src/Analysis` - analyzers (curvature, curve length, etc.)
 
 ## Contributing
 

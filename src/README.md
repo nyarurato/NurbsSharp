@@ -5,6 +5,8 @@
 - Evaluation
 - IO
 - Intersection
+- Operation
+- Analysis
 
 ### Core
 This module contains the fundamental classes and methods for NURBS representation, including knot vectors, basis
@@ -27,5 +29,8 @@ This module manages input and output operations, including reading from and writ
 ### Intersection
 This module provides functionality for computing intersections between NURBS curves and surfaces, as well as with other geometric entities.
 
-## Operation
-This module provides topology operation.
+### Operation
+This module modifies existing geometry to generate or transform new geometry.
+
+### Analysis
+This module extracts numerical measurements and evaluation metrics from existing geometry.
