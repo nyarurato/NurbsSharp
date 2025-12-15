@@ -20,8 +20,8 @@ namespace UnitTests.Evaluation
             ControlPoint[] controlPoints1;
             // Dataset A: Cubic NURBS (non-rational)
             int degree = 3;
-            double[] knots = { 0, 0, 0, 0, 0.2, 0.5, 0.7, 1, 1, 1, 1 };
-            controlPoints1 = new ControlPoint[] {
+            double[] knots = [0, 0, 0, 0, 0.2, 0.5, 0.7, 1, 1, 1, 1];
+            controlPoints1 = [
                 new ControlPoint(0.0, 0.0, 0.0, 1),
                 new ControlPoint(1.0, 2.0, 0.5, 1),
                 new ControlPoint(2.0, 3.0, 0.0, 1),
@@ -29,7 +29,7 @@ namespace UnitTests.Evaluation
                 new ControlPoint(5.0, 1.0, 0.0, 1),
                 new ControlPoint(6.0, 0.0, 0.2, 1),
                 new ControlPoint(7.0, -1.0, 0.0, 1)
-            };
+            ];
             var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints1);
 
             var samples = new (double u, Vector3Double expected)[] {
@@ -48,9 +48,12 @@ namespace UnitTests.Evaluation
             {
                 var pt = CurveEvaluator.Evaluate(curve, u);
 
-                Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.000001));
-                Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.000001));
-                Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.000001));
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.000001));
+                    Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.000001));
+                    Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.000001));
+                }
             }
         }
 
@@ -60,12 +63,12 @@ namespace UnitTests.Evaluation
             ControlPoint[] controlPoints2;
             // Dataset B: Quadratic Rational NURBS (quarter-circle approx)
             int degree = 2;
-            double[] knots = { 0, 0, 0, 1, 1, 1 };
-            controlPoints2 = new ControlPoint[] {
+            double[] knots = [0, 0, 0, 1, 1, 1];
+            controlPoints2 = [
                 new ControlPoint(1.0, 0.0, 0.0, 1.0),
                 new ControlPoint(1.0, 1.0, 0.0, 0.707107),
                 new ControlPoint(0.0, 1.0, 0.0, 1.0)
-            };
+            ];
             var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints2);
 
             var samples = new (double u, Vector3Double expected)[] {
@@ -82,9 +85,12 @@ namespace UnitTests.Evaluation
             foreach (var (u, expected) in samples)
             {
                 var pt = CurveEvaluator.Evaluate(curve, u);
-                Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.000001));
-                Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.000001));
-                Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.000001));
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.000001));
+                    Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.000001));
+                    Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.000001));
+                }
             }
         }
 
@@ -92,8 +98,8 @@ namespace UnitTests.Evaluation
         public void TestNormalNonUniform()
         {
             int degree = 3;
-            double[] knots = { 0, 0, 0, 0, 0.2, 0.5, 0.7, 1, 1, 1, 1 };
-            ControlPoint[] controlPoints = {
+            double[] knots = [0, 0, 0, 0, 0.2, 0.5, 0.7, 1, 1, 1, 1];
+            ControlPoint[] controlPoints = [
             new ControlPoint(0.0, 0.0, 0.0, 1),
             new ControlPoint(1.0, 2.0, 0.5, 1),
             new ControlPoint(2.0, 3.0, 0.0, 1),
@@ -101,7 +107,7 @@ namespace UnitTests.Evaluation
             new ControlPoint(5.0, 1.0, 0.0, 1),
             new ControlPoint(6.0, 0.0, 0.2, 1),
             new ControlPoint(7.0, -1.0, 0.0, 1)
-        };
+        ];
             var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
 
             var samples = new (double u, Vector3Double expected)[] {
@@ -119,9 +125,12 @@ namespace UnitTests.Evaluation
             foreach (var (u, expected) in samples)
             {
                 var pt = CurveEvaluator.Evaluate(curve, u);
-                Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.000001));
-                Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.000001));
-                Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.000001));
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.000001));
+                    Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.000001));
+                    Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.000001));
+                }
             }
         }
 
@@ -129,15 +138,15 @@ namespace UnitTests.Evaluation
         public void TestRepeatedKnotsC0()
         {
             int degree = 3;
-            double[] knots = { 0, 0, 0, 0, 0.5, 0.5, 1, 1, 1, 1 };
-            ControlPoint[] controlPoints = {
+            double[] knots = [0, 0, 0, 0, 0.5, 0.5, 1, 1, 1, 1];
+            ControlPoint[] controlPoints = [
             new ControlPoint(0.0, 0.0, 0.0, 1),
             new ControlPoint(1.0, 2.0, 0.0, 1),
             new ControlPoint(2.0, 2.0, 0.0, 1),
             new ControlPoint(3.0, 0.0, 0.0, 1),
             new ControlPoint(4.0, 2.0, 0.0, 1),
             new ControlPoint(5.0, 0.0, 0.0, 1)
-            };
+            ];
             var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
 
             var samples = new (double u, Vector3Double expected)[] {
@@ -156,9 +165,12 @@ namespace UnitTests.Evaluation
             foreach (var (u, expected) in samples)
             {
                 var pt = CurveEvaluator.Evaluate(curve, u);
-                Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.000001));
-                Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.000001));
-                Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.000001));
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.000001));
+                    Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.000001));
+                    Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.000001));
+                }
             }
         }
 
@@ -166,13 +178,13 @@ namespace UnitTests.Evaluation
         public void TestExtremeWeights()
         {
             int degree = 2;
-            double[] knots = { 0, 0, 0, 0.5, 1, 1, 1 };
-            ControlPoint[] controlPoints = {
+            double[] knots = [0, 0, 0, 0.5, 1, 1, 1];
+            ControlPoint[] controlPoints = [
             new ControlPoint(0.0, 0.0, 0.0, 1),
             new ControlPoint(1.0, 2.0, 0.0, 0.1),
             new ControlPoint(2.0, 0.0, 0.0, 10),
             new ControlPoint(3.0, 1.0, 0.0, 1)
-        };
+        ];
             var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
 
             var samples = new (double u, Vector3Double expected)[] {
@@ -192,9 +204,12 @@ namespace UnitTests.Evaluation
             foreach (var (u, expected) in samples)
             {
                 var pt = CurveEvaluator.Evaluate(curve, u);
-                Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.000001));
-                Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.000001));
-                Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.000001));
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.000001));
+                    Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.000001));
+                    Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.000001));
+                }
             }
         }
 
@@ -202,15 +217,15 @@ namespace UnitTests.Evaluation
         public void TestDiscontinuousCurve()
         {
             int degree = 2;
-            double[] knots = { 0, 0, 0, 1, 1, 1, 2, 2, 2 };
-            ControlPoint[] controlPoints = {
+            double[] knots = [0, 0, 0, 1, 1, 1, 2, 2, 2];
+            ControlPoint[] controlPoints = [
             new ControlPoint(0.0, 0.0, 0.0, 1),
             new ControlPoint(1.0, 0.0, 0.0, 1),
             new ControlPoint(2.0, 0.0, 0.0, 1),
             new ControlPoint(3.0, 3.0, 0.0, 1),
             new ControlPoint(4.0, 3.0, 0.0, 1),
             new ControlPoint(5.0, 3.0, 0.0, 1)
-        };
+        ];
             var curve = new NurbsCurve(degree, new KnotVector(knots,degree), controlPoints);
 
             var samples = new (double u, Vector3Double expected)[] {
@@ -228,9 +243,12 @@ namespace UnitTests.Evaluation
             foreach (var (u, expected) in samples)
             {
                 var pt = CurveEvaluator.Evaluate(curve, u);
-                Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.000001));
-                Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.000001));
-                Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.000001));
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.000001));
+                    Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.000001));
+                    Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.000001));
+                }
             }
         }
 
@@ -239,8 +257,8 @@ namespace UnitTests.Evaluation
         {
             // Circle R=1
             int degree = 2;
-            double[] knots = { 0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1 };
-            ControlPoint[] controlPoints = {
+            double[] knots = [0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1];
+            ControlPoint[] controlPoints = [
                 new ControlPoint(1 ,  0, 0, 1),
                 new ControlPoint(1 ,  1, 0, 0.70710678),
                 new ControlPoint(0 ,  1, 0, 1),
@@ -251,7 +269,7 @@ namespace UnitTests.Evaluation
                 new ControlPoint(1 , -1, 0, 0.70710678),
                 new ControlPoint(1 ,  0, 0, 1),
 
-            };
+            ];
             var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
 
             var samples = new (double u, Vector3Double expected)[] {
@@ -269,9 +287,12 @@ namespace UnitTests.Evaluation
             foreach (var (u, expected) in samples)
             {
                 var pt = CurveEvaluator.Evaluate(curve, u);
-                Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.0001));
-                Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.0001));
-                Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.0001));
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.0001));
+                    Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.0001));
+                    Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.0001));
+                }
             }
 
         }
@@ -281,8 +302,8 @@ namespace UnitTests.Evaluation
         {
             // Circle R=1
             int degree = 2;
-            double[] knots = { 0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1 };
-            ControlPoint[] controlPoints = {
+            double[] knots = [0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1];
+            ControlPoint[] controlPoints = [
                 new ControlPoint(1 ,  0, 0, 1),
                 new ControlPoint(1 ,  1, 0, 0.70710678),
                 new ControlPoint(0 ,  1, 0, 1),
@@ -293,7 +314,7 @@ namespace UnitTests.Evaluation
                 new ControlPoint(1 , -1, 0, 0.70710678),
                 new ControlPoint(1 ,  0, 0, 1),
 
-            };
+            ];
             var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
 
             double expectedLength = Math.PI * 2;// full circle length
@@ -310,11 +331,11 @@ namespace UnitTests.Evaluation
         public void NurbsCurve_GetLength_Line()
         {
             int degree = 1;
-            double[] knots = { 0, 0, 1, 1 };
-            ControlPoint[] controlPoints = {
+            double[] knots = [0, 0, 1, 1];
+            ControlPoint[] controlPoints = [
                 new ControlPoint(0.0, 0.0, 0.0, 1),
                 new ControlPoint(3.0, 4.0, 0.0, 1)
-            };
+            ];
             var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
             double expectedLength = 5.0; // Length of the line from (0,0,0) to (3,4,0)
             double length = curve.GetLength();
@@ -325,12 +346,12 @@ namespace UnitTests.Evaluation
         public void NurbsCurve_GetLength0()
         {
             int degree = 2;
-            double[] knots = { 0, 0, 0, 1, 1, 1 };
-            ControlPoint[] controlPoints = {
+            double[] knots = [0, 0, 0, 1, 1, 1];
+            ControlPoint[] controlPoints = [
                 new ControlPoint(0.0, 0.0, 0.0, 1),
                 new ControlPoint(0.0, 0.0, 0.0, 1),
                 new ControlPoint(0.0, 0.0, 0.0, 1)
-            };
+            ];
             var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
             double expectedLength = 0.0; // Approximate length of the quadratic curve
             double length = curve.GetLength();
@@ -342,15 +363,15 @@ namespace UnitTests.Evaluation
         public void NurbsCurveDegree0()
         {
             int degree = 0;
-            double[] knots = { 0, 0.1666, 0.3333, 0.5, 0.6666, 0.8333, 1 };
-            ControlPoint[] controlPoints = {
+            double[] knots = [0, 0.1666, 0.3333, 0.5, 0.6666, 0.8333, 1];
+            ControlPoint[] controlPoints = [
             new ControlPoint(0.0, 0.0, 0.0, 1),
             new ControlPoint(1.0, 0.0, 0.0, 1),
             new ControlPoint(2.0, 0.0, 0.0, 1),
             new ControlPoint(3.0, 3.0, 0.0, 1),
             new ControlPoint(4.0, 3.0, 0.0, 1),
             new ControlPoint(5.0, 3.0, 0.0, 1)
-        };
+        ];
             var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
 
             var samples = new (double u, Vector3Double expected)[] {
@@ -376,15 +397,15 @@ namespace UnitTests.Evaluation
         public void NurbsCurveDegree1()
         {
             int degree = 1;
-            double[] knots = { 0, 0, 0.286, 0.429, 0.571, 0.714, 1, 1 };
-            ControlPoint[] controlPoints = {
+            double[] knots = [0, 0, 0.286, 0.429, 0.571, 0.714, 1, 1];
+            ControlPoint[] controlPoints = [
                 new ControlPoint(0.0, 0.0, 0.0, 1),
                 new ControlPoint(1.0, 0.0, 0.0, 0.5),
                 new ControlPoint(2.0, 0.0, 0.0, 1),
                 new ControlPoint(3.0, 3.0, 0.0, 0.5),
                 new ControlPoint(4.0, 3.0, 0.0, 1),
                 new ControlPoint(5.0, 3.0, 0.0, 1)
-            };
+            ];
             var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
 
 
@@ -399,9 +420,12 @@ namespace UnitTests.Evaluation
             foreach (var (u, expected) in samples)
             {
                 var pt = CurveEvaluator.Evaluate(curve, u);
-                Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.001));
-                Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.001));
-                Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.001));
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(expected.X, Is.EqualTo(pt.X).Within(0.001));
+                    Assert.That(expected.Y, Is.EqualTo(pt.Y).Within(0.001));
+                    Assert.That(expected.Z, Is.EqualTo(pt.Z).Within(0.001));
+                }
             }
         }
 
@@ -411,8 +435,8 @@ namespace UnitTests.Evaluation
         {
             // Circle R=1
             int degree = 2;
-            double[] knots = { 0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1 };
-            ControlPoint[] controlPoints = {
+            double[] knots = [0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1];
+            ControlPoint[] controlPoints = [
                 new ControlPoint(1 ,  0, 0, 1),
                 new ControlPoint(1 ,  1, 0, 0.70710678),
                 new ControlPoint(0 ,  1, 0, 1),
@@ -423,7 +447,7 @@ namespace UnitTests.Evaluation
                 new ControlPoint(1 , -1, 0, 0.70710678),
                 new ControlPoint(1 ,  0, 0, 1),
 
-            };
+            ];
             var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
 
 
@@ -436,9 +460,12 @@ namespace UnitTests.Evaluation
                 var evalPt = CurveEvaluator.Evaluate(curve, u);
                 var evalPt2 = CurveEvaluator.Evaluate(curve, u + h);
                 var evalDerivPt = (evalPt2 - evalPt) / h;
-                Assert.That(derivVal.X, Is.EqualTo(evalDerivPt.X).Within(0.001));
-                Assert.That(derivVal.Y, Is.EqualTo(evalDerivPt.Y).Within(0.001));
-                Assert.That(derivVal.Z, Is.EqualTo(evalDerivPt.Z).Within(0.001));
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(derivVal.X, Is.EqualTo(evalDerivPt.X).Within(0.001));
+                    Assert.That(derivVal.Y, Is.EqualTo(evalDerivPt.Y).Within(0.001));
+                    Assert.That(derivVal.Z, Is.EqualTo(evalDerivPt.Z).Within(0.001));
+                }
             }
 
         }
@@ -447,15 +474,15 @@ namespace UnitTests.Evaluation
         public void NurbsCurveDerivationTestB()
         {
             int degree = 3;
-            double[] knots = { 0, 0, 0, 0, 0.5, 0.7, 1, 1, 1, 1 };
-            ControlPoint[] controlPoints = {
+            double[] knots = [0, 0, 0, 0, 0.5, 0.7, 1, 1, 1, 1];
+            ControlPoint[] controlPoints = [
             new ControlPoint(0.0, 0.0, 0.0, 1),
             new ControlPoint(1.0, 2.0, 0.0, 1),
             new ControlPoint(2.0, 2.0, 0.0, 1),
             new ControlPoint(3.0, 0.0, 0.0, 1),
             new ControlPoint(4.0, 2.0, 0.0, 1),
             new ControlPoint(5.0, 0.0, 0.0, 1)
-            };
+            ];
             var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
 
             var samplePoints = new double[] { 0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99 };
@@ -468,9 +495,12 @@ namespace UnitTests.Evaluation
                 var evalPt = CurveEvaluator.Evaluate(curve, u);
                 var evalPt2 = CurveEvaluator.Evaluate(curve, u + h);
                 var evalDerivPt = (evalPt2 - evalPt) / h;
-                Assert.That(derivVal.X, Is.EqualTo(evalDerivPt.X).Within(0.001));
-                Assert.That(derivVal.Y, Is.EqualTo(evalDerivPt.Y).Within(0.001));
-                Assert.That(derivVal.Z, Is.EqualTo(evalDerivPt.Z).Within(0.001));
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(derivVal.X, Is.EqualTo(evalDerivPt.X).Within(0.001));
+                    Assert.That(derivVal.Y, Is.EqualTo(evalDerivPt.Y).Within(0.001));
+                    Assert.That(derivVal.Z, Is.EqualTo(evalDerivPt.Z).Within(0.001));
+                }
             }
         }
 
@@ -478,15 +508,15 @@ namespace UnitTests.Evaluation
         public void NurbsCurveSecondDerivationTestA()
         {
             int degree = 3;
-            double[] knots = { 0, 0, 0, 0, 0.5, 0.7, 1, 1, 1, 1 };
-            ControlPoint[] controlPoints = {
+            double[] knots = [0, 0, 0, 0, 0.5, 0.7, 1, 1, 1, 1];
+            ControlPoint[] controlPoints = [
             new ControlPoint(0.0, 0.0, 0.0, 1),
             new ControlPoint(1.0, 2.0, 0.0, 1),
             new ControlPoint(2.0, 2.0, 0.0, 1),
             new ControlPoint(3.0, 0.0, 0.0, 1),
             new ControlPoint(4.0, 2.0, 0.0, 1),
             new ControlPoint(5.0, 0.0, 0.0, 1)
-            };
+            ];
             var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
             var samplePoints = new double[] { 0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99 };
             const double h = 1e-6;
@@ -501,9 +531,12 @@ namespace UnitTests.Evaluation
                     (deriv1b.Y - deriv1.Y) / h,
                     (deriv1b.Z - deriv1.Z) / h
                 );
-                Assert.That(derivVal.X, Is.EqualTo(evalDeriv2Pt.X).Within(0.01));
-                Assert.That(derivVal.Y, Is.EqualTo(evalDeriv2Pt.Y).Within(0.01));
-                Assert.That(derivVal.Z, Is.EqualTo(evalDeriv2Pt.Z).Within(0.01));
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(derivVal.X, Is.EqualTo(evalDeriv2Pt.X).Within(0.01));
+                    Assert.That(derivVal.Y, Is.EqualTo(evalDeriv2Pt.Y).Within(0.01));
+                    Assert.That(derivVal.Z, Is.EqualTo(evalDeriv2Pt.Z).Within(0.01));
+                }
             }
         }
 
@@ -512,8 +545,8 @@ namespace UnitTests.Evaluation
         {
             // Circle R=2
             int degree = 2;
-            double[] knots = { 0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1 };
-            ControlPoint[] controlPoints = {
+            double[] knots = [0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1];
+            ControlPoint[] controlPoints = [
                 new ControlPoint(2 ,  0, 0, 1),
                 new ControlPoint(2 ,  2, 0, 0.70710678),
                 new ControlPoint(0 ,  2, 0, 1),
@@ -523,7 +556,7 @@ namespace UnitTests.Evaluation
                 new ControlPoint(0 , -2, 0, 1),
                 new ControlPoint(2 , -2, 0, 0.70710678),
                 new ControlPoint(2 ,  0, 0, 1),
-            };
+            ];
             var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
 
             var samplePoints = new double[] { 0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99 };
@@ -541,9 +574,12 @@ namespace UnitTests.Evaluation
                     (deriv1b.Y - deriv1.Y) / h,
                     (deriv1b.Z - deriv1.Z) / h
                 );
-                Assert.That(derivVal.X, Is.EqualTo(evalDeriv2Pt.X).Within(0.01));
-                Assert.That(derivVal.Y, Is.EqualTo(evalDeriv2Pt.Y).Within(0.01));
-                Assert.That(derivVal.Z, Is.EqualTo(evalDeriv2Pt.Z).Within(0.01));
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(derivVal.X, Is.EqualTo(evalDeriv2Pt.X).Within(0.01));
+                    Assert.That(derivVal.Y, Is.EqualTo(evalDeriv2Pt.Y).Within(0.01));
+                    Assert.That(derivVal.Z, Is.EqualTo(evalDeriv2Pt.Z).Within(0.01));
+                }
 
                 // Curve curvature k = |r' x r''| / |r'|^3
                 var curvature_magnitude = Vector3Double.Cross(deriv1, derivVal).magnitude / Math.Pow(deriv1.magnitude, 3);
@@ -555,145 +591,5 @@ namespace UnitTests.Evaluation
 
         }
 
-        [Test]
-        public void NurbsCurveCurvatureA()
-        {
-            // Circle R=3
-            int degree = 2;
-            double[] knots = { 0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1 };
-            ControlPoint[] controlPoints = {
-                new ControlPoint(3 ,  0, 0, 1),
-                new ControlPoint(3 ,  3, 0, 0.70710678),
-                new ControlPoint(0 ,  3, 0, 1),
-                new ControlPoint(-3,  3, 0, 0.70710678),
-                new ControlPoint(-3,  0, 0, 1),
-                new ControlPoint(-3, -3, 0, 0.70710678),
-                new ControlPoint(0 , -3, 0, 1),
-                new ControlPoint(3 , -3, 0, 0.70710678),
-                new ControlPoint(3 ,  0, 0, 1),
-            };
-            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
-            var samplePoints = new double[] { 0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99 };//u=1.0 case is unstable
-            double R = 3.0;
-            foreach (var u in samplePoints)
-            {
-                var curvature = CurveEvaluator.EvaluateCurvature(curve, u);
-                //Cirle is special case where curvature can be computed exactly
-                Assert.That(curvature, Is.EqualTo(1 / R).Within(0.01));
-            }
-        }
-
-        [Test]
-        public void NurbsCurveCurvatureB()
-        {
-            int degree = 3;
-            double[] knots = { 0, 0, 0, 0, 0.5, 0.7, 1, 1, 1, 1 };
-            ControlPoint[] controlPoints = {
-            new ControlPoint(0.0, 0.0, 0.0, 1),
-            new ControlPoint(1.0, 2.0, 0.0, 1),
-            new ControlPoint(2.0, 2.0, 0.0, 1),
-            new ControlPoint(3.0, 0.0, 0.0, 1),
-            new ControlPoint(4.0, 2.0, 0.0, 1),
-            new ControlPoint(5.0, 0.0, 0.0, 1)
-            };
-            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
-            var samplePoints = new double[] { 0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 0.999 };// u=1.0 case is unstable
-            foreach (var u in samplePoints)
-            {
-
-                const double eps = 1e-8;
-                
-                double u0 = Math.Clamp(u, eps, 1 - eps);
-                var p = CurveEvaluator.Evaluate(curve, u0);
-                var d1 = CurveEvaluator.EvaluateFirstDerivative(curve, u0);
-                var d2 = CurveEvaluator.EvaluateSecondDerivative(curve, u0);
-                var k = CurveEvaluator.EvaluateCurvature(curve, u0);
-            }
-        }
-        [Test]
-        public void FrenetFrame_Circle_OrthogonalityAndNormalization()
-        {
-            // Circle R=3
-            int degree = 2;
-            double[] knots = { 0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1 };
-            ControlPoint[] controlPoints = {
-                new ControlPoint(3 ,  0, 0, 1),
-                new ControlPoint(3 ,  3, 0, 0.70710678),
-                new ControlPoint(0 ,  3, 0, 1),
-                new ControlPoint(-3,  3, 0, 0.70710678),
-                new ControlPoint(-3,  0, 0, 1),
-                new ControlPoint(-3, -3, 0, 0.70710678),
-                new ControlPoint(0 , -3, 0, 1),
-                new ControlPoint(3 , -3, 0, 0.70710678),
-                new ControlPoint(3 ,  0, 0, 1),
-            };
-            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
-
-            double[] sampleUs = { 0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99 };//u=1.0 case is unstable
-            const double tol = 1e-8;
-
-            foreach (var u in sampleUs)
-            {
-                var (T, N) = CurveEvaluator.EvaluatTangentNormal(curve, u);
-
-                // If tangent is zero then frame is invalid; fail test in that case
-                Assert.That(T.magnitude, Is.GreaterThan(0.0), $"Tangent is zero at u={u}");
-                Assert.That(Math.Abs(T.magnitude - 1.0), Is.LessThan(tol), $"T not normalized at u={u}");
-
-                // circle Normal is origin to point vector
-                var pt = CurveEvaluator.Evaluate(curve, u);
-                var expectedN = new Vector3Double(pt.X, pt.Y, pt.Z).normalized;
-                Assert.That(Math.Abs(N.X) - Math.Abs(expectedN.X), Is.LessThan(tol), $"N.X incorrect at u={u}");
-                Assert.That(Math.Abs(N.Y) - Math.Abs(expectedN.Y), Is.LessThan(tol), $"N.Y incorrect at u={u}");
-                Assert.That(Math.Abs(N.Z) - Math.Abs(expectedN.Z), Is.LessThan(tol), $"N.Z incorrect at u={u}");
-
-                // Ensure helper methods return same vectors
-                var t2 = CurveEvaluator.EvaluateTangent(curve, u);
-                var n2 = CurveEvaluator.EvaluateNormal(curve, u);
-                var dt = new Vector3Double(t2.X - T.X, t2.Y - T.Y, t2.Z - T.Z);
-                var dn = new Vector3Double(n2.X - N.X, n2.Y - N.Y, n2.Z - N.Z);
-                Assert.That(dt.magnitude, Is.LessThan(1e-12));
-                Assert.That(dn.magnitude, Is.LessThan(1e-12));
-            }
-        }
-
-        [Test]
-        public void FrenetFrame_Line_NormalAndBinormalAreZero_TangentMatches()
-        {
-            // Straight line from (0,0,0) to (6,8,0)
-            int degree = 2;
-            double[] knots = { 0, 0, 0, 1, 1, 1 };
-            ControlPoint[] controlPoints = {
-                new ControlPoint(0.0, 0.0, 0.0, 1),
-                new ControlPoint(3.0, 4.0, 0.0, 1),
-                new ControlPoint(6.0, 8.0, 0.0, 1)
-            };
-            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
-
-            double[] sampleUs = { 0.0, 0.25, 0.5, 0.75, 0.999999 };//u=1.0 case is unstable
-            const double tol = 1e-8;
-            var expectedT = new Vector3Double(3.0 / 5.0, 4.0 / 5.0, 0.0); // normalized (6,8,0)
-
-            foreach (var u in sampleUs)
-            {
-                (var t, var n) = CurveEvaluator.EvaluatTangentNormal(curve, u);
-
-                // Tangent should match expected normalized direction
-                Assert.That(Math.Abs(t.X - expectedT.X), Is.LessThan(tol));
-                Assert.That(Math.Abs(t.Y - expectedT.Y), Is.LessThan(tol));
-                Assert.That(Math.Abs(t.Z - expectedT.Z), Is.LessThan(tol));
-
-                // For a straight line, second derivative is zero -> normal should be zero vectors
-                Assert.That(n.magnitude, Is.EqualTo(0.0).Within(tol));
-
-                // Ensure helper methods return same vectors
-                var t2 = CurveEvaluator.EvaluateTangent(curve, u);
-                var n2 = CurveEvaluator.EvaluateNormal(curve, u);
-                var dt = new Vector3Double(t2.X - t.X, t2.Y - t.Y, t2.Z - t.Z);
-                var dn = new Vector3Double(n2.X - n.X, n2.Y - n.Y, n2.Z - n.Z);
-                Assert.That(dt.magnitude, Is.LessThan(1e-12));
-                Assert.That(dn.magnitude, Is.LessThan(1e-12));
-            }
-        }
     }
 }

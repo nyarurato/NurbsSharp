@@ -2,6 +2,8 @@ using System;
 
 namespace NurbsSharp.Core
 {
+#pragma warning disable CS1591
+
     /// <summary>
     /// (en) 4x4 transformation matrix for affine transformations
     /// (ja) アフィン変換用の4x4変換行列
@@ -277,4 +279,6 @@ namespace NurbsSharp.Core
                    $"  [{M41:F3}, {M42:F3}, {M43:F3}, {M44:F3}])";
         }
     }
+#pragma warning restore CS1591
+
 }

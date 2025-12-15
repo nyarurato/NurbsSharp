@@ -6,12 +6,170 @@ using NurbsSharp.Generation;
 using System;
 using System.Linq;
 using NurbsSharp.Analysis;
+using NurbsSharp.Evaluation;
 
 namespace UnitTests.Analysis
 {
     [TestFixture]
     public class CurveAnalyzerTest
     {
+
+        [Test]
+        public void NurbsCurveCurvatureA()
+        {
+            // Circle R=3
+            int degree = 2;
+            double[] knots = [0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1];
+            ControlPoint[] controlPoints = [
+                new ControlPoint(3 ,  0, 0, 1),
+                new ControlPoint(3 ,  3, 0, 0.70710678),
+                new ControlPoint(0 ,  3, 0, 1),
+                new ControlPoint(-3,  3, 0, 0.70710678),
+                new ControlPoint(-3,  0, 0, 1),
+                new ControlPoint(-3, -3, 0, 0.70710678),
+                new ControlPoint(0 , -3, 0, 1),
+                new ControlPoint(3 , -3, 0, 0.70710678),
+                new ControlPoint(3 ,  0, 0, 1),
+            ];
+            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
+            var samplePoints = new double[] { 0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99 };//u=1.0 case is unstable
+            double R = 3.0;
+            foreach (var u in samplePoints)
+            {
+                var curvature = CurveAnalyzer.EvaluateCurvature(curve, u);
+                //Cirle is special case where curvature can be computed exactly
+                Assert.That(curvature, Is.EqualTo(1 / R).Within(0.01));
+            }
+        }
+
+        [Test]
+        public void NurbsCurveCurvatureB()
+        {
+            int degree = 3;
+            double[] knots = [0, 0, 0, 0, 0.5, 0.7, 1, 1, 1, 1];
+            ControlPoint[] controlPoints = [
+            new ControlPoint(0.0, 0.0, 0.0, 1),
+            new ControlPoint(1.0, 2.0, 0.0, 1),
+            new ControlPoint(2.0, 2.0, 0.0, 1),
+            new ControlPoint(3.0, 0.0, 0.0, 1),
+            new ControlPoint(4.0, 2.0, 0.0, 1),
+            new ControlPoint(5.0, 0.0, 0.0, 1)
+            ];
+            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
+            var samplePoints = new double[] { 0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 0.999 };// u=1.0 case is unstable
+            foreach (var u in samplePoints)
+            {
+
+                const double eps = 1e-8;
+
+                double u0 = Math.Clamp(u, eps, 1 - eps);
+                var p = CurveEvaluator.Evaluate(curve, u0);
+                var d1 = CurveEvaluator.EvaluateFirstDerivative(curve, u0);
+                var d2 = CurveEvaluator.EvaluateSecondDerivative(curve, u0);
+                var k = CurveAnalyzer.EvaluateCurvature(curve, u0);
+            }
+        }
+        [Test]
+        public void FrenetFrame_Circle_OrthogonalityAndNormalization()
+        {
+            // Circle R=3
+            int degree = 2;
+            double[] knots = [0, 0, 0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1, 1, 1];
+            ControlPoint[] controlPoints = [
+                new ControlPoint(3 ,  0, 0, 1),
+                new ControlPoint(3 ,  3, 0, 0.70710678),
+                new ControlPoint(0 ,  3, 0, 1),
+                new ControlPoint(-3,  3, 0, 0.70710678),
+                new ControlPoint(-3,  0, 0, 1),
+                new ControlPoint(-3, -3, 0, 0.70710678),
+                new ControlPoint(0 , -3, 0, 1),
+                new ControlPoint(3 , -3, 0, 0.70710678),
+                new ControlPoint(3 ,  0, 0, 1),
+            ];
+            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
+
+            double[] sampleUs = [0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99];//u=1.0 case is unstable
+            const double tol = 1e-8;
+
+            foreach (var u in sampleUs)
+            {
+                var (T, N) = CurveAnalyzer.EvaluateTangentNormal(curve, u);
+
+                using (Assert.EnterMultipleScope())
+                {
+                    // If tangent is zero then frame is invalid; fail test in that case
+                    Assert.That(T.magnitude, Is.GreaterThan(0.0), $"Tangent is zero at u={u}");
+                    Assert.That(Math.Abs(T.magnitude - 1.0), Is.LessThan(tol), $"T not normalized at u={u}");
+                }
+
+                // circle Normal is origin to point vector
+                var pt = CurveEvaluator.Evaluate(curve, u);
+                var expectedN = new Vector3Double(pt.X, pt.Y, pt.Z).normalized;
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(Math.Abs(N.X) - Math.Abs(expectedN.X), Is.LessThan(tol), $"N.X incorrect at u={u}");
+                    Assert.That(Math.Abs(N.Y) - Math.Abs(expectedN.Y), Is.LessThan(tol), $"N.Y incorrect at u={u}");
+                    Assert.That(Math.Abs(N.Z) - Math.Abs(expectedN.Z), Is.LessThan(tol), $"N.Z incorrect at u={u}");
+                }
+
+                // Ensure helper methods return same vectors
+                var t2 = CurveAnalyzer.EvaluateTangent(curve, u);
+                var n2 = CurveAnalyzer.EvaluateNormal(curve, u);
+                var dt = new Vector3Double(t2.X - T.X, t2.Y - T.Y, t2.Z - T.Z);
+                var dn = new Vector3Double(n2.X - N.X, n2.Y - N.Y, n2.Z - N.Z);
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(dt.magnitude, Is.LessThan(1e-12));
+                    Assert.That(dn.magnitude, Is.LessThan(1e-12));
+                }
+            }
+        }
+
+        [Test]
+        public void FrenetFrame_Line_NormalAndBinormalAreZero_TangentMatches()
+        {
+            // Straight line from (0,0,0) to (6,8,0)
+            int degree = 2;
+            double[] knots = [0, 0, 0, 1, 1, 1];
+            ControlPoint[] controlPoints = [
+                new ControlPoint(0.0, 0.0, 0.0, 1),
+                new ControlPoint(3.0, 4.0, 0.0, 1),
+                new ControlPoint(6.0, 8.0, 0.0, 1)
+            ];
+            var curve = new NurbsCurve(degree, new KnotVector(knots, degree), controlPoints);
+
+            double[] sampleUs = [0.0, 0.25, 0.5, 0.75, 0.999999];//u=1.0 case is unstable
+            const double tol = 1e-8;
+            var expectedT = new Vector3Double(3.0 / 5.0, 4.0 / 5.0, 0.0); // normalized (6,8,0)
+
+            foreach (var u in sampleUs)
+            {
+                (var t, var n) = CurveAnalyzer.EvaluateTangentNormal(curve, u);
+
+                using (Assert.EnterMultipleScope())
+                {
+                    // Tangent should match expected normalized direction
+                    Assert.That(Math.Abs(t.X - expectedT.X), Is.LessThan(tol));
+                    Assert.That(Math.Abs(t.Y - expectedT.Y), Is.LessThan(tol));
+                    Assert.That(Math.Abs(t.Z - expectedT.Z), Is.LessThan(tol));
+
+                    // For a straight line, second derivative is zero -> normal should be zero vectors
+                    Assert.That(n.magnitude, Is.EqualTo(0.0).Within(tol));
+                }
+
+                // Ensure helper methods return same vectors
+                var t2 = CurveAnalyzer.EvaluateTangent(curve, u);
+                var n2 = CurveAnalyzer.EvaluateNormal(curve, u);
+                var dt = new Vector3Double(t2.X - t.X, t2.Y - t.Y, t2.Z - t.Z);
+                var dn = new Vector3Double(n2.X - n.X, n2.Y - n.Y, n2.Z - n.Z);
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(dt.magnitude, Is.LessThan(1e-12));
+                    Assert.That(dn.magnitude, Is.LessThan(1e-12));
+                }
+            }
+        }
+
         [Test]
         public void FindClosestPoint_OnStraightLine_ReturnsPerpendicularPoint()
         {
@@ -21,7 +179,7 @@ namespace UnitTests.Analysis
                 new ControlPoint(new Vector3Double(0, 0, 0), 1),
                 new ControlPoint(new Vector3Double(10, 0, 0), 1)
             };
-            var knotVector = new KnotVector(new[] { 0.0, 0.0, 1.0, 1.0 }, 1);
+            var knotVector = new KnotVector([0.0, 0.0, 1.0, 1.0], 1);
             var curve = new NurbsCurve(1, knotVector, controlPoints);
 
             // Target point above the line
@@ -30,12 +188,15 @@ namespace UnitTests.Analysis
             // Find closest point using operator
             var (t, point, distance) = CurveAnalyzer.FindClosestPoint(curve, target);
 
-            // Should find point at (5,0,0)
-            Assert.That(point.X, Is.EqualTo(5.0).Within(1e-5), "X coordinate should be 5");
-            Assert.That(point.Y, Is.EqualTo(0.0).Within(1e-5), "Y coordinate should be 0");
-            Assert.That(point.Z, Is.EqualTo(0.0).Within(1e-5), "Z coordinate should be 0");
-            Assert.That(distance, Is.EqualTo(3.0).Within(1e-5), "Distance should be 3");
-            Assert.That(t, Is.EqualTo(0.5).Within(1e-3), "Parameter should be 0.5");
+            using (Assert.EnterMultipleScope())
+            {
+                // Should find point at (5,0,0)
+                Assert.That(point.X, Is.EqualTo(5.0).Within(1e-5), "X coordinate should be 5");
+                Assert.That(point.Y, Is.EqualTo(0.0).Within(1e-5), "Y coordinate should be 0");
+                Assert.That(point.Z, Is.EqualTo(0.0).Within(1e-5), "Z coordinate should be 0");
+                Assert.That(distance, Is.EqualTo(3.0).Within(1e-5), "Distance should be 3");
+                Assert.That(t, Is.EqualTo(0.5).Within(1e-3), "Parameter should be 0.5");
+            }
         }
 
         [Test]
@@ -47,7 +208,7 @@ namespace UnitTests.Analysis
                 new ControlPoint(new Vector3Double(0, 0, 0), 1),
                 new ControlPoint(new Vector3Double(10, 0, 0), 1)
             };
-            var knotVector = new KnotVector(new[] { 0.0, 0.0, 1.0, 1.0 }, 1);
+            var knotVector = new KnotVector([0.0, 0.0, 1.0, 1.0], 1);
             var curve = new NurbsCurve(1, knotVector, controlPoints);
 
             // Target point above the line
@@ -56,11 +217,14 @@ namespace UnitTests.Analysis
             // Find closest point using instance method
             var (t, point, distance) = curve.FindClosestPoint(target);
 
-            // Should find point at (5,0,0)
-            Assert.That(point.X, Is.EqualTo(5.0).Within(1e-5), "X coordinate should be 5");
-            Assert.That(point.Y, Is.EqualTo(0.0).Within(1e-5), "Y coordinate should be 0");
-            Assert.That(point.Z, Is.EqualTo(0.0).Within(1e-5), "Z coordinate should be 0");
-            Assert.That(distance, Is.EqualTo(3.0).Within(1e-5), "Distance should be 3");
+            using (Assert.EnterMultipleScope())
+            {
+                // Should find point at (5,0,0)
+                Assert.That(point.X, Is.EqualTo(5.0).Within(1e-5), "X coordinate should be 5");
+                Assert.That(point.Y, Is.EqualTo(0.0).Within(1e-5), "Y coordinate should be 0");
+                Assert.That(point.Z, Is.EqualTo(0.0).Within(1e-5), "Z coordinate should be 0");
+                Assert.That(distance, Is.EqualTo(3.0).Within(1e-5), "Distance should be 3");
+            }
         }
 
         [Test]
@@ -75,7 +239,7 @@ namespace UnitTests.Analysis
                 new ControlPoint(new Vector3Double(5, 5, 0), w),
                 new ControlPoint(new Vector3Double(0, 5, 0), 1)
             };
-            var knotVector = new KnotVector(new[] { 0.0, 0.0, 0.0, 1.0, 1.0, 1.0 }, 2);
+            var knotVector = new KnotVector([0.0, 0.0, 0.0, 1.0, 1.0, 1.0], 2);
             var curve = new NurbsCurve(2, knotVector, controlPoints);
 
             // Target point at origin (center of circle)
@@ -101,7 +265,7 @@ namespace UnitTests.Analysis
                 new ControlPoint(new Vector3Double(0, 0, 0), 1),
                 new ControlPoint(new Vector3Double(10, 0, 0), 1)
             };
-            var knotVector = new KnotVector(new[] { 0.0, 0.0, 1.0, 1.0 }, 1);
+            var knotVector = new KnotVector([0.0, 0.0, 1.0, 1.0], 1);
             var curve = new NurbsCurve(1, knotVector, controlPoints);
 
             // Target point
@@ -110,10 +274,13 @@ namespace UnitTests.Analysis
             // Find closest point with good initial guess
             var (t, point, distance) = CurveAnalyzer.FindClosestPoint(curve, target, initialT: 0.7);
 
-            // Should find point at (7,0,0)
-            Assert.That(point.X, Is.EqualTo(7.0).Within(1e-5), "X coordinate should be 7");
-            Assert.That(point.Y, Is.EqualTo(0.0).Within(1e-5), "Y coordinate should be 0");
-            Assert.That(distance, Is.EqualTo(2.0).Within(1e-5), "Distance should be 2");
+            using (Assert.EnterMultipleScope())
+            {
+                // Should find point at (7,0,0)
+                Assert.That(point.X, Is.EqualTo(7.0).Within(1e-5), "X coordinate should be 7");
+                Assert.That(point.Y, Is.EqualTo(0.0).Within(1e-5), "Y coordinate should be 0");
+                Assert.That(distance, Is.EqualTo(2.0).Within(1e-5), "Distance should be 2");
+            }
         }
 
         [Test]
@@ -125,7 +292,7 @@ namespace UnitTests.Analysis
                 new ControlPoint(new Vector3Double(0, 0, 0), 1),
                 new ControlPoint(new Vector3Double(10, 0, 0), 1)
             };
-            var knotVector = new KnotVector(new[] { 0.0, 0.0, 1.0, 1.0 }, 1);
+            var knotVector = new KnotVector([0.0, 0.0, 1.0, 1.0], 1);
             var curve = new NurbsCurve(1, knotVector, controlPoints);
 
             var target = new Vector3Double(7, 2, 0);
@@ -133,8 +300,11 @@ namespace UnitTests.Analysis
             // Use instance method with initial guess
             var (t, point, distance) = curve.FindClosestPointWithInitialGuess(target, initialT: 0.7);
 
-            Assert.That(point.X, Is.EqualTo(7.0).Within(1e-5));
-            Assert.That(distance, Is.EqualTo(2.0).Within(1e-5));
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(point.X, Is.EqualTo(7.0).Within(1e-5));
+                Assert.That(distance, Is.EqualTo(2.0).Within(1e-5));
+            }
         }
 
         [Test]
@@ -147,7 +317,7 @@ namespace UnitTests.Analysis
                 new ControlPoint(new Vector3Double(5, 10, 0), 1),
                 new ControlPoint(new Vector3Double(10, 0, 0), 1)
             };
-            var knotVector = new KnotVector(new[] { 0.0, 0.0, 0.0, 1.0, 1.0, 1.0 }, 2);
+            var knotVector = new KnotVector([0.0, 0.0, 0.0, 1.0, 1.0, 1.0], 2);
             var curve = new NurbsCurve(2, knotVector, controlPoints);
 
             // Target point near the apex
@@ -156,10 +326,13 @@ namespace UnitTests.Analysis
             // Find closest point
             var (t, point, distance) = CurveAnalyzer.FindClosestPoint(curve, target);
 
-            // Point should be near the apex of the parabola
-            Assert.That(point.X, Is.EqualTo(5.0).Within(0.5), "X coordinate should be near 5");
-            Assert.That(point.Y, Is.GreaterThan(4.0), "Y coordinate should be significantly positive");
-            Assert.That(distance, Is.LessThan(2.0), "Distance should be reasonably small");
+            using (Assert.EnterMultipleScope())
+            {
+                // Point should be near the apex of the parabola
+                Assert.That(point.X, Is.EqualTo(5.0).Within(0.5), "X coordinate should be near 5");
+                Assert.That(point.Y, Is.GreaterThan(4.0), "Y coordinate should be significantly positive");
+                Assert.That(distance, Is.LessThan(2.0), "Distance should be reasonably small");
+            }
         }
 
         [Test]
@@ -171,7 +344,7 @@ namespace UnitTests.Analysis
                 new ControlPoint(new Vector3Double(0, 0, 0), 1),
                 new ControlPoint(new Vector3Double(10, 0, 0), 1)
             };
-            var knotVector = new KnotVector(new[] { 0.0, 0.0, 1.0, 1.0 }, 1);
+            var knotVector = new KnotVector([0.0, 0.0, 1.0, 1.0], 1);
             var curve = new NurbsCurve(1, knotVector, controlPoints);
 
             // Target point beyond the start
@@ -179,9 +352,12 @@ namespace UnitTests.Analysis
 
             var (t, point, distance) = CurveAnalyzer.FindClosestPoint(curve, target);
 
-            // Should clamp to start point (0,0,0)
-            Assert.That(point.X, Is.EqualTo(0.0).Within(1e-5), "Should return start point");
-            Assert.That(point.Y, Is.EqualTo(0.0).Within(1e-5));
+            using (Assert.EnterMultipleScope())
+            {
+                // Should clamp to start point (0,0,0)
+                Assert.That(point.X, Is.EqualTo(0.0).Within(1e-5), "Should return start point");
+                Assert.That(point.Y, Is.EqualTo(0.0).Within(1e-5));
+            }
         }
 
         [Test]
@@ -193,7 +369,7 @@ namespace UnitTests.Analysis
                 new ControlPoint(new Vector3Double(0, 0, 0), 1),
                 new ControlPoint(new Vector3Double(10, 0, 0), 1)
             };
-            var knotVector = new KnotVector(new[] { 0.0, 0.0, 1.0, 1.0 }, 1);
+            var knotVector = new KnotVector([0.0, 0.0, 1.0, 1.0], 1);
             var curve = new NurbsCurve(1, knotVector, controlPoints);
 
             // Target point exactly on the curve
@@ -201,9 +377,12 @@ namespace UnitTests.Analysis
 
             var (t, point, distance) = CurveAnalyzer.FindClosestPoint(curve, target);
 
-            // Distance should be essentially zero
-            Assert.That(distance, Is.LessThan(1e-5), "Distance should be near zero");
-            Assert.That(point.X, Is.EqualTo(5.0).Within(1e-5));
+            using (Assert.EnterMultipleScope())
+            {
+                // Distance should be essentially zero
+                Assert.That(distance, Is.LessThan(1e-5), "Distance should be near zero");
+                Assert.That(point.X, Is.EqualTo(5.0).Within(1e-5));
+            }
         }
 
         [Test]
@@ -216,7 +395,7 @@ namespace UnitTests.Analysis
                 new ControlPoint(new Vector3Double(5, 5, 5), 1),
                 new ControlPoint(new Vector3Double(10, 0, 10), 1)
             };
-            var knotVector = new KnotVector(new[] { 0.0, 0.0, 0.0, 1.0, 1.0, 1.0 }, 2);
+            var knotVector = new KnotVector([0.0, 0.0, 0.0, 1.0, 1.0, 1.0], 2);
             var curve = new NurbsCurve(2, knotVector, controlPoints);
 
             // Target point in 3D space
