@@ -167,6 +167,100 @@ namespace NurbsSharp.Analysis
             return u;
         }
 
+        /// <summary>
+        /// (en) Sample points at uniform arc-length intervals along the curve.
+        /// (ja) 曲線上で等弧長間隔の点列をサンプリングします。
+        /// </summary>
+        /// <param name="count">Number of points to sample (>= 2)</param>
+        /// <param name="includeEndpoints">Include start and end points explicitly (default: true)</param>
+        /// <returns>Array of 3D points sampled at uniform arc-length intervals</returns>
+        /// <remarks>
+        /// Example: For CAM toolpath with 100 points along a curve:
+        /// <code>
+        /// var param = CurveAnalyzer.BuildArcLengthParameterization(curve, 20);
+        /// var points = param.GetPointsAtUniformArcLength(100);
+        /// </code>
+        /// </remarks>
+        public Vector3Double[] GetPointsAtUniformArcLength(int count, bool includeEndpoints = true)
+        {
+            if (count < 2)
+                throw new ArgumentOutOfRangeException(nameof(count), "count must be >= 2.");
+
+            if (TotalLength <= 0.0)
+                return new[] { CurveEvaluator.Evaluate(_curve, UMin) };
+
+            var points = new Vector3Double[count];
+
+            if (includeEndpoints)
+            {
+                // First and last points at exact endpoints
+                points[0] = CurveEvaluator.Evaluate(_curve, UMin);
+                points[count - 1] = CurveEvaluator.Evaluate(_curve, UMax);
+
+                // Interior points at uniform arc-length intervals
+                for (int i = 1; i < count - 1; i++)
+                {
+                    double s = TotalLength * i / (count - 1);
+                    double u = GetParameterAtArcLength(s);
+                    points[i] = CurveEvaluator.Evaluate(_curve, u);
+                }
+            }
+            else
+            {
+                // All points at uniform intervals (excluding exact endpoints)
+                double step = TotalLength / (count + 1);
+                for (int i = 0; i < count; i++)
+                {
+                    double s = step * (i + 1);
+                    double u = GetParameterAtArcLength(s);
+                    points[i] = CurveEvaluator.Evaluate(_curve, u);
+                }
+            }
+
+            return points;
+        }
+
+        /// <summary>
+        /// (en) Sample parameters at uniform arc-length intervals.
+        /// (ja) 等弧長間隔のパラメータ値をサンプリングします。
+        /// </summary>
+        /// <param name="count">Number of parameters to sample (>= 2)</param>
+        /// <param name="includeEndpoints">Include UMin and UMax explicitly</param>
+        /// <returns>Array of parameter values at uniform arc-length intervals</returns>
+        public double[] GetParametersAtUniformArcLength(int count, bool includeEndpoints = true)
+        {
+            if (count < 2)
+                throw new ArgumentOutOfRangeException(nameof(count), "count must be >= 2.");
+
+            if (TotalLength <= 0.0)
+                return new[] { UMin };
+
+            var parameters = new double[count];
+
+            if (includeEndpoints)
+            {
+                parameters[0] = UMin;
+                parameters[count - 1] = UMax;
+
+                for (int i = 1; i < count - 1; i++)
+                {
+                    double s = TotalLength * i / (count - 1);
+                    parameters[i] = GetParameterAtArcLength(s);
+                }
+            }
+            else
+            {
+                double step = TotalLength / (count + 1);
+                for (int i = 0; i < count; i++)
+                {
+                    double s = step * (i + 1);
+                    parameters[i] = GetParameterAtArcLength(s);
+                }
+            }
+
+            return parameters;
+        }
+
         private int FindSegmentByU(double u)
         {
             int idx = Array.BinarySearch(_us, u);

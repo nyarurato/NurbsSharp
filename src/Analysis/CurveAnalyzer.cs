@@ -16,7 +16,12 @@ namespace NurbsSharp.Analysis
         /// (ja) パラメータuと弧長sの間の等弧長パラメータ化ヘルパを構築します。
         /// </summary>
         /// <param name="curve">Target curve</param>
-        /// <param name="subdivisionsPerSpan">Subdivisions per non-zero knot span (>= 1)</param>
+        /// <param name="subdivisionsPerSpan">Subdivisions per non-zero knot span (>= 1). 
+        /// Recommended: 10-20 for typical curves, 50-100 for high-curvature curves.</param>
+        /// <remarks>
+        /// Higher subdivisionsPerSpan improves s-to-u conversion accuracy but increases memory and build time.
+        /// For CAM toolpath generation, 20-30 is typically sufficient.
+        /// </remarks>
         public static CurveArcLengthParameterization BuildArcLengthParameterization(NurbsCurve curve, int subdivisionsPerSpan = 10)
         {
             return CurveArcLengthParameterization.Build(curve, subdivisionsPerSpan);
