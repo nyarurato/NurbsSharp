@@ -175,5 +175,108 @@ namespace UnitTests.Operation
                 Assert.That(isoV.Degree, Is.EqualTo(face.DegreeU));
             }
         }
+
+        /// <summary>
+        /// FindClosestPoint on a flat planar surface returns the projected point.
+        /// </summary>
+        [Test]
+        public void FindClosestPoint_PlanarSurface_ProjectsCorrectly()
+        {
+            // Flat XY-plane surface from (0,0,0) to (10,10,0)
+            var face = PrimitiveFactory.CreateFace(
+                new Vector3Double(0, 0, 0),
+                new Vector3Double(10, 0, 0),
+                new Vector3Double(0, 10, 0),
+                new Vector3Double(10, 10, 0));
+
+            // Target point above the center of the surface
+            var target = new Vector3Double(5, 5, 3);
+            var result = SurfaceOperator.FindClosestPoint(face, target);
+
+            // The closest point should be the projection onto the plane (z=0)
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(result.point.X, Is.EqualTo(5.0).Within(0.01));
+                Assert.That(result.point.Y, Is.EqualTo(5.0).Within(0.01));
+                Assert.That(result.point.Z, Is.EqualTo(0.0).Within(0.01));
+                Assert.That(result.distance, Is.EqualTo(3.0).Within(0.01));
+            }
+        }
+
+        /// <summary>
+        /// FindClosestPoint with initial guess on a planar surface.
+        /// </summary>
+        [Test]
+        public void FindClosestPoint_PlanarSurface_WithInitialGuess()
+        {
+            var face = PrimitiveFactory.CreateFace(
+                new Vector3Double(0, 0, 0),
+                new Vector3Double(10, 0, 0),
+                new Vector3Double(0, 10, 0),
+                new Vector3Double(10, 10, 0));
+
+            var target = new Vector3Double(2, 8, 1);
+            var result = SurfaceOperator.FindClosestPoint(face, target, 0.2, 0.8);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(result.point.X, Is.EqualTo(2.0).Within(0.05));
+                Assert.That(result.point.Y, Is.EqualTo(8.0).Within(0.05));
+                Assert.That(result.point.Z, Is.EqualTo(0.0).Within(0.05));
+                Assert.That(result.distance, Is.EqualTo(1.0).Within(0.05));
+            }
+        }
+
+        /// <summary>
+        /// FindClosestPoint on a sphere surface: the closest point should lie on the sphere.
+        /// Also verifies that explicit tolerance/gridDivisions produce the same result as defaults.
+        /// </summary>
+        [Test]
+        public void FindClosestPoint_Sphere_ClosestPointLiesOnSphere()
+        {
+            double radius = 5.0;
+            var sphere = PrimitiveFactory.CreateSphere(radius);
+
+            // Target point outside the sphere along the X axis
+            var target = new Vector3Double(8, 0, 0);
+
+            // With explicit parameters
+            var resultExplicit = SurfaceOperator.FindClosestPoint(sphere, target, tolerance: 1e-5, gridDivisions: 6);
+
+            // With default parameters (tolerance=1e-6, gridDivisions=5)
+            var resultDefault = SurfaceOperator.FindClosestPoint(sphere, target);
+
+            // Both results should be consistent (both should find a point on the sphere)
+            double distExplicit = Math.Sqrt(
+                resultExplicit.point.X * resultExplicit.point.X +
+                resultExplicit.point.Y * resultExplicit.point.Y +
+                resultExplicit.point.Z * resultExplicit.point.Z);
+            double distDefault = Math.Sqrt(
+                resultDefault.point.X * resultDefault.point.X +
+                resultDefault.point.Y * resultDefault.point.Y +
+                resultDefault.point.Z * resultDefault.point.Z);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(distExplicit, Is.EqualTo(radius).Within(0.1));
+                Assert.That(distDefault,  Is.EqualTo(radius).Within(0.1));
+                Assert.That(resultExplicit.distance, Is.EqualTo(3.0).Within(0.2)); // 8 - 5 = 3
+                Assert.That(resultDefault.distance,  Is.EqualTo(3.0).Within(0.2));
+                // Explicit and default converge to same result within reasonable tolerance
+                Assert.That(resultExplicit.point.DistanceTo(resultDefault.point), Is.LessThan(0.5));
+            }
+        }
+
+        /// <summary>
+        /// FindClosestPoint with null surface throws ArgumentNullException.
+        /// </summary>
+        [Test]
+        public void FindClosestPoint_NullSurface_Throws()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+            {
+                SurfaceOperator.FindClosestPoint(null!, new Vector3Double(1, 1, 1));
+            });
+        }
     }
 }

@@ -170,6 +170,46 @@ namespace UnitTests.Generation
                         
         }
 
+        [Test]
+        public void PrimitiveTestLine()
+        {
+            var p0 = new Vector3Double(0, 0, 0);
+            var p1 = new Vector3Double(3, 4, 0);
+            var line = PrimitiveFactory.CreateLine(p0, p1);
+
+            // A line is degree-1 with 2 control points
+            Assert.That(line.Degree, Is.EqualTo(1));
+            Assert.That(line.ControlPoints, Has.Length.EqualTo(2));
+            Assert.That(line.KnotVector.Knots, Has.Length.EqualTo(4));
+
+            // Start and end interpolation
+            var start = line.GetPos(0.0);
+            var end   = line.GetPos(1.0);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(start.X, Is.EqualTo(p0.X).Within(1e-10));
+                Assert.That(start.Y, Is.EqualTo(p0.Y).Within(1e-10));
+                Assert.That(start.Z, Is.EqualTo(p0.Z).Within(1e-10));
+                Assert.That(end.X, Is.EqualTo(p1.X).Within(1e-10));
+                Assert.That(end.Y, Is.EqualTo(p1.Y).Within(1e-10));
+                Assert.That(end.Z, Is.EqualTo(p1.Z).Within(1e-10));
+            }
+
+            // Midpoint should be the average
+            var mid = line.GetPos(0.5);
+            Assert.That(mid.X, Is.EqualTo(1.5).Within(1e-10));
+            Assert.That(mid.Y, Is.EqualTo(2.0).Within(1e-10));
+
+            // All points lie on the segment (linear interpolation)
+            for (int i = 0; i <= 10; i++)
+            {
+                double t = i / 10.0;
+                var pt = line.GetPos(t);
+                Assert.That(pt.X, Is.EqualTo(p0.X + t * (p1.X - p0.X)).Within(1e-10));
+                Assert.That(pt.Y, Is.EqualTo(p0.Y + t * (p1.Y - p0.Y)).Within(1e-10));
+            }
+        }
+
         private static void TestOutputIGES(List<NurbsSurface> surface, string filePath= "PrimitiveTestFace.igs")
         {
             using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
