@@ -57,8 +57,8 @@ namespace NurbsSharp.Core
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value, paramName);
 
 #else
-            if (value < 0)
-                throw new ArgumentOutOfRangeException(paramName, $"{paramName} cannot be negative.");
+            if (value <= 0)
+                throw new ArgumentOutOfRangeException(paramName, $"{paramName} must be greater than zero.");
 #endif
         }
 
@@ -76,7 +76,7 @@ namespace NurbsSharp.Core
 
 #else
             if (value < 0)
-                throw new ArgumentOutOfRangeException(paramName, $"{paramName} must be greater than zero.");
+                throw new ArgumentOutOfRangeException(paramName, $"{paramName} must be non-negative.");
 #endif
         }
     }

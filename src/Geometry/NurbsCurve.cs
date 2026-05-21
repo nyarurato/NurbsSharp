@@ -97,22 +97,22 @@ namespace NurbsSharp.Geometry
         /// <returns></returns>
         public double GetLength()
         {
-            double start_u = KnotVector.Knots[0];
-            double end_u = KnotVector.Knots[KnotVector.Length - 1];
+            double startU = KnotVector.Knots[0];
+            double endU = KnotVector.Knots[KnotVector.Length - 1];
 
-            double len = CurveAnalyzer.CurveLength(this, start_u,end_u);
+            double len = CurveAnalyzer.CurveLength(this, startU, endU);
             return len;
         }
         /// <summary>
         /// (en) Return the calulated length of the NURBS curve between the specified parameters
         /// (ja) 指定したパラメータ間のNURBS曲線の計算された長さを返します
         /// </summary>
-        /// <param name="start_u"></param>
-        /// <param name="end_u"></param>
+        /// <param name="startU"></param>
+        /// <param name="endU"></param>
         /// <returns></returns>
-        public double GetLength(double start_u, double end_u)
+        public double GetLength(double startU, double endU)
         {
-            double len = CurveAnalyzer.CurveLength(this, start_u, end_u);
+            double len = CurveAnalyzer.CurveLength(this, startU, endU);
             return len;
         }
 
