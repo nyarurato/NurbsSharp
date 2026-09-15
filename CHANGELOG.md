@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - B-spline basis, curve, and surface derivatives at the maximum knot
+- Curve continuity evaluation at connections to use exact endpoint derivatives
 - Surface-plane intersection refinement stepping outside the surface parameter domain
 
 ### Removed
