@@ -155,9 +155,13 @@ namespace UnitTests.Analysis
 
             var result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
 
-            Assert.That(result.IsReversed, Is.True);
-            // Antiparallel tangents are still G1 (geometrically continuous in opposite direction)
-            Assert.That(result.Continuity, Is.GreaterThanOrEqualTo(ContinuityType.G1));
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.IsReversed, Is.True);
+                Assert.That(result.Continuity, Is.EqualTo(ContinuityType.C0));
+                Assert.That(result.TangentAngle, Is.EqualTo(Math.PI).Within(1e-12));
+                Assert.That(result.TangentRatio, Is.EqualTo(1.0).Within(1e-12));
+            });
         }
 
         [Test]
@@ -308,6 +312,112 @@ namespace UnitTests.Analysis
                 Assert.That(connection.CurvatureAngle, Is.EqualTo(explicitEndpoints.CurvatureAngle).Within(1e-12));
                 Assert.That(connection.CurvatureRatio, Is.EqualTo(explicitEndpoints.CurvatureRatio).Within(1e-12));
                 Assert.That(connection.IsReversed, Is.EqualTo(explicitEndpoints.IsReversed));
+            });
+        }
+
+        [Test]
+        public void EvaluateCurveContinuity_G2_IsInvariantToParameterSpeedAndTangentialAcceleration()
+        {
+            // At the connection, curve1 has C'=(1,0,0), C''=(0,2,0).
+            var curve1 = new NurbsCurve(
+                2,
+                new KnotVector([0.0, 0.0, 0.0, 1.0, 1.0, 1.0], 2),
+                [
+                    new ControlPoint(new Vector3Double(-1.0, 1.0, 0.0), 1.0),
+                    new ControlPoint(new Vector3Double(-0.5, 0.0, 0.0), 1.0),
+                    new ControlPoint(new Vector3Double(0.0, 0.0, 0.0), 1.0),
+                ]);
+
+            // At the connection, curve2 has C'=(2,0,0), C''=(6,8,0).
+            // Removing the tangential component and dividing by |C'|^2 gives
+            // the same curvature vector (0,2,0) for both curves.
+            var curve2 = new NurbsCurve(
+                2,
+                new KnotVector([0.0, 0.0, 0.0, 1.0, 1.0, 1.0], 2),
+                [
+                    new ControlPoint(new Vector3Double(0.0, 0.0, 0.0), 1.0),
+                    new ControlPoint(new Vector3Double(1.0, 0.0, 0.0), 1.0),
+                    new ControlPoint(new Vector3Double(5.0, 4.0, 0.0), 1.0),
+                ]);
+
+            ContinuityResult result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Continuity, Is.EqualTo(ContinuityType.G2));
+                Assert.That(result.TangentAngle, Is.EqualTo(0.0).Within(1e-12));
+                Assert.That(result.TangentRatio, Is.EqualTo(2.0).Within(1e-12));
+                Assert.That(result.CurvatureAngle, Is.EqualTo(0.0).Within(1e-12));
+                Assert.That(result.CurvatureRatio, Is.EqualTo(1.0).Within(1e-12));
+            });
+        }
+
+        [Test]
+        public void EvaluateCurveContinuity_C1_DoesNotImplyG2WhenCurvatureMagnitudesDiffer()
+        {
+            // Both curves have C'=(1,0,0), but their curvature vectors are
+            // (0,2,0) and (0,4,0), respectively.
+            var curve1 = new NurbsCurve(
+                2,
+                new KnotVector([0.0, 0.0, 0.0, 1.0, 1.0, 1.0], 2),
+                [
+                    new ControlPoint(new Vector3Double(-1.0, 1.0, 0.0), 1.0),
+                    new ControlPoint(new Vector3Double(-0.5, 0.0, 0.0), 1.0),
+                    new ControlPoint(new Vector3Double(0.0, 0.0, 0.0), 1.0),
+                ]);
+
+            var curve2 = new NurbsCurve(
+                2,
+                new KnotVector([0.0, 0.0, 0.0, 1.0, 1.0, 1.0], 2),
+                [
+                    new ControlPoint(new Vector3Double(0.0, 0.0, 0.0), 1.0),
+                    new ControlPoint(new Vector3Double(0.5, 0.0, 0.0), 1.0),
+                    new ControlPoint(new Vector3Double(1.0, 2.0, 0.0), 1.0),
+                ]);
+
+            ContinuityResult result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Continuity, Is.EqualTo(ContinuityType.C1));
+                Assert.That(result.TangentRatio, Is.EqualTo(1.0).Within(1e-12));
+                Assert.That(result.CurvatureAngle, Is.EqualTo(0.0).Within(1e-12));
+                Assert.That(result.CurvatureRatio, Is.EqualTo(2.0).Within(1e-12));
+            });
+        }
+
+        [Test]
+        public void EvaluateCurveContinuity_G2_DoesNotImplyC2WhenSecondDerivativesDiffer()
+        {
+            // Both curves have C'=(1,0,0) and curvature vector (0,2,0).
+            // curve2 has the additional tangential acceleration (3,0,0), so
+            // the raw second derivatives differ and C2 does not hold.
+            var curve1 = new NurbsCurve(
+                2,
+                new KnotVector([0.0, 0.0, 0.0, 1.0, 1.0, 1.0], 2),
+                [
+                    new ControlPoint(new Vector3Double(-1.0, 1.0, 0.0), 1.0),
+                    new ControlPoint(new Vector3Double(-0.5, 0.0, 0.0), 1.0),
+                    new ControlPoint(new Vector3Double(0.0, 0.0, 0.0), 1.0),
+                ]);
+
+            var curve2 = new NurbsCurve(
+                2,
+                new KnotVector([0.0, 0.0, 0.0, 1.0, 1.0, 1.0], 2),
+                [
+                    new ControlPoint(new Vector3Double(0.0, 0.0, 0.0), 1.0),
+                    new ControlPoint(new Vector3Double(0.5, 0.0, 0.0), 1.0),
+                    new ControlPoint(new Vector3Double(2.5, 1.0, 0.0), 1.0),
+                ]);
+
+            ContinuityResult result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Continuity, Is.EqualTo(ContinuityType.G2));
+                Assert.That(result.TangentRatio, Is.EqualTo(1.0).Within(1e-12));
+                Assert.That(result.CurvatureAngle, Is.EqualTo(0.0).Within(1e-12));
+                Assert.That(result.CurvatureRatio, Is.EqualTo(1.0).Within(1e-12));
             });
         }
     }
