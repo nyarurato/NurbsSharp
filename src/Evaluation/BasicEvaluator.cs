@@ -107,21 +107,24 @@ namespace NurbsSharp.Evaluation
         /// <returns></returns>
         public static double BSplineBasisFunction(int i, int p, double u, double[] knots)
         {
-    
-            if (LinAlg.ApproxEqual(u, knots[^1]))
-            {
-                if(i == knots.Length - p - 2)
-                    return 1.0;
-                else
-                    return 0.0;
-            }
-
             /*
              * N_{i,0}(u) = { 1 if u_i <= u < u_{i+1}
              * N_{i,p}(u) = (u - u_i)/(u_{i+p} - u_i) * N_{i,p-1}(u) + (u_{i+p+1} - u)/(u_{i+p+1} - u_{i+1}) * N_{i+1,p-1}(u) 
              */
             if (p == 0)
             {
+                // At the exact maximum knot, use the non-empty span immediately
+                // to its left. This preserves the left-hand endpoint value while
+                // allowing higher-degree derivative recurrences to remain valid.
+                if (u == knots[^1])
+                {
+                    int lastNonZeroSpan = knots.Length - 2;
+                    while (lastNonZeroSpan >= 0 && knots[lastNonZeroSpan] == knots[^1])
+                        lastNonZeroSpan--;
+
+                    return i == lastNonZeroSpan ? 1.0 : 0.0;
+                }
+
                 if (knots[i] <= u && u < knots[i + 1])
                     return 1.0;
                 else
