@@ -288,7 +288,11 @@ namespace UnitTests.Intersection
 
             // Check bounding box of intersection curve
             var curve = curves[0];
-            var bbox = curve.BoundingBox;
+            double curveMin = curve.KnotVector.Knots[curve.Degree];
+            double curveMax = curve.KnotVector.Knots[^(curve.Degree + 1)];
+            var sampledPoints = Enumerable.Range(0, 1001)
+                .Select(i => CurveEvaluator.Evaluate(curve, curveMin + (curveMax - curveMin) * i / 1000.0));
+            var bbox = BoundingBox.FromPoints(sampledPoints);
 
             // Surface 1 Y range is [0, 2], Surface 2 Y range is [-1, 3]
             // Intersection should span Y approximately [0, 2]
