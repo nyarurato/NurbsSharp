@@ -1,3 +1,4 @@
+using System;
 using NUnit.Framework;
 using NurbsSharp.Evaluation;
 using UnitTests.TestInfrastructure;
@@ -26,9 +27,8 @@ namespace UnitTests.Evaluation
                 NumericAssert.Scalar(item.n1, _basis.Value(1, 1, item.u, knots), TestTolerances.AnalyticScalar, 1.0, $"N1 at u={item.u}");
             }
 
-            // N0=(5-u)/3 and N1=(u-2)/3. The maximum-endpoint derivative is
-            // intentionally not committed here because PB-001 currently returns zero there.
-            foreach (double u in new[] { 2.0, 3.5 })
+            // N0=(5-u)/3 and N1=(u-2)/3. At u=5 these are left derivatives.
+            foreach (double u in new[] { 2.0, 3.5, Math.BitDecrement(5.0), 5.0 })
             {
                 NumericAssert.Scalar(-1.0 / 3.0, _basis.Derivative(0, 1, u, knots, 1), TestTolerances.AnalyticFirstDerivative, 1.0 / 3.0, $"N0' at u={u}");
                 NumericAssert.Scalar(1.0 / 3.0, _basis.Derivative(1, 1, u, knots, 1), TestTolerances.AnalyticFirstDerivative, 1.0 / 3.0, $"N1' at u={u}");
@@ -66,6 +66,24 @@ namespace UnitTests.Evaluation
             {
                 for (int i = 0; i < 3; i++)
                     NumericAssert.Scalar(item.values[i], _basis.Value(i, 2, item.u, knots), TestTolerances.AnalyticScalar, 1.0, $"N{i} at u={item.u}");
+            }
+        }
+
+        [Test]
+        public void QuadraticBernstein_MaximumEndpointHasLeftDerivatives()
+        {
+            double[] knots = [0.0, 0.0, 0.0, 1.0, 1.0, 1.0];
+
+            foreach (double u in new[] { Math.BitDecrement(1.0), 1.0 })
+            {
+                double[] expectedFirst = [-2.0 * (1.0 - u), 2.0 - 4.0 * u, 2.0 * u];
+                double[] expectedSecond = [2.0, -4.0, 2.0];
+
+                for (int i = 0; i < 3; i++)
+                {
+                    NumericAssert.Scalar(expectedFirst[i], _basis.Derivative(i, 2, u, knots, 1), TestTolerances.AnalyticFirstDerivative, 2.0, $"N{i}' at maximum side u={u:R}");
+                    NumericAssert.Scalar(expectedSecond[i], _basis.Derivative(i, 2, u, knots, 2), TestTolerances.AnalyticSecondDerivative, 4.0, $"N{i}'' at maximum side u={u:R}");
+                }
             }
         }
 

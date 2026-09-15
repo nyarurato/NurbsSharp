@@ -23,6 +23,13 @@ namespace UnitTests.Evaluation
             NumericAssert.Vector(new Vector3Double(4.0 / 3.0, 0.0, 0.0), first.u_deriv, TestTolerances.AnalyticFirstDerivative, 4.0 / 3.0, "S_u");
             NumericAssert.Vector(new Vector3Double(0.0, 3.0 / 4.0, 0.0), first.v_deriv, TestTolerances.AnalyticFirstDerivative, 3.0 / 4.0, "S_v");
 
+            foreach ((double u, double v) in new[] { (Math.BitDecrement(5.0), Math.BitDecrement(14.0)), (5.0, 14.0) })
+            {
+                var endpointFirst = SurfaceEvaluator.EvaluateFirstDerivative(surface, u, v);
+                NumericAssert.Vector(new Vector3Double(4.0 / 3.0, 0.0, 0.0), endpointFirst.u_deriv, TestTolerances.AnalyticFirstDerivative, 4.0 / 3.0, $"endpoint S_u({u:R},{v:R})");
+                NumericAssert.Vector(new Vector3Double(0.0, 3.0 / 4.0, 0.0), endpointFirst.v_deriv, TestTolerances.AnalyticFirstDerivative, 3.0 / 4.0, $"endpoint S_v({u:R},{v:R})");
+            }
+
             var second = SurfaceEvaluator.EvaluateSecondDerivative(surface, 2.75, 13.0);
             NumericAssert.Vector(Vector3Double.Zero, second.uu_deriv, TestTolerances.AnalyticSecondDerivative, 1.0, "S_uu");
             NumericAssert.Vector(Vector3Double.Zero, second.uv_deriv, TestTolerances.AnalyticSecondDerivative, 1.0, "S_uv");
@@ -47,6 +54,10 @@ namespace UnitTests.Evaluation
             NumericAssert.Scalar(1.0, point.X * point.X + point.Y * point.Y, TestTolerances.AnalyticScalar, 1.0, "quarter-cylinder radius squared");
             NumericAssert.Vector(new Vector3Double(0.0, 0.0, 2.0), first.u_deriv, TestTolerances.AnalyticFirstDerivative, 2.0, "quarter-cylinder S_u");
             NumericAssert.Scalar(0.0, Vector3Double.Dot(first.u_deriv, first.v_deriv), TestTolerances.AnalyticScalar, first.u_deriv.magnitude * first.v_deriv.magnitude, "S_u dot S_v");
+
+            var endpointFirst = SurfaceEvaluator.EvaluateFirstDerivative(surface, 0.5, 1.0);
+            NumericAssert.Vector(new Vector3Double(0.0, 0.0, 2.0), endpointFirst.u_deriv, TestTolerances.AnalyticFirstDerivative, 2.0, "quarter-cylinder endpoint S_u");
+            NumericAssert.Vector(new Vector3Double(-Math.Sqrt(2.0), 0.0, 0.0), endpointFirst.v_deriv, TestTolerances.AnalyticFirstDerivative, 2.0, "quarter-cylinder endpoint S_v");
         }
 
         [Test]

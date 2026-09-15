@@ -28,8 +28,8 @@ namespace UnitTests.Evaluation
             }
 
             var derivative = new Vector3Double(4.0 / 3.0, 4.0 / 3.0, 4.0 / 3.0);
-            NumericAssert.Vector(derivative, CurveEvaluator.EvaluateFirstDerivative(curve, 2.0), TestTolerances.AnalyticFirstDerivative, derivative.magnitude, "right derivative at u=2");
-            NumericAssert.Vector(derivative, CurveEvaluator.EvaluateFirstDerivative(curve, 3.5), TestTolerances.AnalyticFirstDerivative, derivative.magnitude, "derivative at u=3.5");
+            foreach (double u in new[] { 2.0, 3.5, Math.BitDecrement(5.0), 5.0 })
+                NumericAssert.Vector(derivative, CurveEvaluator.EvaluateFirstDerivative(curve, u), TestTolerances.AnalyticFirstDerivative, derivative.magnitude, $"line derivative at u={u:R}");
             NumericAssert.Scalar(4.0 * Math.Sqrt(3.0), CurveAnalyzer.CurveLength(curve, 2.0, 5.0), TestTolerances.AnalyticScalar, 4.0 * Math.Sqrt(3.0), "line length");
         }
 
@@ -52,7 +52,9 @@ namespace UnitTests.Evaluation
             // C'(u)=(2+2u, 4-8u, 0), C''(u)=(2,-8,0).
             NumericAssert.Vector(new Vector3Double(2.0, 4.0, 0.0), CurveEvaluator.EvaluateFirstDerivative(curve, 0.0), TestTolerances.AnalyticFirstDerivative, 5.0, "C'(0)");
             NumericAssert.Vector(new Vector3Double(3.0, 0.0, 0.0), CurveEvaluator.EvaluateFirstDerivative(curve, 0.5), TestTolerances.AnalyticFirstDerivative, 5.0, "C'(0.5)");
-            foreach (double u in new[] { 0.0, 0.25, 0.5, 0.75 })
+            foreach (double u in new[] { Math.BitDecrement(1.0), 1.0 })
+                NumericAssert.Vector(new Vector3Double(2.0 + 2.0 * u, 4.0 - 8.0 * u, 0.0), CurveEvaluator.EvaluateFirstDerivative(curve, u), TestTolerances.AnalyticFirstDerivative, 6.0, $"C'({u:R})");
+            foreach (double u in new[] { 0.0, 0.25, 0.5, 0.75, Math.BitDecrement(1.0), 1.0 })
                 NumericAssert.Vector(new Vector3Double(2.0, -8.0, 0.0), CurveEvaluator.EvaluateSecondDerivative(curve, u), TestTolerances.AnalyticSecondDerivative, 9.0, $"C''({u})");
         }
 
@@ -67,6 +69,8 @@ namespace UnitTests.Evaluation
             NumericAssert.Vector(new Vector3Double(0.0, 1.0, 0.0), CurveEvaluator.Evaluate(curve, 1.0), TestTolerances.AnalyticPosition, 1.0, "quarter-circle end");
             NumericAssert.Vector(new Vector3Double(-1.17157287525381, 1.17157287525381, 0.0), CurveEvaluator.EvaluateFirstDerivative(curve, 0.5), TestTolerances.AnalyticFirstDerivative, 2.0, "quarter-circle midpoint d1");
             NumericAssert.Vector(new Vector3Double(-1.9411254969542813, -1.9411254969542813, 0.0), CurveEvaluator.EvaluateSecondDerivative(curve, 0.5), TestTolerances.AnalyticSecondDerivative, 3.0, "quarter-circle midpoint d2");
+            NumericAssert.Vector(new Vector3Double(-Math.Sqrt(2.0), 0.0, 0.0), CurveEvaluator.EvaluateFirstDerivative(curve, 1.0), TestTolerances.AnalyticFirstDerivative, 2.0, "quarter-circle endpoint d1");
+            NumericAssert.Vector(new Vector3Double(2.0 * Math.Sqrt(2.0) - 2.0, -2.0, 0.0), CurveEvaluator.EvaluateSecondDerivative(curve, 1.0), TestTolerances.AnalyticSecondDerivative, 3.0, "quarter-circle endpoint d2");
 
             foreach (double u in DomainSamples.EndpointsAndInterior(new ParameterDomain(0.0, 1.0)))
             {
