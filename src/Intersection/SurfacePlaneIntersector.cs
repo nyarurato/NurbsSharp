@@ -529,6 +529,12 @@ namespace NurbsSharp.Intersection
                     
                     uNext -= dist * dfdu / (gradMag * gradMag);
                     vNext -= dist * dfdv / (gradMag * gradMag);
+
+                    // Newton refinement is constrained to the surface parameter
+                    // domain. Endpoint derivatives can point outwards, so clamp
+                    // before the next evaluation as well as after marching.
+                    uNext = Math.Max(uMin, Math.Min(uMax, uNext));
+                    vNext = Math.Max(vMin, Math.Min(vMax, vNext));
                 }
                 
                 points.Add((uNext, vNext));
