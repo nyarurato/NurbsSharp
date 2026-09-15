@@ -579,7 +579,8 @@ namespace UnitTests.Evaluation
                 var curvature = Vector3Double.Cross(derivVal.v_deriv, deriv2Val.vv_deriv).magnitude / Math.Pow(derivVal.v_deriv.magnitude, 3);
                 using (Assert.EnterMultipleScope())
                 {
-                    //For a cylinder, all second derivatives should be zero except vv_deriv.Z
+                    // For a cylinder aligned to Z, U derivatives and the Z component
+                    // of the V second derivative are zero; its radial components are not.
                     Assert.That(deriv2Val.uu_deriv.X, Is.EqualTo(0.0).Within(0.0001));
                     Assert.That(deriv2Val.uu_deriv.Y, Is.EqualTo(0.0).Within(0.0001));
                     Assert.That(deriv2Val.uu_deriv.Z, Is.EqualTo(0.0).Within(0.0001));
@@ -588,7 +589,6 @@ namespace UnitTests.Evaluation
                     Assert.That(deriv2Val.vv_deriv.X, Is.Not.EqualTo(0.0).Within(0.0001));
                     Assert.That(deriv2Val.vv_deriv.Y, Is.Not.EqualTo(0.0).Within(0.0001));
                     Assert.That(deriv2Val.vv_deriv.Z, Is.EqualTo(0.0).Within(0.0001));// cylinder axis direction
-                    Assert.That(deriv2Val.vv_deriv.X, !Is.EqualTo(0.0).Within(0.0001));
                     Assert.That(curvature, Is.EqualTo(1 / R).Within(0.0001));
                 }
 

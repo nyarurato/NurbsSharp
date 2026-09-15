@@ -63,7 +63,8 @@ namespace UnitTests.Analysis
 
             double area = SurfaceAnalyzer.SurfaceArea(surface, 0, 1, 0, 1);
             Assert.That(area, Is.EqualTo(10.05).Within(0.01));
-            area = SurfaceAnalyzer.SurfaceArea(surface, 0, 0.5, 0, 0.25);
+            double subArea = SurfaceAnalyzer.SurfaceArea(surface, 0, 0.5, 0, 0.25);
+            Assert.That(subArea, Is.GreaterThan(0.0).And.LessThan(area));
         }
 
         [Test]

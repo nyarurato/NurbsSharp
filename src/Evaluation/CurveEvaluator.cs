@@ -198,14 +198,14 @@ namespace NurbsSharp.Evaluation
         /// (ja) NURBS曲線の長さを計算する
         /// </summary>
         /// <param name="curve"></param>
-        /// <param name="start_u"></param>
-        /// <param name="end_u"></param>
+        /// <param name="startU"></param>
+        /// <param name="endU"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
         [Obsolete("Use CurveAnalyzer.CurveLength instead.")]
-        public static double CurveLength(NurbsCurve curve, double start_u, double end_u)
+        public static double CurveLength(NurbsCurve curve, double startU, double endU)
         {
-            return Analysis.CurveAnalyzer.CurveLength(curve, start_u, end_u);
+            return Analysis.CurveAnalyzer.CurveLength(curve, startU, endU);
         }
 
         /// <summary>
@@ -215,8 +215,8 @@ namespace NurbsSharp.Evaluation
         /// <param name="curve"></param>
         /// <param name="u"></param>
         /// <returns></returns>
-        [Obsolete("Use CurveAnalyzer.EvaluatTangentNormal instead.")]
-        public static (Vector3Double tangent, Vector3Double normal) EvaluatTangentNormal(NurbsCurve curve, double u)
+        [Obsolete("Use CurveAnalyzer.EvaluateTangentNormal instead.")]
+        public static (Vector3Double tangent, Vector3Double normal) EvaluateTangentNormal(NurbsCurve curve, double u)
         {
             return Analysis.CurveAnalyzer.EvaluateTangentNormal(curve, u);
         }

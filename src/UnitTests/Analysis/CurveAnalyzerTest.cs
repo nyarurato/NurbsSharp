@@ -67,6 +67,16 @@ namespace UnitTests.Analysis
                 var d1 = CurveEvaluator.EvaluateFirstDerivative(curve, u0);
                 var d2 = CurveEvaluator.EvaluateSecondDerivative(curve, u0);
                 var k = CurveAnalyzer.EvaluateCurvature(curve, u0);
+
+                using (Assert.EnterMultipleScope())
+                {
+                    Assert.That(double.IsFinite(p.X) && double.IsFinite(p.Y) && double.IsFinite(p.Z), Is.True, $"Position is non-finite at u={u0}");
+                    Assert.That(double.IsFinite(d1.X) && double.IsFinite(d1.Y) && double.IsFinite(d1.Z), Is.True, $"First derivative is non-finite at u={u0}");
+                    Assert.That(d1.magnitude, Is.GreaterThan(0.0), $"First derivative is zero at u={u0}");
+                    Assert.That(double.IsFinite(d2.X) && double.IsFinite(d2.Y) && double.IsFinite(d2.Z), Is.True, $"Second derivative is non-finite at u={u0}");
+                    Assert.That(double.IsFinite(k), Is.True, $"Curvature is non-finite at u={u0}");
+                    Assert.That(k, Is.GreaterThanOrEqualTo(0.0), $"Curvature is negative at u={u0}");
+                }
             }
         }
         [Test]
@@ -107,9 +117,9 @@ namespace UnitTests.Analysis
                 var expectedN = new Vector3Double(pt.X, pt.Y, pt.Z).normalized;
                 using (Assert.EnterMultipleScope())
                 {
-                    Assert.That(Math.Abs(N.X) - Math.Abs(expectedN.X), Is.LessThan(tol), $"N.X incorrect at u={u}");
-                    Assert.That(Math.Abs(N.Y) - Math.Abs(expectedN.Y), Is.LessThan(tol), $"N.Y incorrect at u={u}");
-                    Assert.That(Math.Abs(N.Z) - Math.Abs(expectedN.Z), Is.LessThan(tol), $"N.Z incorrect at u={u}");
+                    Assert.That(Math.Abs(Math.Abs(N.X) - Math.Abs(expectedN.X)), Is.LessThan(tol), $"N.X incorrect at u={u}");
+                    Assert.That(Math.Abs(Math.Abs(N.Y) - Math.Abs(expectedN.Y)), Is.LessThan(tol), $"N.Y incorrect at u={u}");
+                    Assert.That(Math.Abs(Math.Abs(N.Z) - Math.Abs(expectedN.Z)), Is.LessThan(tol), $"N.Z incorrect at u={u}");
                 }
 
                 // Ensure helper methods return same vectors

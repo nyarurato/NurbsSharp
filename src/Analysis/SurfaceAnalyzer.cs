@@ -19,25 +19,25 @@ namespace NurbsSharp.Analysis
         /// (ja) NURBSサーフェスの面積を計算します
         /// </summary>
         /// <param name="surface"></param>
-        /// <param name="start_u"></param>
-        /// <param name="end_u"></param>
-        /// <param name="start_v"></param>
-        /// <param name="end_v"></param>
+        /// <param name="startU"></param>
+        /// <param name="endU"></param>
+        /// <param name="startV"></param>
+        /// <param name="endV"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
-        public static double SurfaceArea(NurbsSurface surface, double start_u, double end_u, double start_v, double end_v)
+        public static double SurfaceArea(NurbsSurface surface, double startU, double endU, double startV, double endV)
         {
             Guard.ThrowIfNull(surface, nameof(surface));
-            if ( start_u >= end_u || start_v >= end_v)
+            if ( startU >= endU || startV >= endV)
                 throw new ArgumentException("Invalid parameter range.");
-            if(start_u < surface.KnotVectorU.Knots[surface.DegreeU])
-                throw new ArgumentOutOfRangeException(nameof(start_u) ,"Parameter u is out of range.");
-            if(end_u > surface.KnotVectorU.Knots[surface.KnotVectorU.Knots.Length - surface.DegreeU -1])
-                throw new ArgumentOutOfRangeException(nameof(end_u) ,"Parameter u is out of range.");
-            if(start_v < surface.KnotVectorV.Knots[surface.DegreeV])
-                throw new ArgumentOutOfRangeException(nameof(start_v) ,"Parameter v is out of range.");
-            if(end_v > surface.KnotVectorV.Knots[surface.KnotVectorV.Knots.Length - surface.DegreeV -1])
-                throw new ArgumentOutOfRangeException(nameof(end_v) ,"Parameter v is out of range.");
+            if(startU < surface.KnotVectorU.Knots[surface.DegreeU])
+                throw new ArgumentOutOfRangeException(nameof(startU) ,"Parameter u is out of range.");
+            if(endU > surface.KnotVectorU.Knots[surface.KnotVectorU.Knots.Length - surface.DegreeU -1])
+                throw new ArgumentOutOfRangeException(nameof(endU) ,"Parameter u is out of range.");
+            if(startV < surface.KnotVectorV.Knots[surface.DegreeV])
+                throw new ArgumentOutOfRangeException(nameof(startV) ,"Parameter v is out of range.");
+            if(endV > surface.KnotVectorV.Knots[surface.KnotVectorV.Knots.Length - surface.DegreeV -1])
+                throw new ArgumentOutOfRangeException(nameof(endV) ,"Parameter v is out of range.");
 
             // Calculate the length of the NURBS Surface using 5-point Gaussian quadrature
 
@@ -63,8 +63,8 @@ namespace NurbsSharp.Analysis
             // integrate over each knot span to better capture local behavior
             for (int i = 0; i < knotsU.Length - 1; i++)
             {
-                double a_u = Math.Max(start_u, knotsU[i]);
-                double b_u = Math.Min(end_u, knotsU[i + 1]);
+                double a_u = Math.Max(startU, knotsU[i]);
+                double b_u = Math.Min(endU, knotsU[i + 1]);
 
                 if (b_u <= a_u)
                     continue;
@@ -92,8 +92,8 @@ namespace NurbsSharp.Analysis
 
                 for (int j = 0; j < knotsV.Length - 1; j++)
                 {
-                    double a_v = Math.Max(start_v, knotsV[j]);
-                    double b_v = Math.Min(end_v, knotsV[j + 1]);
+                    double a_v = Math.Max(startV, knotsV[j]);
+                    double b_v = Math.Min(endV, knotsV[j + 1]);
                     if (b_v <= a_v)
                         continue;
                     double half_v = 0.5 * (b_v - a_v);
@@ -148,7 +148,7 @@ namespace NurbsSharp.Analysis
         /// <param name="v"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
-        public static (Vector3Double tangentU,Vector3Double tangentV, Vector3Double normal) EvaluatTangentNormal(NurbsSurface surface, double u, double v)
+        public static (Vector3Double tangentU,Vector3Double tangentV, Vector3Double normal) EvaluateTangentNormal(NurbsSurface surface, double u, double v)
         {
             Guard.ThrowIfNull(surface, nameof(surface));
 
@@ -174,7 +174,7 @@ namespace NurbsSharp.Analysis
         /// <returns></returns>
         public static Vector3Double EvaluateNormal(NurbsSurface surface, double u, double v)
         {
-           return EvaluatTangentNormal(surface, u, v).normal;
+           return EvaluateTangentNormal(surface, u, v).normal;
         }
 
         /// <summary>
@@ -187,7 +187,7 @@ namespace NurbsSharp.Analysis
         /// <returns></returns>
         public static (Vector3Double tangentU, Vector3Double tangentV) EvaluateTangents(NurbsSurface surface, double u, double v)
         {
-            var (tangentU, tangentV, normal) = EvaluatTangentNormal(surface, u, v);
+            var (tangentU, tangentV, normal) = EvaluateTangentNormal(surface, u, v);
             return (tangentU,tangentV);
         }
 

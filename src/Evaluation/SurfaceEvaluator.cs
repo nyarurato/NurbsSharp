@@ -77,16 +77,16 @@ namespace NurbsSharp.Evaluation
         /// (ja) NURBSサーフェスの面積を計算します
         /// </summary>
         /// <param name="surface"></param>
-        /// <param name="start_u"></param>
-        /// <param name="end_u"></param>
-        /// <param name="start_v"></param>
-        /// <param name="end_v"></param>
+        /// <param name="startU"></param>
+        /// <param name="endU"></param>
+        /// <param name="startV"></param>
+        /// <param name="endV"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
         [Obsolete("Use Analysis.SurfaceAnalyzer.SurfaceArea instead.")]
-        public static double SurfaceArea(NurbsSurface surface, double start_u, double end_u, double start_v, double end_v)
+        public static double SurfaceArea(NurbsSurface surface, double startU, double endU, double startV, double endV)
         {
-            return Analysis.SurfaceAnalyzer.SurfaceArea(surface, start_u, end_u, start_v, end_v);
+            return Analysis.SurfaceAnalyzer.SurfaceArea(surface, startU, endU, startV, endV);
         }
 
         /// <summary>
@@ -315,10 +315,10 @@ namespace NurbsSharp.Evaluation
         /// <param name="v"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
-        [Obsolete("Use Analysis.SurfaceAnalyzer.EvaluatTangentNormal instead.")]
-        public static (Vector3Double tangentU,Vector3Double tangentV, Vector3Double normal) EvaluatTangentNormal(NurbsSurface surface, double u, double v)
+        [Obsolete("Use Analysis.SurfaceAnalyzer.EvaluateTangentNormal instead.")]
+        public static (Vector3Double tangentU,Vector3Double tangentV, Vector3Double normal) EvaluateTangentNormal(NurbsSurface surface, double u, double v)
         {
-            return Analysis.SurfaceAnalyzer.EvaluatTangentNormal(surface, u, v);
+            return Analysis.SurfaceAnalyzer.EvaluateTangentNormal(surface, u, v);
         }
 
         /// <summary>

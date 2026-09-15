@@ -16,7 +16,12 @@ namespace NurbsSharp.Analysis
         /// (ja) パラメータuと弧長sの間の等弧長パラメータ化ヘルパを構築します。
         /// </summary>
         /// <param name="curve">Target curve</param>
-        /// <param name="subdivisionsPerSpan">Subdivisions per non-zero knot span (>= 1)</param>
+        /// <param name="subdivisionsPerSpan">Subdivisions per non-zero knot span (>= 1). 
+        /// Recommended: 10-20 for typical curves, 50-100 for high-curvature curves.</param>
+        /// <remarks>
+        /// Higher subdivisionsPerSpan improves s-to-u conversion accuracy but increases memory and build time.
+        /// For CAM toolpath generation, 20-30 is typically sufficient.
+        /// </remarks>
         public static CurveArcLengthParameterization BuildArcLengthParameterization(NurbsCurve curve, int subdivisionsPerSpan = 10)
         {
             return CurveArcLengthParameterization.Build(curve, subdivisionsPerSpan);
@@ -27,19 +32,19 @@ namespace NurbsSharp.Analysis
         /// (ja) NURBS曲線の長さを計算する
         /// </summary>
         /// <param name="curve"></param>
-        /// <param name="start_u"></param>
-        /// <param name="end_u"></param>
+        /// <param name="startU"></param>
+        /// <param name="endU"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
-        public static double CurveLength(NurbsCurve curve, double start_u, double end_u)
+        public static double CurveLength(NurbsCurve curve, double startU, double endU)
         {
             Guard.ThrowIfNull(curve, nameof(curve));
-            if (start_u> end_u)
-                throw new ArgumentOutOfRangeException(nameof(start_u), "start_u must be less than or equal to end_u.");
-            if (start_u < curve.KnotVector.Knots[0])
-                throw new ArgumentOutOfRangeException(nameof(start_u), "start_u is out of the knot vector range.");
-            if (end_u > curve.KnotVector.Knots[curve.KnotVector.Length - 1])
-                throw new ArgumentOutOfRangeException(nameof(end_u), "end_u is out of the knot vector range.");
+            if (startU > endU)
+                throw new ArgumentOutOfRangeException(nameof(startU), "startU must be less than or equal to endU.");
+            if (startU < curve.KnotVector.Knots[0])
+                throw new ArgumentOutOfRangeException(nameof(startU), "startU is out of the knot vector range.");
+            if (endU > curve.KnotVector.Knots[curve.KnotVector.Length - 1])
+                throw new ArgumentOutOfRangeException(nameof(endU), "endU is out of the knot vector range.");
 
             // Calculate the length of the NURBS curve using 5-point Gaussian quadrature
 
@@ -52,16 +57,16 @@ namespace NurbsSharp.Analysis
             double uMin = knots[degree];
             double uMax = knots[knots.Length - degree - 1];
 
-            start_u = Math.Max(start_u, uMin);
-            end_u = Math.Min(end_u, uMax);
+            startU = Math.Max(startU, uMin);
+            endU = Math.Min(endU, uMax);
 
             double total = 0.0;
 
             // integrate over each knot span to better capture local behavior
             for (int i = 0; i < knots.Length - 1; i++)
             {
-                double a = Math.Max(start_u, knots[i]);
-                double b = Math.Min(end_u, knots[i + 1]);
+                double a = Math.Max(startU, knots[i]);
+                double b = Math.Min(endU, knots[i + 1]);
 
                 if (b <= a)
                     continue;
@@ -288,6 +293,206 @@ namespace NurbsSharp.Analysis
             Vector3Double finalPoint = CurveEvaluator.Evaluate(curve, t);
             double finalDistance = (finalPoint - target).magnitude;
             return (t, finalPoint, finalDistance);
+        }
+
+        /// <summary>
+        /// (en) Evaluate continuity between two curves at their connection point.
+        /// (ja) 2つの曲線の接続点での連続性を評価します。
+        /// </summary>
+        /// <param name="curve1">First curve</param>
+        /// <param name="curve2">Second curve</param>
+        /// <param name="u1">Parameter on first curve (typically end point)</param>
+        /// <param name="u2">Parameter on second curve (typically start point)</param>
+        /// <param name="positionTolerance">Position gap tolerance for C0 (default: 1e-6)</param>
+        /// <param name="angleTolerance">Angle tolerance in radians for tangent/curvature alignment (default: 0.01 rad ≈ 0.57°)</param>
+        /// <param name="ratioTolerance">Magnitude ratio tolerance for C1/C2 (default: 0.05 = 5%)</param>
+        /// <returns>Continuity evaluation result</returns>
+        public static ContinuityResult EvaluateCurveContinuity(
+            NurbsCurve curve1, 
+            NurbsCurve curve2,
+            double u1,
+            double u2,
+            double positionTolerance = 1e-6,
+            double angleTolerance = 0.01,
+            double ratioTolerance = 0.05)
+        {
+            Guard.ThrowIfNull(curve1, nameof(curve1));
+            Guard.ThrowIfNull(curve2, nameof(curve2));
+
+            var result = new ContinuityResult();
+
+            Vector3Double p1 = CurveEvaluator.Evaluate(curve1, u1);
+            Vector3Double p2 = CurveEvaluator.Evaluate(curve2, u2);
+
+            result.PositionGap = (p2 - p1).magnitude;
+            if (result.PositionGap > positionTolerance)
+            {
+                result.Continuity = ContinuityType.None;
+                return result;
+            }
+
+            result.Continuity = ContinuityType.C0;
+
+            Vector3Double d1First  = CurveEvaluator.EvaluateFirstDerivative(curve1, u1);
+            Vector3Double d2First  = CurveEvaluator.EvaluateFirstDerivative(curve2, u2);
+            Vector3Double d1Second = curve1.Degree >= 2
+                ? CurveEvaluator.EvaluateSecondDerivative(curve1, u1)
+                : Vector3Double.Zero;
+            Vector3Double d2Second = curve2.Degree >= 2
+                ? CurveEvaluator.EvaluateSecondDerivative(curve2, u2)
+                : Vector3Double.Zero;
+
+            return EvaluateHigherContinuity(result, d1First, d2First, d1Second, d2Second, angleTolerance, ratioTolerance);
+        }
+
+        /// <summary>
+        /// (en) Evaluate continuity between the end of curve1 and the start of curve2.
+        /// (ja) curve1の終点と curve2の始点間の連続性を評価します。
+        /// </summary>
+        /// <param name="curve1">First curve</param>
+        /// <param name="curve2">Second curve</param>
+        /// <param name="positionTolerance">Position gap tolerance</param>
+        /// <param name="angleTolerance">Angle tolerance in radians</param>
+        /// <param name="ratioTolerance">Magnitude ratio tolerance</param>
+        /// <returns>Continuity evaluation result</returns>
+        public static ContinuityResult EvaluateCurveContinuityAtConnection(
+            NurbsCurve curve1,
+            NurbsCurve curve2,
+            double positionTolerance = 1e-6,
+            double angleTolerance = 0.01,
+            double ratioTolerance = 0.05)
+        {
+            Guard.ThrowIfNull(curve1, nameof(curve1));
+            Guard.ThrowIfNull(curve2, nameof(curve2));
+
+            var result = new ContinuityResult();
+
+            // Get endpoint parameters
+            double u1End   = curve1.KnotVector.Knots[curve1.KnotVector.Length - curve1.Degree - 1];
+            double u2Start = curve2.KnotVector.Knots[curve2.Degree];
+
+            // Evaluate positions at exact endpoints
+            Vector3Double p1 = CurveEvaluator.Evaluate(curve1, u1End);
+            Vector3Double p2 = CurveEvaluator.Evaluate(curve2, u2Start);
+
+            result.PositionGap = (p2 - p1).magnitude;
+            if (result.PositionGap > positionTolerance)
+            {
+                result.Continuity = ContinuityType.None;
+                return result;
+            }
+
+            result.Continuity = ContinuityType.C0;
+
+            // Evaluate derivatives slightly inside the domain to avoid endpoint numerical issues
+            double u1Min = curve1.KnotVector.Knots[curve1.Degree];
+            double u2Max = curve2.KnotVector.Knots[curve2.KnotVector.Length - curve2.Degree - 1];
+            double eps1 = Math.Max(1e-8, (u1End   - u1Min) * 1e-4);
+            double eps2 = Math.Max(1e-8, (u2Max - u2Start) * 1e-4);
+            double u1Deriv = u1End   - eps1;
+            double u2Deriv = u2Start + eps2;
+
+            Vector3Double d1First  = CurveEvaluator.EvaluateFirstDerivative(curve1, u1Deriv);
+            Vector3Double d2First  = CurveEvaluator.EvaluateFirstDerivative(curve2, u2Deriv);
+            Vector3Double d1Second = curve1.Degree >= 2
+                ? CurveEvaluator.EvaluateSecondDerivative(curve1, u1Deriv)
+                : Vector3Double.Zero;
+            Vector3Double d2Second = curve2.Degree >= 2
+                ? CurveEvaluator.EvaluateSecondDerivative(curve2, u2Deriv)
+                : Vector3Double.Zero;
+
+            return EvaluateHigherContinuity(result, d1First, d2First, d1Second, d2Second, angleTolerance, ratioTolerance);
+        }
+
+        /// <summary>
+        /// (en) Evaluate continuity across a chain of curves.
+        /// (ja) 曲線列全体の連続性を評価します。
+        /// </summary>
+        /// <param name="curves">Array of curves in connection order</param>
+        /// <param name="positionTolerance">Position gap tolerance</param>
+        /// <param name="angleTolerance">Angle tolerance in radians</param>
+        /// <param name="ratioTolerance">Magnitude ratio tolerance</param>
+        /// <returns>Array of continuity results for each connection (length = curves.Length - 1)</returns>
+        public static ContinuityResult[] EvaluateCurveChainContinuity(
+            NurbsCurve[] curves,
+            double positionTolerance = 1e-6,
+            double angleTolerance = 0.01,
+            double ratioTolerance = 0.05)
+        {
+            if (curves == null || curves.Length < 2)
+                throw new ArgumentException("At least 2 curves required for chain continuity evaluation.", nameof(curves));
+
+            var results = new ContinuityResult[curves.Length - 1];
+            for (int i = 0; i < curves.Length - 1; i++)
+            {
+                results[i] = EvaluateCurveContinuityAtConnection(
+                    curves[i], curves[i + 1],
+                    positionTolerance, angleTolerance, ratioTolerance);
+            }
+            return results;
+        }
+
+        // Evaluates G1/C1/G2/C2 continuity given pre-computed derivatives.
+        // Assumes result.Continuity is already set to C0.
+        private static ContinuityResult EvaluateHigherContinuity(
+            ContinuityResult result,
+            Vector3Double d1First, Vector3Double d2First,
+            Vector3Double d1Second, Vector3Double d2Second,
+            double angleTolerance, double ratioTolerance)
+        {
+            double mag1 = d1First.magnitude;
+            double mag2 = d2First.magnitude;
+
+            if (mag1 < 1e-12 || mag2 < 1e-12)
+                return result; // Degenerate tangent - cannot evaluate higher continuity
+
+            Vector3Double t1 = d1First.normalized;
+            Vector3Double t2 = d2First.normalized;
+
+            double dotProduct = Vector3Double.Dot(t1, t2);
+            result.IsReversed = dotProduct < 0;
+            result.TangentAngle = Math.Acos(Math.Clamp(Math.Abs(dotProduct), 0.0, 1.0));
+
+            if (result.TangentAngle > angleTolerance)
+                return result; // Not even G1
+
+            result.Continuity = ContinuityType.G1;
+
+            result.TangentRatio = result.IsReversed ? -mag2 / mag1 : mag2 / mag1;
+            if (Math.Abs(result.TangentRatio - 1.0) > ratioTolerance)
+                return result; // Only G1, not C1
+
+            result.Continuity = ContinuityType.C1;
+
+            // G2/C2 check
+            double mag1_2nd = d1Second.magnitude;
+            double mag2_2nd = d2Second.magnitude;
+
+            if (mag1_2nd < 1e-12 && mag2_2nd < 1e-12)
+            {
+                // Both second derivatives are zero (e.g. straight lines) - C2
+                result.Continuity = ContinuityType.C2;
+                result.CurvatureAngle = 0.0;
+                result.CurvatureRatio = 1.0;
+                return result;
+            }
+
+            if (mag1_2nd < 1e-12 || mag2_2nd < 1e-12)
+                return result; // One is straight, other is curved - not G2
+
+            double curvatureDot = Vector3Double.Dot(d1Second.normalized, d2Second.normalized);
+            result.CurvatureAngle = Math.Acos(Math.Clamp(Math.Abs(curvatureDot), 0.0, 1.0));
+
+            if (result.CurvatureAngle > angleTolerance)
+                return result; // Not G2
+
+            result.Continuity = ContinuityType.G2;
+
+            result.CurvatureRatio = mag2_2nd / mag1_2nd;
+            if (Math.Abs(result.CurvatureRatio - 1.0) <= ratioTolerance)
+                result.Continuity = ContinuityType.C2;
+
+            return result;
         }
     }
 }
