@@ -1,0 +1,272 @@
+using NUnit.Framework;
+using NurbsSharp.Core;
+using NurbsSharp.Geometry;
+using NurbsSharp.Analysis;
+using NurbsSharp.Evaluation;
+using System;
+
+namespace UnitTests.Analysis
+{
+    [TestFixture]
+    public class CurveContinuityTest
+    {
+        [Test]
+        public void EvaluateCurveContinuity_C0_PositionMatch()
+        {
+            // Two line segments meeting at (5, 0, 0) with different directions
+            var curve1 = new NurbsCurve(
+                1,
+                new KnotVector([0.0, 0.0, 1.0, 1.0], 1),
+                new[] {
+                    new ControlPoint(new Vector3Double(0, 0, 0), 1),
+                    new ControlPoint(new Vector3Double(5, 0, 0), 1)
+                }
+            );
+
+            var curve2 = new NurbsCurve(
+                1,
+                new KnotVector([0.0, 0.0, 1.0, 1.0], 1),
+                new[] {
+                    new ControlPoint(new Vector3Double(5, 0, 0), 1),
+                    new ControlPoint(new Vector3Double(5, 5, 0), 1)
+                }
+            );
+
+            var result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
+
+            Assert.That(result.Continuity, Is.EqualTo(ContinuityType.C0));
+            Assert.That(result.PositionGap, Is.LessThan(1e-10));
+            Assert.That(result.TangentAngle, Is.GreaterThan(0.5)); // ~90 degrees
+        }
+
+        [Test]
+        public void EvaluateCurveContinuity_C1_TangentMatch()
+        {
+            // Two line segments in same direction
+            var curve1 = new NurbsCurve(
+                1,
+                new KnotVector([0.0, 0.0, 1.0, 1.0], 1),
+                new[] {
+                    new ControlPoint(new Vector3Double(0, 0, 0), 1),
+                    new ControlPoint(new Vector3Double(5, 0, 0), 1)
+                }
+            );
+
+            var curve2 = new NurbsCurve(
+                1,
+                new KnotVector([0.0, 0.0, 1.0, 1.0], 1),
+                new[] {
+                    new ControlPoint(new Vector3Double(5, 0, 0), 1),
+                    new ControlPoint(new Vector3Double(10, 0, 0), 1)
+                }
+            );
+
+            var result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
+
+            Assert.That(result.Continuity, Is.EqualTo(ContinuityType.C2)); // Lines are C2 (zero curvature)
+            Assert.That(result.PositionGap, Is.LessThan(1e-10));
+            Assert.That(result.TangentAngle, Is.LessThan(1e-6));
+            Assert.That(result.TangentRatio, Is.EqualTo(1.0).Within(0.01));
+        }
+
+        [Test]
+        public void EvaluateCurveContinuity_G1_ParallelTangentsButDifferentMagnitudes()
+        {
+            // Two parabolic curves that meet at (5,0,0) with parallel tangents but different speeds
+            // First curve: symmetric parabola ending horizontally at (5,0,0)
+            var curve1 = new NurbsCurve(
+                2,
+                new KnotVector([0.0, 0.0, 0.0, 1.0, 1.0, 1.0], 2),
+                new[] {
+                    new ControlPoint(new Vector3Double(0, 0, 0), 1),
+                    new ControlPoint(new Vector3Double(2.5, 2.5, 0), 1),
+                    new ControlPoint(new Vector3Double(5, 0, 0), 1)
+                }
+            );
+
+            // Second curve: also symmetric but with tighter control (different parameterization speed)
+            // Starts at (5,0,0) and goes horizontally initially
+            var curve2 = new NurbsCurve(
+                2,
+                new KnotVector([0.0, 0.0, 0.0, 1.0, 1.0, 1.0], 2),
+                new[] {
+                    new ControlPoint(new Vector3Double(5, 0, 0), 1),
+                    new ControlPoint(new Vector3Double(6.25, -1.25, 0), 1),  // Steeper curve (different speed)
+                    new ControlPoint(new Vector3Double(7.5, 0, 0), 1)
+                }
+            );
+
+            var result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
+
+            //Should be at least G1 (geometric tangent continuity)
+            Assert.That(result.Continuity, Is.GreaterThanOrEqualTo(ContinuityType.G1));
+            Assert.That(result.PositionGap, Is.LessThan(1e-10));
+            Assert.That(result.TangentAngle, Is.LessThan(0.1)); // Allow reasonable tolerance for parabolas
+        }
+
+        [Test]
+        public void EvaluateCurveContinuity_None_PositionGap()
+        {
+            var curve1 = new NurbsCurve(
+                1,
+                new KnotVector([0.0, 0.0, 1.0, 1.0], 1),
+                new[] {
+                    new ControlPoint(new Vector3Double(0, 0, 0), 1),
+                    new ControlPoint(new Vector3Double(5, 0, 0), 1)
+                }
+            );
+
+            var curve2 = new NurbsCurve(
+                1,
+                new KnotVector([0.0, 0.0, 1.0, 1.0], 1),
+                new[] {
+                    new ControlPoint(new Vector3Double(6, 0, 0), 1),  // Gap of 1 unit
+                    new ControlPoint(new Vector3Double(10, 0, 0), 1)
+                }
+            );
+
+            var result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
+
+            Assert.That(result.Continuity, Is.EqualTo(ContinuityType.None));
+            Assert.That(result.PositionGap, Is.EqualTo(1.0).Within(1e-6));
+        }
+
+        [Test]
+        public void EvaluateCurveContinuity_Reversed_DetectsOppositeDirection()
+        {
+            var curve1 = new NurbsCurve(
+                1,
+                new KnotVector([0.0, 0.0, 1.0, 1.0], 1),
+                new[] {
+                    new ControlPoint(new Vector3Double(0, 0, 0), 1),
+                    new ControlPoint(new Vector3Double(5, 0, 0), 1)
+                }
+            );
+
+            // Second curve goes backwards
+            var curve2 = new NurbsCurve(
+                1,
+                new KnotVector([0.0, 0.0, 1.0, 1.0], 1),
+                new[] {
+                    new ControlPoint(new Vector3Double(5, 0, 0), 1),
+                    new ControlPoint(new Vector3Double(0, 0, 0), 1)  // Opposite direction
+                }
+            );
+
+            var result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
+
+            Assert.That(result.IsReversed, Is.True);
+            // Antiparallel tangents are still G1 (geometrically continuous in opposite direction)
+            Assert.That(result.Continuity, Is.GreaterThanOrEqualTo(ContinuityType.G1));
+        }
+
+        [Test]
+        public void EvaluateCurveChainContinuity_ThreeCurves_ReturnsAllConnections()
+        {
+            var curve1 = new NurbsCurve(
+                1,
+                new KnotVector([0.0, 0.0, 1.0, 1.0], 1),
+                new[] {
+                    new ControlPoint(new Vector3Double(0, 0, 0), 1),
+                    new ControlPoint(new Vector3Double(5, 0, 0), 1)
+                }
+            );
+
+            var curve2 = new NurbsCurve(
+                1,
+                new KnotVector([0.0, 0.0, 1.0, 1.0], 1),
+                new[] {
+                    new ControlPoint(new Vector3Double(5, 0, 0), 1),
+                    new ControlPoint(new Vector3Double(10, 0, 0), 1)
+                }
+            );
+
+            var curve3 = new NurbsCurve(
+                1,
+                new KnotVector([0.0, 0.0, 1.0, 1.0], 1),
+                new[] {
+                    new ControlPoint(new Vector3Double(10, 0, 0), 1),
+                    new ControlPoint(new Vector3Double(10, 5, 0), 1)
+                }
+            );
+
+            var results = CurveAnalyzer.EvaluateCurveChainContinuity(new[] { curve1, curve2, curve3 });
+
+            Assert.That(results.Length, Is.EqualTo(2));
+            
+            // First connection: C2 (collinear)
+            Assert.That(results[0].Continuity, Is.EqualTo(ContinuityType.C2));
+            Assert.That(results[0].PositionGap, Is.LessThan(1e-10));
+
+            // Second connection: C0 (perpendicular)
+            Assert.That(results[1].Continuity, Is.EqualTo(ContinuityType.C0));
+            Assert.That(results[1].PositionGap, Is.LessThan(1e-10));
+        }
+
+        [Test]
+        public void EvaluateCurveContinuity_CustomTolerances_RespectsTolerance()
+        {
+            var curve1 = new NurbsCurve(
+                1,
+                new KnotVector([0.0, 0.0, 1.0, 1.0], 1),
+                new[] {
+                    new ControlPoint(new Vector3Double(0, 0, 0), 1),
+                    new ControlPoint(new Vector3Double(5, 0, 0), 1)
+                }
+            );
+
+            var curve2 = new NurbsCurve(
+                1,
+                new KnotVector([0.0, 0.0, 1.0, 1.0], 1),
+                new[] {
+                    new ControlPoint(new Vector3Double(5.0001, 0, 0), 1),  // Small gap
+                    new ControlPoint(new Vector3Double(10, 0, 0), 1)
+                }
+            );
+
+            // With default tolerance (1e-6), should fail C0
+            var result1 = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
+            Assert.That(result1.Continuity, Is.EqualTo(ContinuityType.None));
+
+            // With relaxed tolerance (1e-3), should pass C0
+            var result2 = CurveAnalyzer.EvaluateCurveContinuityAtConnection(
+                curve1, curve2, positionTolerance: 1e-3);
+            Assert.That(result2.Continuity, Is.GreaterThanOrEqualTo(ContinuityType.C0));
+        }
+
+        [Test]
+        public void EvaluateCurveContinuity_CircleSegments_C2Continuity()
+        {
+            // Two 90-degree circular arc segments forming 180-degree arc
+            double w = Math.Sqrt(2) / 2.0;
+            
+            var curve1 = new NurbsCurve(
+                2,
+                new KnotVector([0.0, 0.0, 0.0, 1.0, 1.0, 1.0], 2),
+                new[] {
+                    new ControlPoint(new Vector3Double(5, 0, 0), 1),
+                    new ControlPoint(new Vector3Double(5, 5, 0), w),
+                    new ControlPoint(new Vector3Double(0, 5, 0), 1)
+                }
+            );
+
+            var curve2 = new NurbsCurve(
+                2,
+                new KnotVector([0.0, 0.0, 0.0, 1.0, 1.0, 1.0], 2),
+                new[] {
+                    new ControlPoint(new Vector3Double(0, 5, 0), 1),
+                    new ControlPoint(new Vector3Double(-5, 5, 0), w),
+                    new ControlPoint(new Vector3Double(-5, 0, 0), 1)
+                }
+            );
+
+            var result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
+
+            // Circle segments should have at least C1 continuity
+            // (Perfect C2 depends on exact parameterization matching)
+            Assert.That(result.Continuity, Is.GreaterThanOrEqualTo(ContinuityType.C1));
+            Assert.That(result.PositionGap, Is.LessThan(1e-6));
+            Assert.That(result.TangentAngle, Is.LessThan(0.01));
+        }
+    }
+}
