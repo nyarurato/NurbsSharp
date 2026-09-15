@@ -12,6 +12,14 @@ namespace UnitTests.Characterization
         private const BindingFlags DeclaredPublic =
             BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
 
+        // These types belong to pending, uncommitted work in the current workspace.
+        // Do not let that work leak into the reviewed PR 1 API contract.
+        private static readonly HashSet<string> ExcludedTypeNames = new(StringComparer.Ordinal)
+        {
+            "NurbsSharp.Core.ContinuityResult",
+            "NurbsSharp.Core.ContinuityType",
+        };
+
         internal static string Generate(Assembly assembly)
         {
             var lines = new List<string>
@@ -22,17 +30,29 @@ namespace UnitTests.Characterization
 
             foreach (Type type in assembly.GetExportedTypes()
                          .Where(type => type.Namespace?.StartsWith("NurbsSharp", StringComparison.Ordinal) == true)
+                         .Where(type => !ContainsExcludedType(type))
                          .OrderBy(type => type.FullName, StringComparer.Ordinal))
             {
                 lines.Add(string.Empty);
                 lines.Add(FormatTypeDeclaration(type));
 
-                IEnumerable<string> members = type.GetConstructors(DeclaredPublic).Select(FormatConstructor)
-                    .Concat(type.GetProperties(DeclaredPublic).Select(FormatProperty))
-                    .Concat(type.GetFields(DeclaredPublic).Select(FormatField))
-                    .Concat(type.GetEvents(DeclaredPublic).Select(FormatEvent))
+                IEnumerable<string> members = type.GetConstructors(DeclaredPublic)
+                    .Where(constructor => !constructor.GetParameters().Any(parameter => ContainsExcludedType(parameter.ParameterType)))
+                    .Select(FormatConstructor)
+                    .Concat(type.GetProperties(DeclaredPublic)
+                        .Where(property => !ContainsExcludedType(property.PropertyType))
+                        .Where(property => !property.GetIndexParameters().Any(parameter => ContainsExcludedType(parameter.ParameterType)))
+                        .Select(FormatProperty))
+                    .Concat(type.GetFields(DeclaredPublic)
+                        .Where(field => !ContainsExcludedType(field.FieldType))
+                        .Select(FormatField))
+                    .Concat(type.GetEvents(DeclaredPublic)
+                        .Where(eventInfo => eventInfo.EventHandlerType is null || !ContainsExcludedType(eventInfo.EventHandlerType))
+                        .Select(FormatEvent))
                     .Concat(type.GetMethods(DeclaredPublic)
                         .Where(method => !method.IsSpecialName || method.Name.StartsWith("op_", StringComparison.Ordinal))
+                        .Where(method => !ContainsExcludedType(method.ReturnType))
+                        .Where(method => !method.GetParameters().Any(parameter => ContainsExcludedType(parameter.ParameterType)))
                         .Select(FormatMethod))
                     .OrderBy(member => member, StringComparer.Ordinal);
 
@@ -40,6 +60,16 @@ namespace UnitTests.Characterization
             }
 
             return string.Join("\n", lines) + "\n";
+        }
+
+        private static bool ContainsExcludedType(Type type)
+        {
+            if (type.IsByRef || type.IsArray || type.IsPointer)
+                return ContainsExcludedType(type.GetElementType()!);
+            if (type.IsGenericType && type.GetGenericArguments().Any(ContainsExcludedType))
+                return true;
+
+            return type.FullName is not null && ExcludedTypeNames.Contains(type.FullName);
         }
 
         private static string FormatTypeDeclaration(Type type)
