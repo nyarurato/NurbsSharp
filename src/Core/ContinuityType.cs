@@ -19,8 +19,8 @@ namespace NurbsSharp.Core
         C0 = 1,
 
         /// <summary>
-        /// (en) G1 continuity - Geometric tangent continuity (tangent vectors are parallel, magnitudes may differ).
-        /// (ja) G1連続 - 幾何学的接線連続性（接線ベクトルが平行、大きさは異なってもよい）。
+        /// (en) G1 continuity - Geometric tangent continuity (tangent vectors have the same direction, magnitudes may differ).
+        /// (ja) G1連続 - 幾何学的接線連続性（接線ベクトルが同方向、大きさは異なってもよい）。
         /// </summary>
         G1 = 2,
 
@@ -31,8 +31,8 @@ namespace NurbsSharp.Core
         C1 = 3,
 
         /// <summary>
-        /// (en) G2 continuity - Geometric curvature continuity (curvature vectors are parallel).
-        /// (ja) G2連続 - 幾何学的曲率連続性（曲率ベクトルが平行）。
+        /// (en) G2 continuity - Geometric curvature continuity (curvature vectors match within tolerance).
+        /// (ja) G2連続 - 幾何学的曲率連続性（曲率ベクトルが許容誤差内で一致）。
         /// </summary>
         G2 = 4,
 
@@ -80,14 +80,14 @@ namespace NurbsSharp.Core
         public double CurvatureAngle { get; set; }
 
         /// <summary>
-        /// (en) Curvature magnitude ratio (second derivative ratio for C2 check).
-        /// (ja) 曲率大きさ比率（C2チェック用の2階微分比率）。
+        /// (en) Curvature vector magnitude ratio (for G2 check).
+        /// (ja) 曲率ベクトルの大きさ比率（G2チェック用）。
         /// </summary>
         public double CurvatureRatio { get; set; }
 
         /// <summary>
-        /// (en) Whether the connection is reversed (curves meet in opposite directions).
-        /// (ja) 接続が逆向きか（曲線が逆方向で接続）。
+        /// (en) Whether the tangent parameter directions are opposite at the connection.
+        /// (ja) 接続点で接線のパラメータ方向が反対向きか。
         /// </summary>
         public bool IsReversed { get; set; }
 

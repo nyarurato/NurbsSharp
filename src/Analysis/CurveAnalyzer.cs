@@ -11,6 +11,8 @@ namespace NurbsSharp.Analysis
     /// </summary>
     public class CurveAnalyzer: BasicAnalyzer
     {
+        private const double DegenerateDerivativeTolerance = 1e-12;
+
         /// <summary>
         /// (en) Build arc-length parameterization helper between parameter u and arc-length s.
         /// (ja) パラメータuと弧長sの間の等弧長パラメータ化ヘルパを構築します。
@@ -418,56 +420,108 @@ namespace NurbsSharp.Analysis
             double mag1 = d1First.magnitude;
             double mag2 = d2First.magnitude;
 
-            if (mag1 < 1e-12 || mag2 < 1e-12)
+            if (mag1 < DegenerateDerivativeTolerance || mag2 < DegenerateDerivativeTolerance)
                 return result; // Degenerate tangent - cannot evaluate higher continuity
 
             Vector3Double t1 = d1First.normalized;
             Vector3Double t2 = d2First.normalized;
 
-            double dotProduct = Vector3Double.Dot(t1, t2);
+            double dotProduct = Math.Clamp(Vector3Double.Dot(t1, t2), -1.0, 1.0);
             result.IsReversed = dotProduct < 0;
-            result.TangentAngle = Math.Acos(Math.Clamp(Math.Abs(dotProduct), 0.0, 1.0));
+            result.TangentAngle = Math.Acos(dotProduct);
+            result.TangentRatio = mag2 / mag1;
 
             if (result.TangentAngle > angleTolerance)
                 return result; // Not even G1
 
             result.Continuity = ContinuityType.G1;
 
-            result.TangentRatio = result.IsReversed ? -mag2 / mag1 : mag2 / mag1;
-            if (Math.Abs(result.TangentRatio - 1.0) > ratioTolerance)
-                return result; // Only G1, not C1
+            bool hasC1 = Math.Abs(result.TangentRatio - 1.0) <= ratioTolerance;
+            if (hasC1)
+                result.Continuity = ContinuityType.C1;
 
-            result.Continuity = ContinuityType.C1;
+            Vector3Double curvature1 = CalculateCurvatureVector(d1First, d1Second);
+            Vector3Double curvature2 = CalculateCurvatureVector(d2First, d2Second);
+            double curvatureMagnitude1 = curvature1.magnitude;
+            double curvatureMagnitude2 = curvature2.magnitude;
 
-            // G2/C2 check
-            double mag1_2nd = d1Second.magnitude;
-            double mag2_2nd = d2Second.magnitude;
-
-            if (mag1_2nd < 1e-12 && mag2_2nd < 1e-12)
+            bool hasG2;
+            if (curvatureMagnitude1 < DegenerateDerivativeTolerance &&
+                curvatureMagnitude2 < DegenerateDerivativeTolerance)
             {
-                // Both second derivatives are zero (e.g. straight lines) - C2
-                result.Continuity = ContinuityType.C2;
                 result.CurvatureAngle = 0.0;
                 result.CurvatureRatio = 1.0;
+                hasG2 = true;
+            }
+            else if (curvatureMagnitude1 < DegenerateDerivativeTolerance ||
+                     curvatureMagnitude2 < DegenerateDerivativeTolerance)
+            {
+                result.CurvatureRatio = curvatureMagnitude1 < DegenerateDerivativeTolerance
+                    ? double.PositiveInfinity
+                    : 0.0;
                 return result;
             }
+            else
+            {
+                double curvatureDot = Math.Clamp(
+                    Vector3Double.Dot(curvature1.normalized, curvature2.normalized),
+                    -1.0,
+                    1.0);
 
-            if (mag1_2nd < 1e-12 || mag2_2nd < 1e-12)
-                return result; // One is straight, other is curved - not G2
+                result.CurvatureAngle = Math.Acos(curvatureDot);
+                result.CurvatureRatio = curvatureMagnitude2 / curvatureMagnitude1;
+                hasG2 = result.CurvatureAngle <= angleTolerance &&
+                        Math.Abs(result.CurvatureRatio - 1.0) <= ratioTolerance;
+            }
 
-            double curvatureDot = Vector3Double.Dot(d1Second.normalized, d2Second.normalized);
-            result.CurvatureAngle = Math.Acos(Math.Clamp(Math.Abs(curvatureDot), 0.0, 1.0));
-
-            if (result.CurvatureAngle > angleTolerance)
-                return result; // Not G2
+            if (!hasG2)
+                return result;
 
             result.Continuity = ContinuityType.G2;
 
-            result.CurvatureRatio = mag2_2nd / mag1_2nd;
-            if (Math.Abs(result.CurvatureRatio - 1.0) <= ratioTolerance)
+            if (hasC1 && AreEquivalentDerivatives(d1Second, d2Second, angleTolerance, ratioTolerance))
                 result.Continuity = ContinuityType.C2;
 
             return result;
+        }
+
+        private static Vector3Double CalculateCurvatureVector(
+            Vector3Double firstDerivative,
+            Vector3Double secondDerivative)
+        {
+            double speed = firstDerivative.magnitude;
+            Vector3Double tangent = firstDerivative / speed;
+            Vector3Double normalAcceleration = secondDerivative -
+                tangent * Vector3Double.Dot(tangent, secondDerivative);
+
+            return normalAcceleration / (speed * speed);
+        }
+
+        private static bool AreEquivalentDerivatives(
+            Vector3Double first,
+            Vector3Double second,
+            double angleTolerance,
+            double ratioTolerance)
+        {
+            double firstMagnitude = first.magnitude;
+            double secondMagnitude = second.magnitude;
+
+            if (firstMagnitude < DegenerateDerivativeTolerance &&
+                secondMagnitude < DegenerateDerivativeTolerance)
+                return true;
+
+            if (firstMagnitude < DegenerateDerivativeTolerance ||
+                secondMagnitude < DegenerateDerivativeTolerance)
+                return false;
+
+            double dotProduct = Math.Clamp(
+                Vector3Double.Dot(first.normalized, second.normalized),
+                -1.0,
+                1.0);
+            double angle = Math.Acos(dotProduct);
+            double ratio = secondMagnitude / firstMagnitude;
+
+            return angle <= angleTolerance && Math.Abs(ratio - 1.0) <= ratioTolerance;
         }
     }
 }
