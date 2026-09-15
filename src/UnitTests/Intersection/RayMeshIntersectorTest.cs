@@ -561,9 +561,11 @@ namespace UnitTests.Intersection
                 new Ray(new Vector3Double(100, 10, 100), new Vector3Double(0, -1, 0)) // Should miss
             };
             
-            foreach (var ray in rays)
+            bool[] expectedHits = [true, true, true, false];
+            for (int i = 0; i < rays.Length; i++)
             {
-                RayMeshIntersector.Intersects(ray, mesh, out _,bvh);
+                bool hit = RayMeshIntersector.Intersects(rays[i], mesh, out _, bvh);
+                Assert.That(hit, Is.EqualTo(expectedHits[i]), $"Unexpected BVH result for ray {i}");
             }
 
         }
