@@ -30,4 +30,8 @@
     <ProjectReference Include="..\..\NurbsSharp.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Characterization\PublicApiBaseline.txt" />
+  </ItemGroup>
+
 </Project>
