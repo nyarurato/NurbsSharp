@@ -268,5 +268,47 @@ namespace UnitTests.Analysis
             Assert.That(result.PositionGap, Is.LessThan(1e-6));
             Assert.That(result.TangentAngle, Is.LessThan(0.01));
         }
+
+        [Test]
+        public void EvaluateCurveContinuityAtConnection_UsesExactEndpointsOnArbitraryDomains()
+        {
+            // Both cubic curves have C'(connection)=(1,-3,0) and
+            // C''(connection)=(0,-2,0), but their derivatives differ immediately
+            // inside their respective domains. This detects endpoint offsets.
+            var curve1 = new NurbsCurve(
+                3,
+                new KnotVector([2.0, 2.0, 2.0, 2.0, 5.0, 5.0, 5.0, 5.0], 3),
+                [
+                    new ControlPoint(new Vector3Double(0.0, 0.0, 0.0), 1.0),
+                    new ControlPoint(new Vector3Double(1.0, 3.0, 0.0), 1.0),
+                    new ControlPoint(new Vector3Double(2.0, 3.0, 0.0), 1.0),
+                    new ControlPoint(new Vector3Double(3.0, 0.0, 0.0), 1.0),
+                ]);
+
+            var curve2 = new NurbsCurve(
+                3,
+                new KnotVector([10.0, 10.0, 10.0, 10.0, 14.0, 14.0, 14.0, 14.0], 3),
+                [
+                    new ControlPoint(new Vector3Double(3.0, 0.0, 0.0), 1.0),
+                    new ControlPoint(new Vector3Double(13.0 / 3.0, -4.0, 0.0), 1.0),
+                    new ControlPoint(new Vector3Double(17.0 / 3.0, -40.0 / 3.0, 0.0), 1.0),
+                    new ControlPoint(new Vector3Double(8.0, -12.0, 0.0), 1.0),
+                ]);
+
+            ContinuityResult explicitEndpoints = CurveAnalyzer.EvaluateCurveContinuity(curve1, curve2, 5.0, 10.0);
+            ContinuityResult connection = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(explicitEndpoints.Continuity, Is.EqualTo(ContinuityType.C2));
+                Assert.That(connection.Continuity, Is.EqualTo(explicitEndpoints.Continuity));
+                Assert.That(connection.PositionGap, Is.EqualTo(explicitEndpoints.PositionGap).Within(1e-12));
+                Assert.That(connection.TangentAngle, Is.EqualTo(explicitEndpoints.TangentAngle).Within(1e-12));
+                Assert.That(connection.TangentRatio, Is.EqualTo(explicitEndpoints.TangentRatio).Within(1e-12));
+                Assert.That(connection.CurvatureAngle, Is.EqualTo(explicitEndpoints.CurvatureAngle).Within(1e-12));
+                Assert.That(connection.CurvatureRatio, Is.EqualTo(explicitEndpoints.CurvatureRatio).Within(1e-12));
+                Assert.That(connection.IsReversed, Is.EqualTo(explicitEndpoints.IsReversed));
+            });
+        }
     }
 }
