@@ -365,43 +365,18 @@ namespace NurbsSharp.Analysis
             Guard.ThrowIfNull(curve1, nameof(curve1));
             Guard.ThrowIfNull(curve2, nameof(curve2));
 
-            var result = new ContinuityResult();
-
             // Get endpoint parameters
             double u1End   = curve1.KnotVector.Knots[curve1.KnotVector.Length - curve1.Degree - 1];
             double u2Start = curve2.KnotVector.Knots[curve2.Degree];
 
-            // Evaluate positions at exact endpoints
-            Vector3Double p1 = CurveEvaluator.Evaluate(curve1, u1End);
-            Vector3Double p2 = CurveEvaluator.Evaluate(curve2, u2Start);
-
-            result.PositionGap = (p2 - p1).magnitude;
-            if (result.PositionGap > positionTolerance)
-            {
-                result.Continuity = ContinuityType.None;
-                return result;
-            }
-
-            result.Continuity = ContinuityType.C0;
-
-            // Evaluate derivatives slightly inside the domain to avoid endpoint numerical issues
-            double u1Min = curve1.KnotVector.Knots[curve1.Degree];
-            double u2Max = curve2.KnotVector.Knots[curve2.KnotVector.Length - curve2.Degree - 1];
-            double eps1 = Math.Max(1e-8, (u1End   - u1Min) * 1e-4);
-            double eps2 = Math.Max(1e-8, (u2Max - u2Start) * 1e-4);
-            double u1Deriv = u1End   - eps1;
-            double u2Deriv = u2Start + eps2;
-
-            Vector3Double d1First  = CurveEvaluator.EvaluateFirstDerivative(curve1, u1Deriv);
-            Vector3Double d2First  = CurveEvaluator.EvaluateFirstDerivative(curve2, u2Deriv);
-            Vector3Double d1Second = curve1.Degree >= 2
-                ? CurveEvaluator.EvaluateSecondDerivative(curve1, u1Deriv)
-                : Vector3Double.Zero;
-            Vector3Double d2Second = curve2.Degree >= 2
-                ? CurveEvaluator.EvaluateSecondDerivative(curve2, u2Deriv)
-                : Vector3Double.Zero;
-
-            return EvaluateHigherContinuity(result, d1First, d2First, d1Second, d2Second, angleTolerance, ratioTolerance);
+            return EvaluateCurveContinuity(
+                curve1,
+                curve2,
+                u1End,
+                u2Start,
+                positionTolerance,
+                angleTolerance,
+                ratioTolerance);
         }
 
         /// <summary>
