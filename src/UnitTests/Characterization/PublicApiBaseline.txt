@@ -513,8 +513,6 @@ static class NurbsSharp.Intersection.SurfaceSurfaceIntersector
   method static System.Collections.Generic.List<NurbsSharp.Intersection.SurfaceSurfaceIntersection> Intersect(NurbsSharp.Geometry.NurbsSurface surfaceA, NurbsSharp.Geometry.NurbsSurface surfaceB, System.Double tolerance = 1E-06, System.Int32 isoDivisions = 20, System.Boolean useBVH = true, System.Boolean useParallel = true)
   method static System.Collections.Generic.List<NurbsSharp.Intersection.SurfaceSurfaceIntersection> IntersectWithMarching(NurbsSharp.Geometry.NurbsSurface surfaceA, NurbsSharp.Geometry.NurbsSurface surfaceB, System.Double stepSize = 0.01, System.Double tolerance = 1E-06, System.Int32 isoDivisions = 20)
 
-static class NurbsSharp.Operation.CurveOperator
-
 class NurbsSharp.Operation.DegreeOperator
   ctor NurbsSharp.Operation.DegreeOperator()
   method static NurbsSharp.Geometry.NurbsCurve ElevateDegree(NurbsSharp.Geometry.NurbsCurve curve, System.Int32 times)
