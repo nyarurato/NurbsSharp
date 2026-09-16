@@ -22,10 +22,12 @@ NURBS Sharpは.NET向けの依存関係なしのNURBS（非一様有理 B-スプ
 
 ## 特長
 
-- NURBS曲線・サーフェスの生成および評価
+- NURBS曲線・サーフェス・ボリュームの生成および評価
 - トポロジー演算：次数変更、ノット挿入/削除/細分化、結合/分割
 - 生成機能：補間、最小二乗近似、プリミティブ形状
-- 交差計算：Ray-Box、Ray-Mesh、Curve-Curve、Curve-Surface, Surface-Surface, Surface-Plane
+- 解析機能：曲線長、弧長パラメータ化・等弧長サンプリング、最近接点、曲率、法線、曲線連続性
+- 曲線・サーフェス・ボリュームの変換：平行移動、回転、拡大縮小、変換行列
+- 交差計算：Ray-Box、Ray-Mesh、Ray-Surface、Curve-Curve、Curve-Surface、Surface-Surface、Surface-Plane
 - 入出力ヘルパー：
   - メッシュのみ：`OBJ`/`STL`出力、`BMP`出力（簡易）
   - NURBSのみ：`IGES`入出力（Point、Curve、Surfaceエンティティ対応）
@@ -42,6 +44,7 @@ NURBS Sharpは.NET向けの依存関係なしのNURBS（非一様有理 B-スプ
 - **メッシュエクスポート (OBJ/STL)**: メッシュオブジェクトのみサポートしています。NURBSからの直接エクスポートはサポートされていません（テッセレーションが必要です）。
 - **交差計算**: 
     - 現状初期条件に依存するため不安定な場合があります。
+    - Surface-Plane交差の孤立した接点は、交線として安定して判定できません。
 
 ## インストール
 
@@ -58,27 +61,26 @@ dotnet add package NurbsSharp
 基本的な使用例（C#）
 
 ```csharp
+using System;
 using NurbsSharp.Core;
 using NurbsSharp.Geometry;
-using NurbsSharp.Tesselation;
-using NurbsSharp.IO;
 
 // NURBS曲面を作成して評価
-int degreeU = 3, degreeV = 3;
-var knotsU = new double[] {0,0,0,0,1,1,1,1};
-var knotsV = new double[] {0,0,0,0,1,1,1,1};
-var kvU = new KnotVector(knotsU);
-var kvV = new KnotVector(knotsV);
+int degreeU = 1, degreeV = 1;
+var kvU = new KnotVector(new[] { 0.0, 0.0, 1.0, 1.0 }, degreeU);
+var kvV = new KnotVector(new[] { 0.0, 0.0, 1.0, 1.0 }, degreeV);
 
 // コントロールポイント（u x v グリッド）
-ControlPoint[][] controlPoints = new ControlPoint[4][];
-controlPoints[0] = new ControlPoint[] {
-    new ControlPoint(0.0, 0.0, 0.0, 1),
-    new ControlPoint(1.0, 0.0, 1.0, 1),
-    new ControlPoint(2.0, 0.0, 3.0, 1),
-    new ControlPoint(3.0, 0.0, 3.0, 1)
+var controlPoints = new[] {
+    new[] {
+        new ControlPoint(0.0, 0.0, 0.0, 1.0),
+        new ControlPoint(0.0, 1.0, 0.0, 1.0)
+    },
+    new[] {
+        new ControlPoint(1.0, 0.0, 0.0, 1.0),
+        new ControlPoint(1.0, 1.0, 1.0, 1.0)
+    }
 };
-// ... コントロールポイントの定義 ...
 
 var surface = new NurbsSurface(degreeU, degreeV, kvU, kvV, controlPoints);
 var point = surface.GetPos(0.5, 0.5);

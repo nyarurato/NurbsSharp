@@ -22,10 +22,12 @@ It provides data structures, evaluators, topology operators, I/O and tessellatio
 
 ## Features
 
-- Generation and evaluation of NURBS curves, surfaces
+- Generation and evaluation of NURBS curves, surfaces and volumes
 - Topology operators: degree elevation/reduction, knot insertion/removal/refinement, join/split
 - Generation capabilities: interpolation, least squares approximation, primitive shapes
-- Intersection calculations: Ray-Box, Ray-Mesh, Curve-Curve, Curve-Surface, Surface-Surface, Surface-Plane
+- Analysis utilities: curve length, arc-length parameterization/sampling, closest points, curvature, normals and curve continuity
+- Transformations for curves, surfaces and volumes: translation, rotation, scaling and transformation matrices
+- Intersection calculations: Ray-Box, Ray-Mesh, Ray-Surface, Curve-Curve, Curve-Surface, Surface-Surface, Surface-Plane
 - IO helpers:
   - Mesh only: OBJ/STL export, simple BMP export
   - NURBS only: IGES import/export (Point, Curve, Surface entities supported)
@@ -42,6 +44,7 @@ It provides data structures, evaluators, topology operators, I/O and tessellatio
 - **Mesh Export (OBJ/STL)**: Only supports Mesh objects. Direct export from NURBS is not supported (tessellation required).
 - **Intersection Calculations**: 
     - The current state may be unstable due to its dependence on initial conditions.
+    - Isolated tangent contacts in surface-plane intersections are not reliably classified as curve intersections.
 
 ## Installation
 
@@ -58,27 +61,26 @@ Or add the package reference to your project file.
 Basic usage (C#):
 
 ```csharp
+using System;
 using NurbsSharp.Core;
 using NurbsSharp.Geometry;
-using NurbsSharp.Tesselation;
-using NurbsSharp.IO;
 
 // Create a NURBS surface and evaluate a point
-int degreeU = 3, degreeV = 3;
-var knotsU = new double[] {0,0,0,0,1,1,1,1};
-var knotsV = new double[] {0,0,0,0,1,1,1,1};
-var kvU = new KnotVector(knotsU);
-var kvV = new KnotVector(knotsV);
+int degreeU = 1, degreeV = 1;
+var kvU = new KnotVector(new[] { 0.0, 0.0, 1.0, 1.0 }, degreeU);
+var kvV = new KnotVector(new[] { 0.0, 0.0, 1.0, 1.0 }, degreeV);
 
 // Build control points (u x v grid)
-ControlPoint[][] controlPoints = new ControlPoint[4][];
-controlPoints[0] = new ControlPoint[] {
-    new ControlPoint(0.0, 0.0, 0.0, 1),
-    new ControlPoint(1.0, 0.0, 1.0, 1),
-    new ControlPoint(2.0, 0.0, 3.0, 1),
-    new ControlPoint(3.0, 0.0, 3.0, 1)
+var controlPoints = new[] {
+    new[] {
+        new ControlPoint(0.0, 0.0, 0.0, 1.0),
+        new ControlPoint(0.0, 1.0, 0.0, 1.0)
+    },
+    new[] {
+        new ControlPoint(1.0, 0.0, 0.0, 1.0),
+        new ControlPoint(1.0, 1.0, 1.0, 1.0)
+    }
 };
-// ... Create Control Points ...
 
 var surface = new NurbsSurface(degreeU, degreeV, kvU, kvV, controlPoints);
 var point = surface.GetPos(0.5, 0.5);
