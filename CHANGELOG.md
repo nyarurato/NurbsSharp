@@ -8,19 +8,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- CurveAnalyzer
-- Curve continuity evaluation APIs in CurveAnalyzer, with ContinuityType and CurveContinuityResult
-- SurfaceAnalyzer
-- NurbsCurve: FindClosestPoint and FindClosestPointWithInitialGuess
-- NurbsSurface: FindClosestPointWithInitialGuess
-- Ray-Surface Intersector
 
 ### Changed
-- integrate CurveSurfaceIntersector.IntersectWithBVH to Intersect method
-- rename: SurfaceSurfaceIntersector.IntersectRobust to IntersectWithMarching
-- Default use Parallel for SurfaceSurfaceIntersector.Intersect
-- move CurveLength, EvaluatTangentNormal, EvaluateTangent, EvaluateNormal, EvaluateCurvature from CurveEvaluator to CurveAnalyzer
-- move SurfaceArea, EvaluatTangentNormal, EvaluateTangents, EvaluateNormal, EvaluatePrincipalCurvatures, EvaluateMeanAndGaussianCurvatures from SurfaceEvaluator to SurfaceAnalyzer
+
+### Fixed
+
+### Removed
+
+### Deprecated
+
+## [0.4.0] - 2026-09-16
+
+### Added
+- CurveAnalyzer and SurfaceAnalyzer for geometric analysis operations
+- Curve continuity evaluation APIs, ContinuityType, and CurveContinuityResult
+- Curve arc-length parameterization and uniform arc-length sampling
+- Closest-point query APIs on NurbsCurve and NurbsSurface
+- Matrix4x4 and TransformOperator, with translation, rotation, scaling, and general transforms for curves, surfaces, and volumes
+- Fast and robust ray-surface intersection APIs
+
+### Changed
+- CurveSurfaceIntersector.Intersect now uses BVH candidate detection with a marching fallback
+- SurfaceSurfaceIntersector.Intersect now supports BVH and parallel execution, enabled by default
+- Renamed SurfaceSurfaceIntersector.IntersectRobust to IntersectWithMarching
+- Moved curve length, tangent, normal, and curvature analysis from CurveEvaluator to CurveAnalyzer
+- Moved surface area, tangent, normal, and curvature analysis from SurfaceEvaluator to SurfaceAnalyzer
+- Moved surface closest-point analysis from SurfaceOperator to SurfaceAnalyzer and NurbsSurface
+- Parallelized large regular surface tessellation workloads and reduced adaptive tessellation allocations
+- Standardized selected public method and parameter names to .NET naming conventions
 
 ### Fixed
 - B-spline basis, curve, and surface derivatives at the maximum knot
@@ -30,8 +45,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Surface-plane intersection refinement stepping outside the surface parameter domain
 
 ### Removed
+- CurveSurfaceIntersector.IntersectWithBVH; use CurveSurfaceIntersector.Intersect
+- SurfaceSurfaceIntersector.IntersectRobust; use SurfaceSurfaceIntersector.IntersectWithMarching
+- SurfaceOperator.FindClosestPoint overloads; use SurfaceAnalyzer or NurbsSurface closest-point APIs
+- Misspelled CurveEvaluator.EvaluatTangentNormal and SurfaceEvaluator.EvaluatTangentNormal; use the analyzer APIs
 
 ### Deprecated
+- Curve analysis methods on CurveEvaluator; use CurveAnalyzer
+- Surface analysis methods on SurfaceEvaluator; use SurfaceAnalyzer
 
 ## [0.3.0] - 2025-12-12
 ### Added
