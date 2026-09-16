@@ -47,6 +47,34 @@ namespace NurbsSharp.Core
     /// (en) Result of continuity evaluation between two geometric entities.
     /// (ja) 2つの幾何要素間の連続性評価結果。
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// (en) A NaN metric means that the value was not evaluated or is mathematically undefined;
+    /// it does not mean zero or a failed tolerance comparison. Tangent metrics are NaN when
+    /// position continuity fails or either first derivative is the zero vector. Curvature metrics
+    /// remain NaN when curvature comparison is not reached. CurvatureAngle is also NaN when exactly
+    /// one curvature vector is zero because no angle can be defined.
+    /// </para>
+    /// <para>
+    /// (ja) NaNのmetricは、その値が未評価または数学的に未定義であることを表し、ゼロや
+    /// tolerance比較の不合格を意味しません。位置連続性が成立しない場合、またはいずれかの
+    /// 一階微分がゼロベクトルの場合、接線metricはNaNになります。曲率比較へ到達しない場合、
+    /// 曲率metricはNaNのままです。また片方の曲率ベクトルだけがゼロの場合は角度を定義できないため、
+    /// CurvatureAngleはNaNになります。
+    /// </para>
+    /// <para>
+    /// (en) In particular, C0 with a finite TangentAngle means that both tangents were defined but
+    /// did not satisfy G1. C0 with a NaN TangentAngle means that position continuity was established,
+    /// but higher continuity could not be evaluated because a tangent was degenerate. Use
+    /// <see cref="System.Double.IsNaN(System.Double)"/> when testing metric availability.
+    /// </para>
+    /// <para>
+    /// (ja) 特に、有限のTangentAngleを持つC0は両方の接線を評価できたもののG1を満たさなかった
+    /// ことを表します。NaNのTangentAngleを持つC0は位置連続性までは確認できたものの、接線が退化して
+    /// higher continuityを評価できなかったことを表します。metricが利用可能かどうかは
+    /// <see cref="System.Double.IsNaN(System.Double)"/>で確認してください。
+    /// </para>
+    /// </remarks>
     public class ContinuityResult
     {
         /// <summary>
