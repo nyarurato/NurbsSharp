@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - B-spline basis, curve, and surface derivatives at the maximum knot
 - Curve continuity evaluation at connections to use exact endpoint derivatives
 - Curve G1/G2 and C1/C2 classification for reparameterized and reversed connections
+- Curve continuity tolerance validation and scale-independent degenerate-tangent handling
 - Surface-plane intersection refinement stepping outside the surface parameter domain
 
 ### Removed
