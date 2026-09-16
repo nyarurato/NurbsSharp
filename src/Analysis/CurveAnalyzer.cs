@@ -308,7 +308,7 @@ namespace NurbsSharp.Analysis
         /// <param name="ratioTolerance">Finite, non-negative derivative/curvature magnitude ratio tolerance (default: 0.05 = 5%)</param>
         /// <returns>Continuity evaluation result</returns>
         /// <exception cref="ArgumentOutOfRangeException">Thrown when a tolerance is outside its valid range.</exception>
-        public static ContinuityResult EvaluateCurveContinuity(
+        public static CurveContinuityResult EvaluateCurveContinuity(
             NurbsCurve curve1, 
             NurbsCurve curve2,
             double u1,
@@ -321,7 +321,7 @@ namespace NurbsSharp.Analysis
             Guard.ThrowIfNull(curve2, nameof(curve2));
             ValidateContinuityTolerances(positionTolerance, angleTolerance, ratioTolerance);
 
-            var result = new ContinuityResult();
+            var result = new CurveContinuityResult();
 
             Vector3Double p1 = CurveEvaluator.Evaluate(curve1, u1);
             Vector3Double p2 = CurveEvaluator.Evaluate(curve2, u2);
@@ -358,7 +358,7 @@ namespace NurbsSharp.Analysis
         /// <param name="ratioTolerance">Finite, non-negative derivative/curvature magnitude ratio tolerance</param>
         /// <returns>Continuity evaluation result</returns>
         /// <exception cref="ArgumentOutOfRangeException">Thrown when a tolerance is outside its valid range.</exception>
-        public static ContinuityResult EvaluateCurveContinuityAtConnection(
+        public static CurveContinuityResult EvaluateCurveContinuityAtConnection(
             NurbsCurve curve1,
             NurbsCurve curve2,
             double positionTolerance = 1e-6,
@@ -394,7 +394,7 @@ namespace NurbsSharp.Analysis
         /// <returns>Array of continuity results for each connection (length = curves.Length - 1)</returns>
         /// <exception cref="ArgumentException">Thrown when fewer than two curves are supplied.</exception>
         /// <exception cref="ArgumentOutOfRangeException">Thrown when a tolerance is outside its valid range.</exception>
-        public static ContinuityResult[] EvaluateCurveChainContinuity(
+        public static CurveContinuityResult[] EvaluateCurveChainContinuity(
             NurbsCurve[] curves,
             double positionTolerance = 1e-6,
             double angleTolerance = 0.01,
@@ -404,7 +404,7 @@ namespace NurbsSharp.Analysis
                 throw new ArgumentException("At least 2 curves required for chain continuity evaluation.", nameof(curves));
             ValidateContinuityTolerances(positionTolerance, angleTolerance, ratioTolerance);
 
-            var results = new ContinuityResult[curves.Length - 1];
+            var results = new CurveContinuityResult[curves.Length - 1];
             for (int i = 0; i < curves.Length - 1; i++)
             {
                 results[i] = EvaluateCurveContinuityAtConnection(
@@ -416,8 +416,8 @@ namespace NurbsSharp.Analysis
 
         // Evaluates G1/C1/G2/C2 continuity given pre-computed derivatives.
         // Assumes result.Continuity is already set to C0.
-        private static ContinuityResult EvaluateHigherContinuity(
-            ContinuityResult result,
+        private static CurveContinuityResult EvaluateHigherContinuity(
+            CurveContinuityResult result,
             Vector3Double d1First, Vector3Double d2First,
             Vector3Double d1Second, Vector3Double d2Second,
             double angleTolerance, double ratioTolerance)

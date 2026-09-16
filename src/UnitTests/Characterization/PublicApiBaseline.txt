@@ -7,9 +7,9 @@ class NurbsSharp.Analysis.BasicAnalyzer
 class NurbsSharp.Analysis.CurveAnalyzer : NurbsSharp.Analysis.BasicAnalyzer
   ctor NurbsSharp.Analysis.CurveAnalyzer()
   method static NurbsSharp.Analysis.CurveArcLengthParameterization BuildArcLengthParameterization(NurbsSharp.Geometry.NurbsCurve curve, System.Int32 subdivisionsPerSpan = 10)
-  method static NurbsSharp.Core.ContinuityResult EvaluateCurveContinuity(NurbsSharp.Geometry.NurbsCurve curve1, NurbsSharp.Geometry.NurbsCurve curve2, System.Double u1, System.Double u2, System.Double positionTolerance = 1E-06, System.Double angleTolerance = 0.01, System.Double ratioTolerance = 0.05)
-  method static NurbsSharp.Core.ContinuityResult EvaluateCurveContinuityAtConnection(NurbsSharp.Geometry.NurbsCurve curve1, NurbsSharp.Geometry.NurbsCurve curve2, System.Double positionTolerance = 1E-06, System.Double angleTolerance = 0.01, System.Double ratioTolerance = 0.05)
-  method static NurbsSharp.Core.ContinuityResult[] EvaluateCurveChainContinuity(NurbsSharp.Geometry.NurbsCurve[] curves, System.Double positionTolerance = 1E-06, System.Double angleTolerance = 0.01, System.Double ratioTolerance = 0.05)
+  method static NurbsSharp.Core.CurveContinuityResult EvaluateCurveContinuity(NurbsSharp.Geometry.NurbsCurve curve1, NurbsSharp.Geometry.NurbsCurve curve2, System.Double u1, System.Double u2, System.Double positionTolerance = 1E-06, System.Double angleTolerance = 0.01, System.Double ratioTolerance = 0.05)
+  method static NurbsSharp.Core.CurveContinuityResult EvaluateCurveContinuityAtConnection(NurbsSharp.Geometry.NurbsCurve curve1, NurbsSharp.Geometry.NurbsCurve curve2, System.Double positionTolerance = 1E-06, System.Double angleTolerance = 0.01, System.Double ratioTolerance = 0.05)
+  method static NurbsSharp.Core.CurveContinuityResult[] EvaluateCurveChainContinuity(NurbsSharp.Geometry.NurbsCurve[] curves, System.Double positionTolerance = 1E-06, System.Double angleTolerance = 0.01, System.Double ratioTolerance = 0.05)
   method static NurbsSharp.Core.Vector3Double EvaluateNormal(NurbsSharp.Geometry.NurbsCurve curve, System.Double u)
   method static NurbsSharp.Core.Vector3Double EvaluateTangent(NurbsSharp.Geometry.NurbsCurve curve, System.Double u)
   method static System.Double CurveLength(NurbsSharp.Geometry.NurbsCurve curve, System.Double startU, System.Double endU)
@@ -65,17 +65,6 @@ struct NurbsSharp.Core.BoundingBox
   property System.Double SurfaceArea { get; }
   property System.Double Volume { get; }
 
-class NurbsSharp.Core.ContinuityResult
-  ctor NurbsSharp.Core.ContinuityResult()
-  method System.String ToString()
-  property NurbsSharp.Core.ContinuityType Continuity { get; set; }
-  property System.Boolean IsReversed { get; set; }
-  property System.Double CurvatureAngle { get; set; }
-  property System.Double CurvatureRatio { get; set; }
-  property System.Double PositionGap { get; set; }
-  property System.Double TangentAngle { get; set; }
-  property System.Double TangentRatio { get; set; }
-
 enum NurbsSharp.Core.ContinuityType
   field System.Int32 value__
   field const NurbsSharp.Core.ContinuityType C0 = NurbsSharp.Core.ContinuityType.C0
@@ -95,6 +84,17 @@ class NurbsSharp.Core.ControlPoint
   property NurbsSharp.Core.Vector3Double Position { get; set; }
   property NurbsSharp.Core.Vector4Double HomogeneousPosition { get; }
   property System.Double Weight { get; set; }
+
+class NurbsSharp.Core.CurveContinuityResult
+  ctor NurbsSharp.Core.CurveContinuityResult()
+  method System.String ToString()
+  property NurbsSharp.Core.ContinuityType Continuity { get; set; }
+  property System.Boolean IsReversed { get; set; }
+  property System.Double CurvatureAngle { get; set; }
+  property System.Double CurvatureRatio { get; set; }
+  property System.Double PositionGap { get; set; }
+  property System.Double TangentAngle { get; set; }
+  property System.Double TangentRatio { get; set; }
 
 class NurbsSharp.Core.KnotVector
   ctor NurbsSharp.Core.KnotVector()

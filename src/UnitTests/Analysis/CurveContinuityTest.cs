@@ -299,8 +299,8 @@ namespace UnitTests.Analysis
                     new ControlPoint(new Vector3Double(8.0, -12.0, 0.0), 1.0),
                 ]);
 
-            ContinuityResult explicitEndpoints = CurveAnalyzer.EvaluateCurveContinuity(curve1, curve2, 5.0, 10.0);
-            ContinuityResult connection = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
+            CurveContinuityResult explicitEndpoints = CurveAnalyzer.EvaluateCurveContinuity(curve1, curve2, 5.0, 10.0);
+            CurveContinuityResult connection = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
 
             Assert.Multiple(() =>
             {
@@ -340,7 +340,7 @@ namespace UnitTests.Analysis
                     new ControlPoint(new Vector3Double(5.0, 4.0, 0.0), 1.0),
                 ]);
 
-            ContinuityResult result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
+            CurveContinuityResult result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
 
             Assert.Multiple(() =>
             {
@@ -375,7 +375,7 @@ namespace UnitTests.Analysis
                     new ControlPoint(new Vector3Double(1.0, 2.0, 0.0), 1.0),
                 ]);
 
-            ContinuityResult result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
+            CurveContinuityResult result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
 
             Assert.Multiple(() =>
             {
@@ -410,7 +410,7 @@ namespace UnitTests.Analysis
                     new ControlPoint(new Vector3Double(2.5, 1.0, 0.0), 1.0),
                 ]);
 
-            ContinuityResult result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
+            CurveContinuityResult result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
 
             Assert.Multiple(() =>
             {
@@ -477,7 +477,7 @@ namespace UnitTests.Analysis
             NurbsCurve curve1 = CreateLine(-1.0, 0.0);
             NurbsCurve curve2 = CreateLine(0.0, 1.0);
 
-            ContinuityResult result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(
+            CurveContinuityResult result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(
                 curve1,
                 curve2,
                 positionTolerance: 0.0,
@@ -500,7 +500,7 @@ namespace UnitTests.Analysis
                 ]);
             NurbsCurve curve2 = CreateLine(0.0, 1.0);
 
-            ContinuityResult result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
+            CurveContinuityResult result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
 
             Assert.Multiple(() =>
             {
@@ -520,7 +520,7 @@ namespace UnitTests.Analysis
             NurbsCurve curve1 = CreateLine(-scale, 0.0);
             NurbsCurve curve2 = CreateLine(0.0, scale);
 
-            ContinuityResult result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
+            CurveContinuityResult result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
 
             Assert.Multiple(() =>
             {
