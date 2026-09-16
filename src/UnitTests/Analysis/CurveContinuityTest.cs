@@ -420,5 +420,125 @@ namespace UnitTests.Analysis
                 Assert.That(result.CurvatureRatio, Is.EqualTo(1.0).Within(1e-12));
             });
         }
+
+        [TestCase(-1.0, 0.01, 0.05, "positionTolerance")]
+        [TestCase(double.NaN, 0.01, 0.05, "positionTolerance")]
+        [TestCase(double.PositiveInfinity, 0.01, 0.05, "positionTolerance")]
+        [TestCase(1e-6, -1.0, 0.05, "angleTolerance")]
+        [TestCase(1e-6, double.NaN, 0.05, "angleTolerance")]
+        [TestCase(1e-6, double.PositiveInfinity, 0.05, "angleTolerance")]
+        [TestCase(1e-6, 3.1415926535897932 + 0.01, 0.05, "angleTolerance")]
+        [TestCase(1e-6, 0.01, -1.0, "ratioTolerance")]
+        [TestCase(1e-6, 0.01, double.NaN, "ratioTolerance")]
+        [TestCase(1e-6, 0.01, double.PositiveInfinity, "ratioTolerance")]
+        public void EvaluateCurveContinuity_InvalidTolerance_ThrowsAcrossAllEntryPoints(
+            double positionTolerance,
+            double angleTolerance,
+            double ratioTolerance,
+            string expectedParameterName)
+        {
+            NurbsCurve curve1 = CreateLine(-1.0, 0.0);
+            NurbsCurve curve2 = CreateLine(0.0, 1.0);
+
+            ArgumentOutOfRangeException? directException = Assert.Throws<ArgumentOutOfRangeException>(() =>
+                CurveAnalyzer.EvaluateCurveContinuity(
+                    curve1,
+                    curve2,
+                    1.0,
+                    0.0,
+                    positionTolerance,
+                    angleTolerance,
+                    ratioTolerance));
+            ArgumentOutOfRangeException? connectionException = Assert.Throws<ArgumentOutOfRangeException>(() =>
+                CurveAnalyzer.EvaluateCurveContinuityAtConnection(
+                    curve1,
+                    curve2,
+                    positionTolerance,
+                    angleTolerance,
+                    ratioTolerance));
+            ArgumentOutOfRangeException? chainException = Assert.Throws<ArgumentOutOfRangeException>(() =>
+                CurveAnalyzer.EvaluateCurveChainContinuity(
+                    [curve1, curve2],
+                    positionTolerance,
+                    angleTolerance,
+                    ratioTolerance));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(directException!.ParamName, Is.EqualTo(expectedParameterName));
+                Assert.That(connectionException!.ParamName, Is.EqualTo(expectedParameterName));
+                Assert.That(chainException!.ParamName, Is.EqualTo(expectedParameterName));
+            });
+        }
+
+        [Test]
+        public void EvaluateCurveContinuity_ZeroTolerances_AreAccepted()
+        {
+            NurbsCurve curve1 = CreateLine(-1.0, 0.0);
+            NurbsCurve curve2 = CreateLine(0.0, 1.0);
+
+            ContinuityResult result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(
+                curve1,
+                curve2,
+                positionTolerance: 0.0,
+                angleTolerance: 0.0,
+                ratioTolerance: 0.0);
+
+            Assert.That(result.Continuity, Is.EqualTo(ContinuityType.C2));
+        }
+
+        [Test]
+        public void EvaluateCurveContinuity_DegenerateTangent_ReturnsC0WithUndefinedMetrics()
+        {
+            var curve1 = new NurbsCurve(
+                2,
+                new KnotVector([0.0, 0.0, 0.0, 1.0, 1.0, 1.0], 2),
+                [
+                    new ControlPoint(new Vector3Double(-1.0, 0.0, 0.0), 1.0),
+                    new ControlPoint(new Vector3Double(0.0, 0.0, 0.0), 1.0),
+                    new ControlPoint(new Vector3Double(0.0, 0.0, 0.0), 1.0),
+                ]);
+            NurbsCurve curve2 = CreateLine(0.0, 1.0);
+
+            ContinuityResult result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Continuity, Is.EqualTo(ContinuityType.C0));
+                Assert.That(result.PositionGap, Is.EqualTo(0.0));
+                Assert.That(result.TangentAngle, Is.NaN);
+                Assert.That(result.TangentRatio, Is.NaN);
+                Assert.That(result.CurvatureAngle, Is.NaN);
+                Assert.That(result.CurvatureRatio, Is.NaN);
+            });
+        }
+
+        [Test]
+        public void EvaluateCurveContinuity_SmallRegularCurves_AreNotTreatedAsDegenerate()
+        {
+            const double scale = 1e-13;
+            NurbsCurve curve1 = CreateLine(-scale, 0.0);
+            NurbsCurve curve2 = CreateLine(0.0, scale);
+
+            ContinuityResult result = CurveAnalyzer.EvaluateCurveContinuityAtConnection(curve1, curve2);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Continuity, Is.EqualTo(ContinuityType.C2));
+                Assert.That(result.TangentAngle, Is.EqualTo(0.0));
+                Assert.That(result.TangentRatio, Is.EqualTo(1.0));
+            });
+        }
+
+        private static NurbsCurve CreateLine(double startX, double endX)
+        {
+            return new NurbsCurve(
+                1,
+                new KnotVector([0.0, 0.0, 1.0, 1.0], 1),
+                [
+                    new ControlPoint(new Vector3Double(startX, 0.0, 0.0), 1.0),
+                    new ControlPoint(new Vector3Double(endX, 0.0, 0.0), 1.0),
+                ]);
+        }
     }
 }
