@@ -11,8 +11,6 @@ namespace NurbsSharp.Analysis
     /// </summary>
     public class CurveAnalyzer: BasicAnalyzer
     {
-        private const double DegenerateDerivativeTolerance = 1e-12;
-
         /// <summary>
         /// (en) Build arc-length parameterization helper between parameter u and arc-length s.
         /// (ja) パラメータuと弧長sの間の等弧長パラメータ化ヘルパを構築します。
@@ -305,10 +303,11 @@ namespace NurbsSharp.Analysis
         /// <param name="curve2">Second curve</param>
         /// <param name="u1">Parameter on first curve (typically end point)</param>
         /// <param name="u2">Parameter on second curve (typically start point)</param>
-        /// <param name="positionTolerance">Position gap tolerance for C0 (default: 1e-6)</param>
-        /// <param name="angleTolerance">Angle tolerance in radians for tangent/curvature alignment (default: 0.01 rad ≈ 0.57°)</param>
-        /// <param name="ratioTolerance">Magnitude ratio tolerance for C1/C2 (default: 0.05 = 5%)</param>
+        /// <param name="positionTolerance">Finite, non-negative position gap tolerance for C0 (default: 1e-6)</param>
+        /// <param name="angleTolerance">Finite angle tolerance in radians in the range [0, π] for tangent/curvature alignment (default: 0.01 rad ≈ 0.57°)</param>
+        /// <param name="ratioTolerance">Finite, non-negative derivative/curvature magnitude ratio tolerance (default: 0.05 = 5%)</param>
         /// <returns>Continuity evaluation result</returns>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when a tolerance is outside its valid range.</exception>
         public static ContinuityResult EvaluateCurveContinuity(
             NurbsCurve curve1, 
             NurbsCurve curve2,
@@ -320,6 +319,7 @@ namespace NurbsSharp.Analysis
         {
             Guard.ThrowIfNull(curve1, nameof(curve1));
             Guard.ThrowIfNull(curve2, nameof(curve2));
+            ValidateContinuityTolerances(positionTolerance, angleTolerance, ratioTolerance);
 
             var result = new ContinuityResult();
 
@@ -353,10 +353,11 @@ namespace NurbsSharp.Analysis
         /// </summary>
         /// <param name="curve1">First curve</param>
         /// <param name="curve2">Second curve</param>
-        /// <param name="positionTolerance">Position gap tolerance</param>
-        /// <param name="angleTolerance">Angle tolerance in radians</param>
-        /// <param name="ratioTolerance">Magnitude ratio tolerance</param>
+        /// <param name="positionTolerance">Finite, non-negative position gap tolerance</param>
+        /// <param name="angleTolerance">Finite angle tolerance in radians in the range [0, π]</param>
+        /// <param name="ratioTolerance">Finite, non-negative derivative/curvature magnitude ratio tolerance</param>
         /// <returns>Continuity evaluation result</returns>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when a tolerance is outside its valid range.</exception>
         public static ContinuityResult EvaluateCurveContinuityAtConnection(
             NurbsCurve curve1,
             NurbsCurve curve2,
@@ -366,6 +367,7 @@ namespace NurbsSharp.Analysis
         {
             Guard.ThrowIfNull(curve1, nameof(curve1));
             Guard.ThrowIfNull(curve2, nameof(curve2));
+            ValidateContinuityTolerances(positionTolerance, angleTolerance, ratioTolerance);
 
             // Get endpoint parameters
             double u1End   = curve1.KnotVector.Knots[curve1.KnotVector.Length - curve1.Degree - 1];
@@ -386,10 +388,12 @@ namespace NurbsSharp.Analysis
         /// (ja) 曲線列全体の連続性を評価します。
         /// </summary>
         /// <param name="curves">Array of curves in connection order</param>
-        /// <param name="positionTolerance">Position gap tolerance</param>
-        /// <param name="angleTolerance">Angle tolerance in radians</param>
-        /// <param name="ratioTolerance">Magnitude ratio tolerance</param>
+        /// <param name="positionTolerance">Finite, non-negative position gap tolerance</param>
+        /// <param name="angleTolerance">Finite angle tolerance in radians in the range [0, π]</param>
+        /// <param name="ratioTolerance">Finite, non-negative derivative/curvature magnitude ratio tolerance</param>
         /// <returns>Array of continuity results for each connection (length = curves.Length - 1)</returns>
+        /// <exception cref="ArgumentException">Thrown when fewer than two curves are supplied.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when a tolerance is outside its valid range.</exception>
         public static ContinuityResult[] EvaluateCurveChainContinuity(
             NurbsCurve[] curves,
             double positionTolerance = 1e-6,
@@ -398,6 +402,7 @@ namespace NurbsSharp.Analysis
         {
             if (curves == null || curves.Length < 2)
                 throw new ArgumentException("At least 2 curves required for chain continuity evaluation.", nameof(curves));
+            ValidateContinuityTolerances(positionTolerance, angleTolerance, ratioTolerance);
 
             var results = new ContinuityResult[curves.Length - 1];
             for (int i = 0; i < curves.Length - 1; i++)
@@ -417,12 +422,11 @@ namespace NurbsSharp.Analysis
             Vector3Double d1Second, Vector3Double d2Second,
             double angleTolerance, double ratioTolerance)
         {
-            double mag1 = d1First.magnitude;
-            double mag2 = d2First.magnitude;
-
-            if (mag1 < DegenerateDerivativeTolerance || mag2 < DegenerateDerivativeTolerance)
+            if (IsZeroVector(d1First) || IsZeroVector(d2First))
                 return result; // Degenerate tangent - cannot evaluate higher continuity
 
+            double mag1 = d1First.magnitude;
+            double mag2 = d2First.magnitude;
             Vector3Double t1 = d1First.normalized;
             Vector3Double t2 = d2First.normalized;
 
@@ -444,19 +448,19 @@ namespace NurbsSharp.Analysis
             Vector3Double curvature2 = CalculateCurvatureVector(d2First, d2Second);
             double curvatureMagnitude1 = curvature1.magnitude;
             double curvatureMagnitude2 = curvature2.magnitude;
+            bool hasZeroCurvature1 = IsZeroVector(curvature1);
+            bool hasZeroCurvature2 = IsZeroVector(curvature2);
 
             bool hasG2;
-            if (curvatureMagnitude1 < DegenerateDerivativeTolerance &&
-                curvatureMagnitude2 < DegenerateDerivativeTolerance)
+            if (hasZeroCurvature1 && hasZeroCurvature2)
             {
                 result.CurvatureAngle = 0.0;
                 result.CurvatureRatio = 1.0;
                 hasG2 = true;
             }
-            else if (curvatureMagnitude1 < DegenerateDerivativeTolerance ||
-                     curvatureMagnitude2 < DegenerateDerivativeTolerance)
+            else if (hasZeroCurvature1 || hasZeroCurvature2)
             {
-                result.CurvatureRatio = curvatureMagnitude1 < DegenerateDerivativeTolerance
+                result.CurvatureRatio = hasZeroCurvature1
                     ? double.PositiveInfinity
                     : 0.0;
                 return result;
@@ -503,17 +507,17 @@ namespace NurbsSharp.Analysis
             double angleTolerance,
             double ratioTolerance)
         {
-            double firstMagnitude = first.magnitude;
-            double secondMagnitude = second.magnitude;
+            bool firstIsZero = IsZeroVector(first);
+            bool secondIsZero = IsZeroVector(second);
 
-            if (firstMagnitude < DegenerateDerivativeTolerance &&
-                secondMagnitude < DegenerateDerivativeTolerance)
+            if (firstIsZero && secondIsZero)
                 return true;
 
-            if (firstMagnitude < DegenerateDerivativeTolerance ||
-                secondMagnitude < DegenerateDerivativeTolerance)
+            if (firstIsZero || secondIsZero)
                 return false;
 
+            double firstMagnitude = first.magnitude;
+            double secondMagnitude = second.magnitude;
             double dotProduct = Math.Clamp(
                 Vector3Double.Dot(first.normalized, second.normalized),
                 -1.0,
@@ -522,6 +526,43 @@ namespace NurbsSharp.Analysis
             double ratio = secondMagnitude / firstMagnitude;
 
             return angle <= angleTolerance && Math.Abs(ratio - 1.0) <= ratioTolerance;
+        }
+
+        private static bool IsZeroVector(Vector3Double vector)
+        {
+            return vector.X == 0.0 && vector.Y == 0.0 && vector.Z == 0.0;
+        }
+
+        private static void ValidateContinuityTolerances(
+            double positionTolerance,
+            double angleTolerance,
+            double ratioTolerance)
+        {
+            ValidateFiniteNonNegativeTolerance(positionTolerance, nameof(positionTolerance));
+
+            if (double.IsNaN(angleTolerance) ||
+                double.IsInfinity(angleTolerance) ||
+                angleTolerance < 0.0 ||
+                angleTolerance > Math.PI)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(angleTolerance),
+                    angleTolerance,
+                    "angleTolerance must be finite and in the range [0, PI].");
+            }
+
+            ValidateFiniteNonNegativeTolerance(ratioTolerance, nameof(ratioTolerance));
+        }
+
+        private static void ValidateFiniteNonNegativeTolerance(double tolerance, string parameterName)
+        {
+            if (double.IsNaN(tolerance) || double.IsInfinity(tolerance) || tolerance < 0.0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    parameterName,
+                    tolerance,
+                    $"{parameterName} must be finite and non-negative.");
+            }
         }
     }
 }

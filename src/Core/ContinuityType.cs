@@ -62,26 +62,26 @@ namespace NurbsSharp.Core
         public double PositionGap { get; set; }
 
         /// <summary>
-        /// (en) Tangent deviation angle in radians (for G1/C1 check).
-        /// (ja) 接線偏差角度（ラジアン、G1/C1チェック用）。
+        /// (en) Tangent deviation angle in radians (for G1/C1 check), or NaN when not evaluated or undefined.
+        /// (ja) 接線偏差角度（ラジアン、G1/C1チェック用）。未評価または未定義の場合はNaN。
         /// </summary>
         public double TangentAngle { get; set; }
 
         /// <summary>
-        /// (en) Tangent magnitude ratio (first derivative ratio for C1 check).
-        /// (ja) 接線大きさ比率（C1チェック用の1階微分比率）。
+        /// (en) Tangent magnitude ratio (first derivative ratio for C1 check), or NaN when not evaluated or undefined.
+        /// (ja) 接線大きさ比率（C1チェック用の1階微分比率）。未評価または未定義の場合はNaN。
         /// </summary>
         public double TangentRatio { get; set; }
 
         /// <summary>
-        /// (en) Curvature deviation angle in radians (for G2/C2 check).
-        /// (ja) 曲率偏差角度（ラジアン、G2/C2チェック用）。
+        /// (en) Curvature deviation angle in radians (for G2/C2 check), or NaN when not evaluated or undefined.
+        /// (ja) 曲率偏差角度（ラジアン、G2/C2チェック用）。未評価または未定義の場合はNaN。
         /// </summary>
         public double CurvatureAngle { get; set; }
 
         /// <summary>
-        /// (en) Curvature vector magnitude ratio (for G2 check).
-        /// (ja) 曲率ベクトルの大きさ比率（G2チェック用）。
+        /// (en) Curvature vector magnitude ratio (for G2 check), or NaN when not evaluated or undefined.
+        /// (ja) 曲率ベクトルの大きさ比率（G2チェック用）。未評価または未定義の場合はNaN。
         /// </summary>
         public double CurvatureRatio { get; set; }
 
@@ -99,10 +99,10 @@ namespace NurbsSharp.Core
         {
             Continuity = ContinuityType.None;
             PositionGap = double.MaxValue;
-            TangentAngle = double.MaxValue;
-            TangentRatio = 0.0;
-            CurvatureAngle = double.MaxValue;
-            CurvatureRatio = 0.0;
+            TangentAngle = double.NaN;
+            TangentRatio = double.NaN;
+            CurvatureAngle = double.NaN;
+            CurvatureRatio = double.NaN;
             IsReversed = false;
         }
 
