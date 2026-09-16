@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - CurveAnalyzer
-- Curve continuity evaluation APIs and result types in CurveAnalyzer
+- Curve continuity evaluation APIs in CurveAnalyzer, with ContinuityType and CurveContinuityResult
 - SurfaceAnalyzer
 - NurbsCurve: FindClosestPoint and FindClosestPointWithInitialGuess
 - NurbsSurface: FindClosestPointWithInitialGuess
