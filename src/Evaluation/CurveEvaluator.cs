@@ -1,10 +1,6 @@
 using NurbsSharp.Core;
 using NurbsSharp.Geometry;
-using System.Numerics;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Diagnostics;
 
 namespace NurbsSharp.Evaluation
 {
@@ -45,15 +41,8 @@ namespace NurbsSharp.Evaluation
 
             int k = FindSpan(degree, knots, u);
 
-            Vector4Double[][] d = new Vector4Double[degree + 1][];
-            //initialize d
-            for (int i = 0; i <= degree; i++)
-            {
-                d[i] = new Vector4Double[degree + 1];
-            }
-            
             // convert back to 3D
-            Vector4Double resultH = DeBoor(degree, knots, k, controlPoints.Select(cp => cp.HomogeneousPosition).ToArray(), u);
+            Vector4Double resultH = DeBoor(degree, knots, k, controlPoints, u);
             return new Vector3Double(resultH.X / resultH.W, resultH.Y / resultH.W, resultH.Z / resultH.W);
         }
 
@@ -84,7 +73,7 @@ namespace NurbsSharp.Evaluation
 
             int k = FindSpan(degree, knots, u);
 
-            return DeBoor(degree, knots, k, controlPoints.Select(cp => cp.HomogeneousPosition).ToArray(), u);
+            return DeBoor(degree, knots, k, controlPoints, u);
         }
 
         /// <summary>

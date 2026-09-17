@@ -1,8 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using NurbsSharp.Core;
-using NurbsSharp.Geometry;
 
 namespace NurbsSharp.Evaluation
 {
@@ -69,9 +66,6 @@ namespace NurbsSharp.Evaluation
         /// <returns></returns>
         protected static Vector4Double DeBoor(int p, double[] knots, int span_i, Vector4Double[] ctrlPoints, double u)
         {
-
-            int n = ctrlPoints.Length - 1;
-            // Find span index
             int span = span_i;
 
             // initalize
@@ -81,6 +75,24 @@ namespace NurbsSharp.Evaluation
                 d[j] = ctrlPoints[span - p + j];
             }
 
+            return DeBoorInPlace(p, knots, span, d, u);
+        }
+
+        internal static Vector4Double DeBoor(int p, double[] knots, int span_i, ControlPoint[] ctrlPoints, double u)
+        {
+            int span = span_i;
+
+            Vector4Double[] d = new Vector4Double[p + 1];
+            for (int j = 0; j <= p; j++)
+            {
+                d[j] = ctrlPoints[span - p + j].HomogeneousPosition;
+            }
+
+            return DeBoorInPlace(p, knots, span, d, u);
+        }
+
+        private static Vector4Double DeBoorInPlace(int p, double[] knots, int span, Vector4Double[] d, double u)
+        {
             //calculation
             for (int r = 1; r <= p; r++)
             {
