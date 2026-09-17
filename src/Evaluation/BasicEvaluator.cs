@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using NurbsSharp.Core;
 
 namespace NurbsSharp.Evaluation
@@ -9,6 +10,8 @@ namespace NurbsSharp.Evaluation
     /// </summary>
     public class BasicEvaluator
     {
+        private const int MaxStackScratchLength = 32; // 32 Vector4Double values use 1 KiB of stack space.
+
         /// <summary>
         /// (en) Find the knot span index for the given parameter u
         /// (ja) 指定したパラメータ u に対するノットベクトルの区間インデックスを見つける
@@ -64,6 +67,7 @@ namespace NurbsSharp.Evaluation
         /// <param name="ctrlPoints">control point of NURBS</param>
         /// <param name="u">parameter u</param>
         /// <returns></returns>
+        /// <remarks>Allocates and initializes its own scratch buffer, leaving the input control points unchanged.</remarks>
         protected static Vector4Double DeBoor(int p, double[] knots, int span_i, Vector4Double[] ctrlPoints, double u)
         {
             int span = span_i;
@@ -75,23 +79,39 @@ namespace NurbsSharp.Evaluation
                 d[j] = ctrlPoints[span - p + j];
             }
 
-            return DeBoorInPlace(p, knots, span, d, u);
+            return DeBoorCore(p, knots, span, d, u);
         }
 
+        // Allocates and initializes scratch from the active control points before evaluation.
         internal static Vector4Double DeBoor(int p, double[] knots, int span_i, ControlPoint[] ctrlPoints, double u)
         {
             int span = span_i;
+            int scratchLength = p + 1;
 
-            Vector4Double[] d = new Vector4Double[p + 1];
+            // Allocate degree + 1 scratch elements at runtime: stack up to 32 elements (1 KiB), otherwise heap.
+            Span<Vector4Double> d = scratchLength <= MaxStackScratchLength
+                ? stackalloc Vector4Double[scratchLength]
+                : new Vector4Double[scratchLength];
             for (int j = 0; j <= p; j++)
             {
                 d[j] = ctrlPoints[span - p + j].HomogeneousPosition;
             }
 
-            return DeBoorInPlace(p, knots, span, d, u);
+            return DeBoorCore(p, knots, span, d, u);
         }
 
-        private static Vector4Double DeBoorInPlace(int p, double[] knots, int span, Vector4Double[] d, double u)
+        // Evaluates by overwriting caller-initialized scratch so the buffer can be reused without another allocation.
+        internal static Vector4Double DeBoorInPlace(int p, double[] knots, int span, Span<Vector4Double> scratch, double u)
+        {
+            int requiredLength = p + 1;
+            if (scratch.Length < requiredLength)
+                throw new ArgumentException("Scratch buffer must contain at least degree + 1 elements.", nameof(scratch));
+
+            return DeBoorCore(p, knots, span, scratch.Slice(0, requiredLength), u);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static Vector4Double DeBoorCore(int p, double[] knots, int span, Span<Vector4Double> d, double u)
         {
             //calculation
             for (int r = 1; r <= p; r++)

@@ -38,6 +38,36 @@ namespace UnitTests.Evaluation
 
 
         }
+
+        [Test]
+        public void DeBoorInPlace_DoesNotWritePastRequiredScratchRange()
+        {
+            double[] knots = [0.0, 0.0, 1.0, 1.0];
+            var sentinel = new Vector4Double(101.0, 102.0, 103.0, 104.0);
+            Vector4Double[] scratch =
+            [
+                new Vector4Double(0.0, 0.0, 0.0, 1.0),
+                new Vector4Double(2.0, 4.0, 6.0, 1.0),
+                sentinel,
+            ];
+
+            Vector4Double result = BasicEvaluator.DeBoorInPlace(1, knots, 1, scratch, 0.25);
+
+            Assert.That(result, Is.EqualTo(new Vector4Double(0.5, 1.0, 1.5, 1.0)));
+            Assert.That(scratch[2], Is.EqualTo(sentinel));
+        }
+
+        [Test]
+        public void DeBoorInPlace_RejectsUndersizedScratchBuffer()
+        {
+            double[] knots = [0.0, 0.0, 1.0, 1.0];
+            Vector4Double[] scratch = [new Vector4Double(0.0, 0.0, 0.0, 1.0)];
+
+            var exception = Assert.Throws<ArgumentException>(
+                () => BasicEvaluator.DeBoorInPlace(1, knots, 1, scratch, 0.25));
+
+            Assert.That(exception!.ParamName, Is.EqualTo("scratch"));
+        }
     }
 
     internal class DummyEvaluator : BasicEvaluator

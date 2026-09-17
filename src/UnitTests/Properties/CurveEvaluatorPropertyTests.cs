@@ -14,6 +14,7 @@ namespace UnitTests.Properties
         [TestCase(3)]
         [TestCase(4)]
         [TestCase(8)]
+        [TestCase(32)]
         public void RationalBezierEvaluation_IsAffineCovariantAndWeightScaleInvariant(int degree)
         {
             NurbsCurve source = CreateBezierCurve(degree, 1.0, Identity);

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Reduced CurveEvaluator position-evaluation allocations by removing unused and full-control-point temporary arrays
+- Eliminated heap allocations for common-degree curve evaluation by using stack-backed DeBoor scratch storage with a high-degree fallback
 
 ### Fixed
 
