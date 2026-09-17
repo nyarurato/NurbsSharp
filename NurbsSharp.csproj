@@ -52,6 +52,9 @@
 	  <Compile Remove="src\UnitTests\**" />
 	  <EmbeddedResource Remove="src\UnitTests\**" />
 	  <None Remove="src\UnitTests\**" />
+	  <Compile Remove="src\Benchmarks\**" />
+	  <EmbeddedResource Remove="src\Benchmarks\**" />
+	  <None Remove="src\Benchmarks\**" />
 	</ItemGroup>
 
 	<ItemGroup>
