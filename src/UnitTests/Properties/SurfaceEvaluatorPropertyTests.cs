@@ -13,6 +13,8 @@ namespace UnitTests.Properties
         [TestCase(2, 2)]
         [TestCase(3, 2)]
         [TestCase(4, 3)]
+        [TestCase(32, 2)]
+        [TestCase(2, 32)]
         public void RationalBezierSurface_IsAffineCovariantAndWeightScaleInvariant(int degreeU, int degreeV)
         {
             NurbsSurface source = CreateBezierSurface(degreeU, degreeV, 1.0, Identity);

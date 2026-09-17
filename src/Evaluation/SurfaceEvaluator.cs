@@ -1,13 +1,6 @@
 using NurbsSharp.Core;
 using NurbsSharp.Geometry;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace NurbsSharp.Evaluation
 {
@@ -41,9 +34,6 @@ namespace NurbsSharp.Evaluation
 
             var controlPoints = surface.ControlPoints;
 
-            int nU = controlPoints.Length;
-            int nV = controlPoints[0].Length;
-
             var knotsU = surface.KnotVectorU.Knots;
             var knotsV = surface.KnotVectorV.Knots;
 
@@ -51,20 +41,33 @@ namespace NurbsSharp.Evaluation
             int spanU = FindSpan(degreeU, knotsU, u);
             int spanV = FindSpan(degreeV, knotsV, v);
 
-            // de Boor's algorithm in U direction
-            Vector4Double[] temp = new Vector4Double[nV];
-            for (int j = 0; j < nV; j++)
+            int scratchLengthU = degreeU + 1;
+            int scratchLengthV = degreeV + 1;
+
+            // The point depends only on degree + 1 active control points in each direction.
+            // Keep common low-degree scratch on the stack; unusually high degrees fall back to the heap.
+            Span<Vector4Double> scratchU = scratchLengthU <= MaxStackScratchLength
+                ? stackalloc Vector4Double[scratchLengthU]
+                : new Vector4Double[scratchLengthU];
+            Span<Vector4Double> scratchV = scratchLengthV <= MaxStackScratchLength
+                ? stackalloc Vector4Double[scratchLengthV]
+                : new Vector4Double[scratchLengthV];
+
+            int firstControlPointU = spanU - degreeU;
+            int firstControlPointV = spanV - degreeV;
+
+            // Reuse U scratch for each active V row, then evaluate those row results in V.
+            for (int localV = 0; localV <= degreeV; localV++)
             {
-                Vector4Double[] row = new Vector4Double[nU];
-                for (int i = 0; i < nU; i++)
-                {
-                    row[i] = controlPoints[i][j].HomogeneousPosition;
-                }
-                temp[j] = DeBoor(degreeU, knotsU,spanU, row, u);
+                int controlPointV = firstControlPointV + localV;
+                for (int localU = 0; localU <= degreeU; localU++)
+                    scratchU[localU] = controlPoints[firstControlPointU + localU][controlPointV].HomogeneousPosition;
+
+                scratchV[localV] = DeBoorInPlace(degreeU, knotsU, spanU, scratchU, u);
             }
 
             // de Boor's algorithm in V direction
-            Vector4Double Sv = DeBoor(degreeV, knotsV,spanV, temp, v);
+            Vector4Double Sv = DeBoorInPlace(degreeV, knotsV, spanV, scratchV, v);
 
             return new Vector3Double(Sv.X/Sv.W, Sv.Y / Sv.W, Sv.Z / Sv.W);
         }

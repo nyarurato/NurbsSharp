@@ -10,7 +10,7 @@ namespace NurbsSharp.Evaluation
     /// </summary>
     public class BasicEvaluator
     {
-        private const int MaxStackScratchLength = 32; // 32 Vector4Double values use 1 KiB of stack space.
+        internal const int MaxStackScratchLength = 32; // 32 Vector4Double values use 1 KiB of stack space.
 
         /// <summary>
         /// (en) Find the knot span index for the given parameter u
