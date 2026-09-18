@@ -97,6 +97,141 @@ namespace UnitTests.Properties
             }
         }
 
+        [TestCase(2, 2)]
+        [TestCase(3, 2)]
+        [TestCase(4, 3)]
+        public void RationalBezierSecondDerivative_IsAffineCovariantAndWeightScaleInvariant(int degreeU, int degreeV)
+        {
+            NurbsSurface source = CreateBezierSurface(degreeU, degreeV, 1.0, Identity);
+            NurbsSurface weightScaled = CreateBezierSurface(degreeU, degreeV, 6.5, Identity);
+            NurbsSurface transformed = CreateBezierSurface(degreeU, degreeV, 1.0, ApplyAffineTransform);
+
+            foreach ((double u, double v) in new[]
+                     {
+                         (-2.0, 10.0),
+                         (-0.85, 11.24),
+                         (0.5, 12.0),
+                         (Math.BitDecrement(3.0), Math.BitDecrement(14.0)),
+                         (3.0, 14.0),
+                     })
+            {
+                var sourceDerivative = SurfaceEvaluator.EvaluateSecondDerivative(source, u, v);
+                var scaledDerivative = SurfaceEvaluator.EvaluateSecondDerivative(weightScaled, u, v);
+                var transformedDerivative = SurfaceEvaluator.EvaluateSecondDerivative(transformed, u, v);
+
+                NumericAssert.Vector(
+                    sourceDerivative.uu_deriv,
+                    scaledDerivative.uu_deriv,
+                    TestTolerances.AnalyticSecondDerivative,
+                    30.0,
+                    $"UU derivative global weight scale degree=({degreeU},{degreeV}), u={u:R}, v={v:R}");
+                NumericAssert.Vector(
+                    sourceDerivative.uv_deriv,
+                    scaledDerivative.uv_deriv,
+                    TestTolerances.AnalyticSecondDerivative,
+                    30.0,
+                    $"UV derivative global weight scale degree=({degreeU},{degreeV}), u={u:R}, v={v:R}");
+                NumericAssert.Vector(
+                    sourceDerivative.vv_deriv,
+                    scaledDerivative.vv_deriv,
+                    TestTolerances.AnalyticSecondDerivative,
+                    30.0,
+                    $"VV derivative global weight scale degree=({degreeU},{degreeV}), u={u:R}, v={v:R}");
+                NumericAssert.Vector(
+                    ApplyAffineLinearTransform(sourceDerivative.uu_deriv),
+                    transformedDerivative.uu_deriv,
+                    TestTolerances.AnalyticSecondDerivative,
+                    70.0,
+                    $"UU derivative affine covariance degree=({degreeU},{degreeV}), u={u:R}, v={v:R}");
+                NumericAssert.Vector(
+                    ApplyAffineLinearTransform(sourceDerivative.uv_deriv),
+                    transformedDerivative.uv_deriv,
+                    TestTolerances.AnalyticSecondDerivative,
+                    70.0,
+                    $"UV derivative affine covariance degree=({degreeU},{degreeV}), u={u:R}, v={v:R}");
+                NumericAssert.Vector(
+                    ApplyAffineLinearTransform(sourceDerivative.vv_deriv),
+                    transformedDerivative.vv_deriv,
+                    TestTolerances.AnalyticSecondDerivative,
+                    70.0,
+                    $"VV derivative affine covariance degree=({degreeU},{degreeV}), u={u:R}, v={v:R}");
+            }
+        }
+
+        [TestCase(20, 20)]
+        [TestCase(21, 20)]
+        public void PlanarBezierSurface_SecondDerivative_IsZeroAcrossScratchFallbackBoundary(int degreeU, int degreeV)
+        {
+            NurbsSurface plane = CreatePlanarBezierSurface(degreeU, degreeV);
+
+            foreach ((double u, double v) in new[]
+                     {
+                         (-2.0, 10.0),
+                         (-1.5, 13.6),
+                         (0.5, 12.0),
+                         (Math.BitDecrement(3.0), Math.BitDecrement(14.0)),
+                         (3.0, 14.0),
+                     })
+            {
+                var second = SurfaceEvaluator.EvaluateSecondDerivative(plane, u, v);
+                NumericAssert.Vector(
+                    Vector3Double.Zero,
+                    second.uu_deriv,
+                    TestTolerances.AnalyticSecondDerivative,
+                    30.0,
+                    $"planar UU derivative degree=({degreeU},{degreeV}), u={u:R}, v={v:R}");
+                NumericAssert.Vector(
+                    Vector3Double.Zero,
+                    second.uv_deriv,
+                    TestTolerances.AnalyticSecondDerivative,
+                    30.0,
+                    $"planar UV derivative degree=({degreeU},{degreeV}), u={u:R}, v={v:R}");
+                NumericAssert.Vector(
+                    Vector3Double.Zero,
+                    second.vv_deriv,
+                    TestTolerances.AnalyticSecondDerivative,
+                    30.0,
+                    $"planar VV derivative degree=({degreeU},{degreeV}), u={u:R}, v={v:R}");
+            }
+        }
+
+        [Test]
+        public void RationalSurfaceWithRepeatedKnots_SecondDerivative_IsWeightScaleInvariantAndFinite()
+        {
+            NurbsSurface source = CreateRepeatedKnotSurface(1.0);
+            NurbsSurface weightScaled = CreateRepeatedKnotSurface(4.0);
+            double[] uSamples = [-3.0, Math.BitDecrement(-0.5), -0.5, Math.BitIncrement(-0.5), 1.0, Math.BitDecrement(2.0), 2.0];
+            double[] vSamples = [10.0, Math.BitDecrement(12.0), 12.0, Math.BitIncrement(12.0), Math.BitDecrement(14.0), 14.0];
+
+            foreach (double u in uSamples)
+            {
+                foreach (double v in vSamples)
+                {
+                    var sourceDerivative = SurfaceEvaluator.EvaluateSecondDerivative(source, u, v);
+                    var scaledDerivative = SurfaceEvaluator.EvaluateSecondDerivative(weightScaled, u, v);
+
+                    NumericAssert.Vector(
+                        sourceDerivative.uu_deriv,
+                        scaledDerivative.uu_deriv,
+                        TestTolerances.AnalyticSecondDerivative,
+                        30.0,
+                        $"repeated-knot UU weight scale u={u:R}, v={v:R}");
+                    NumericAssert.Vector(
+                        sourceDerivative.uv_deriv,
+                        scaledDerivative.uv_deriv,
+                        TestTolerances.AnalyticSecondDerivative,
+                        30.0,
+                        $"repeated-knot UV weight scale u={u:R}, v={v:R}");
+                    NumericAssert.Vector(
+                        sourceDerivative.vv_deriv,
+                        scaledDerivative.vv_deriv,
+                        TestTolerances.AnalyticSecondDerivative,
+                        30.0,
+                        $"repeated-knot VV weight scale u={u:R}, v={v:R}");
+                }
+            }
+        }
+
         [Test]
         public void AsymmetricSurface_BoundariesMatchIndependentCurveEvaluations()
         {
@@ -161,6 +296,26 @@ namespace UnitTests.Properties
             double[] knotsU = CreateBezierKnots(degreeU, -2.0, 3.0);
             double[] knotsV = CreateBezierKnots(degreeV, 10.0, 14.0);
             ControlPoint[][] controlPoints = CreateControlNet(degreeU + 1, degreeV + 1, weightScale, positionTransform);
+            return new NurbsSurface(
+                degreeU,
+                degreeV,
+                new KnotVector(knotsU, degreeU),
+                new KnotVector(knotsV, degreeV),
+                controlPoints);
+        }
+
+        private static NurbsSurface CreatePlanarBezierSurface(int degreeU, int degreeV)
+        {
+            double[] knotsU = CreateBezierKnots(degreeU, -2.0, 3.0);
+            double[] knotsV = CreateBezierKnots(degreeV, 10.0, 14.0);
+            ControlPoint[][] controlPoints = new ControlPoint[degreeU + 1][];
+            for (int i = 0; i <= degreeU; i++)
+            {
+                controlPoints[i] = new ControlPoint[degreeV + 1];
+                for (int j = 0; j <= degreeV; j++)
+                    controlPoints[i][j] = new ControlPoint(i, j, 0.0, 1.0);
+            }
+
             return new NurbsSurface(
                 degreeU,
                 degreeV,

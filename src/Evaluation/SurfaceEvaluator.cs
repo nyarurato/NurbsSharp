@@ -230,10 +230,6 @@ namespace NurbsSharp.Evaluation
             if (p < 0 || q < 0)
                 throw new ArgumentException("Surface degrees must be non-negative.", nameof(surface));
 
-            var cps = surface.ControlPoints;
-            int nu = cps.Length;           // #CP in U
-            int nv = cps[0].Length;        // #CP in V
-
             double[] U = surface.KnotVectorU.Knots;
             double[] V = surface.KnotVectorV.Knots;
 
@@ -247,15 +243,51 @@ namespace NurbsSharp.Evaluation
             if (v < vmin) v = vmin;
             if (v > vmax) v = LinAlg.BitDecrement(vmax);
 
+            // Keep the six basis buffers in one per-call scratch span. This simple
+            // ownership avoids shared mutable state; unusually high combined degrees
+            // fall back to a single heap allocation. A reusable internal buffer could
+            // remove some stackalloc overhead, but should only be added if later
+            // profiling justifies the extra lifetime and thread-safety complexity.
+            int basisCountU = p + 1;
+            int basisCountV = q + 1;
+            int basisScratchLength = 3 * (basisCountU + basisCountV);
+            Span<double> basisScratch = basisScratchLength <= MaxStackBasisScratchLength
+                ? stackalloc double[basisScratchLength]
+                : new double[basisScratchLength];
+
+            // Compute the basis values and accumulation in a separate method. Having
+            // stackalloc in the same method inhibited JIT optimization of the hot math;
+            // splitting measured clearly faster than a single combined method.
+            return EvaluateSecondDerivativeCore(surface, u, v, basisScratch);
+        }
+
+        private static (Vector3Double uu_deriv, Vector3Double uv_deriv, Vector3Double vv_deriv) EvaluateSecondDerivativeCore(
+            NurbsSurface surface,
+            double u,
+            double v,
+            Span<double> basisScratch)
+        {
+            int p = surface.DegreeU;
+            int q = surface.DegreeV;
+            var cps = surface.ControlPoints;
+            double[] U = surface.KnotVectorU.Knots;
+            double[] V = surface.KnotVectorV.Knots;
+
             int spanU = FindSpan(p, U, u);
             int spanV = FindSpan(q, V, v);
 
             int iu0 = spanU - p;
             int iv0 = spanV - q;
 
-            double[] Nu = new double[p + 1];
-            double[] Nu_d = new double[p + 1];
-            double[] Nu_d2 = new double[p + 1];
+            int basisCountU = p + 1;
+            int basisCountV = q + 1;
+            Span<double> Nu = basisScratch.Slice(0, basisCountU);
+            Span<double> Nu_d = basisScratch.Slice(basisCountU, basisCountU);
+            Span<double> Nu_d2 = basisScratch.Slice(2 * basisCountU, basisCountU);
+            Span<double> Nv = basisScratch.Slice(3 * basisCountU, basisCountV);
+            Span<double> Nv_d = basisScratch.Slice(3 * basisCountU + basisCountV, basisCountV);
+            Span<double> Nv_d2 = basisScratch.Slice(3 * basisCountU + 2 * basisCountV, basisCountV);
+
             for (int k = 0; k <= p; k++)
             {
                 int i = iu0 + k;
@@ -264,9 +296,6 @@ namespace NurbsSharp.Evaluation
                 Nu_d2[k] = DerivativeBSplineBasisFunction(i, p, u, U,2);
             }
 
-            double[] Nv = new double[q + 1];
-            double[] Nv_d = new double[q + 1];
-            double[] Nv_d2 = new double[q + 1];
             for (int l = 0; l <= q; l++)
             {
                 int j = iv0 + l;
@@ -285,28 +314,34 @@ namespace NurbsSharp.Evaluation
             for (int k = 0; k <= p; k++)
             {
                 int i = iu0 + k;
+                double Nu_k = Nu[k];
+                double Nu_d_k = Nu_d[k];
+                double Nu_d2_k = Nu_d2[k];
                 for (int l = 0; l <= q; l++)
                 {
                     int j = iv0 + l;
+                    double Nv_l = Nv[l];
+                    double Nv_d_l = Nv_d[l];
+                    double Nv_d2_l = Nv_d2[l];
 
                     ControlPoint cp = cps[i][j];
                     double w = cp.Weight;
                     Vector3Double Pw = cp.Position * w;
 
-                    A += Pw * Nu[k] * Nv[l];
-                    W += w * Nu[k] * Nv[l];
+                    A += Pw * Nu_k * Nv_l;
+                    W += w * Nu_k * Nv_l;
 
-                    A_deriv_u += Pw * Nu_d[k] * Nv[l];
-                    W_deriv_u += w * Nu_d[k] * Nv[l];
-                    A_deriv_v += Pw * Nu[k] * Nv_d[l];
-                    W_deriv_v += w * Nu[k] * Nv_d[l];
+                    A_deriv_u += Pw * Nu_d_k * Nv_l;
+                    W_deriv_u += w * Nu_d_k * Nv_l;
+                    A_deriv_v += Pw * Nu_k * Nv_d_l;
+                    W_deriv_v += w * Nu_k * Nv_d_l;
 
-                    A_deriv_uu += Pw * Nu_d2[k] * Nv[l];
-                    W_deriv_uu += w * Nu_d2[k] * Nv[l];
-                    A_deriv_uv += Pw * Nu_d[k] * Nv_d[l];
-                    W_deriv_uv += w * Nu_d[k] * Nv_d[l];
-                    A_deriv_vv += Pw * Nu[k] * Nv_d2[l];
-                    W_deriv_vv += w * Nu[k] * Nv_d2[l];
+                    A_deriv_uu += Pw * Nu_d2_k * Nv_l;
+                    W_deriv_uu += w * Nu_d2_k * Nv_l;
+                    A_deriv_uv += Pw * Nu_d_k * Nv_d_l;
+                    W_deriv_uv += w * Nu_d_k * Nv_d_l;
+                    A_deriv_vv += Pw * Nu_k * Nv_d2_l;
+                    W_deriv_vv += w * Nu_k * Nv_d2_l;
                 }
             }
 
