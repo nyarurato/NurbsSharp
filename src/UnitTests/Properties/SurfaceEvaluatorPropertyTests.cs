@@ -49,6 +49,54 @@ namespace UnitTests.Properties
             NumericAssert.Vector(source.ControlPoints[^1][^1].Position, SurfaceEvaluator.Evaluate(source, 3.0, 14.0), TestTolerances.AnalyticPosition, 30.0, "maximum corner");
         }
 
+        [TestCase(2, 2)]
+        [TestCase(3, 2)]
+        [TestCase(4, 3)]
+        public void RationalBezierFirstDerivative_IsAffineCovariantAndWeightScaleInvariant(int degreeU, int degreeV)
+        {
+            NurbsSurface source = CreateBezierSurface(degreeU, degreeV, 1.0, Identity);
+            NurbsSurface weightScaled = CreateBezierSurface(degreeU, degreeV, 6.5, Identity);
+            NurbsSurface transformed = CreateBezierSurface(degreeU, degreeV, 1.0, ApplyAffineTransform);
+
+            foreach ((double u, double v) in new[]
+                     {
+                         (-2.0, 10.0),
+                         (-0.85, 11.24),
+                         (0.5, 12.0),
+                         (3.0, 14.0),
+                     })
+            {
+                var sourceDerivative = SurfaceEvaluator.EvaluateFirstDerivative(source, u, v);
+                var scaledDerivative = SurfaceEvaluator.EvaluateFirstDerivative(weightScaled, u, v);
+                var transformedDerivative = SurfaceEvaluator.EvaluateFirstDerivative(transformed, u, v);
+
+                NumericAssert.Vector(
+                    sourceDerivative.u_deriv,
+                    scaledDerivative.u_deriv,
+                    TestTolerances.AnalyticFirstDerivative,
+                    30.0,
+                    $"U derivative global weight scale degree=({degreeU},{degreeV}), u={u:R}, v={v:R}");
+                NumericAssert.Vector(
+                    sourceDerivative.v_deriv,
+                    scaledDerivative.v_deriv,
+                    TestTolerances.AnalyticFirstDerivative,
+                    30.0,
+                    $"V derivative global weight scale degree=({degreeU},{degreeV}), u={u:R}, v={v:R}");
+                NumericAssert.Vector(
+                    ApplyAffineLinearTransform(sourceDerivative.u_deriv),
+                    transformedDerivative.u_deriv,
+                    TestTolerances.AnalyticFirstDerivative,
+                    70.0,
+                    $"U derivative affine covariance degree=({degreeU},{degreeV}), u={u:R}, v={v:R}");
+                NumericAssert.Vector(
+                    ApplyAffineLinearTransform(sourceDerivative.v_deriv),
+                    transformedDerivative.v_deriv,
+                    TestTolerances.AnalyticFirstDerivative,
+                    70.0,
+                    $"V derivative affine covariance degree=({degreeU},{degreeV}), u={u:R}, v={v:R}");
+            }
+        }
+
         [Test]
         public void AsymmetricSurface_BoundariesMatchIndependentCurveEvaluations()
         {
@@ -178,6 +226,14 @@ namespace UnitTests.Properties
                 2.0 * point.X + 0.25 * point.Y + 3.0,
                 -0.5 * point.Y + 2.0,
                 1.5 * point.Z - 0.1 * point.X - 1.0);
+        }
+
+        private static Vector3Double ApplyAffineLinearTransform(Vector3Double vector)
+        {
+            return new Vector3Double(
+                2.0 * vector.X + 0.25 * vector.Y,
+                -0.5 * vector.Y,
+                1.5 * vector.Z - 0.1 * vector.X);
         }
 
         private static void AssertFinite(Vector3Double point, string context)

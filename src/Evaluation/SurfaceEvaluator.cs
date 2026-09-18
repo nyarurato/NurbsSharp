@@ -10,6 +10,8 @@ namespace NurbsSharp.Evaluation
     /// </summary>
     public class SurfaceEvaluator:BasicEvaluator
     {
+        private const int MaxStackBasisScratchLength = 128; // 128 double values use 1 KiB of stack space.
+
         /// <summary>
         /// (en) Evaluates the position on the NURBS surface at the specified parameters u and v. The range is the same as the knot vector's minimum and maximum values.
         /// (ja) 指定したパラメータ u と v でNURBSサーフェス上の位置を評価します。レンジはノットベクトルの最小値と最大値と同じです。
@@ -136,22 +138,33 @@ namespace NurbsSharp.Evaluation
             int iu0 = spanU - p;
             int iv0 = spanV - q;
 
-            // Calculate basis functions and their derivatives
-            double[] Nu = new double[p + 1];
-            double[] Nu_d = new double[p + 1];
+            // Keep the four basis buffers in one per-call scratch span. This simple
+            // ownership avoids shared mutable state; unusually high combined degrees
+            // fall back to a single heap allocation. A reusable internal buffer could
+            // remove some stackalloc overhead, but should only be added if later
+            // profiling justifies the extra lifetime and thread-safety complexity.
+            int basisCountU = p + 1;
+            int basisCountV = q + 1;
+            int basisScratchLength = 2 * (basisCountU + basisCountV);
+            Span<double> basisScratch = basisScratchLength <= MaxStackBasisScratchLength
+                ? stackalloc double[basisScratchLength]
+                : new double[basisScratchLength];
+            Span<double> Nu = basisScratch.Slice(0, basisCountU);
+            Span<double> Nu_d = basisScratch.Slice(basisCountU, basisCountU);
+            Span<double> Nv = basisScratch.Slice(2 * basisCountU, basisCountV);
+            Span<double> Nv_d = basisScratch.Slice(2 * basisCountU + basisCountV, basisCountV);
+
             for (int k = 0; k <= p; k++)
             {
                 int i = iu0 + k;
-                Nu[k]   = BSplineBasisFunction(i, p, u, U);
+                Nu[k] = BSplineBasisFunction(i, p, u, U);
                 Nu_d[k] = DerivativeBSplineBasisFunction(i, p, u, U);
             }
 
-            double[] Nv = new double[q + 1];
-            double[] Nv_d = new double[q + 1];
             for (int l = 0; l <= q; l++)
             {
                 int j = iv0 + l;
-                Nv[l]   = BSplineBasisFunction(j, q, v, V);
+                Nv[l] = BSplineBasisFunction(j, q, v, V);
                 Nv_d[l] = DerivativeBSplineBasisFunction(j, q, v, V);
             }
 
@@ -172,9 +185,9 @@ namespace NurbsSharp.Evaluation
                     double w = cp.Weight;
                     Vector3Double Pw = cp.Position * w;
 
-                    double Nuv    = Nu[k]   * Nv[l];
+                    double Nuv = Nu[k] * Nv[l];
                     double Nu_dNv = Nu_d[k] * Nv[l];
-                    double NuNv_d = Nu[k]   * Nv_d[l];
+                    double NuNv_d = Nu[k] * Nv_d[l];
 
                     A  += Pw * Nuv;
                     W  += w  * Nuv;
