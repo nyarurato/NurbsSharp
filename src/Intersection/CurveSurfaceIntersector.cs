@@ -59,12 +59,27 @@ namespace NurbsSharp.Intersection
         /// </remarks>
         public static List<CurveSurfaceIntersection> Intersect(NurbsCurve curve, NurbsSurface surface, double tolerance = Tolerance)
         {
+            return Intersect(curve, surface, null, tolerance);
+        }
+
+        /// <summary>
+        /// (en) Find all intersections between a NURBS curve and surface, reusing a caller-owned surface BVH.
+        /// (ja) 呼び出し側が所有するサーフェスBVHを再利用してNURBS曲線とサーフェス間の全交点検索を行う。
+        /// </summary>
+        /// <param name="curve">Curve to intersect</param>
+        /// <param name="surface">Surface to intersect</param>
+        /// <param name="surfaceBVH">Prebuilt surface BVH, or null to build one for this call</param>
+        /// <param name="tolerance">Convergence tolerance</param>
+        internal static List<CurveSurfaceIntersection> Intersect(NurbsCurve curve, NurbsSurface surface, SurfaceBVHNode? surfaceBVH, double tolerance)
+        {
             Guard.ThrowIfNull(curve, nameof(curve));
             Guard.ThrowIfNull(surface, nameof(surface));
 
-            // Build BVH for both curve and surface
+            // Build BVH for both curve and surface. The surface BVH is immutable after
+            // construction, so callers processing many curves against one surface can
+            // pass in a single shared instance.
             var curveBVH = CurveBVHBuilder.Build(curve);
-            var surfaceBVH = SurfaceBVHBuilder.Build(surface);
+            surfaceBVH ??= SurfaceBVHBuilder.Build(surface);
 
             // Find intersection candidates using dual BVH
             var candidates = FindIntersectionCandidatesWithDualBVH(curve, surface, curveBVH, surfaceBVH, tolerance);

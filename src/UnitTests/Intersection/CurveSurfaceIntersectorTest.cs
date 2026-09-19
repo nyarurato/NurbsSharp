@@ -14,6 +14,58 @@ namespace UnitTests.Intersection
     [TestFixture]
     public class CurveSurfaceIntersectorTest
     {
+        // Reusing a prebuilt surface BVH must produce the same intersection geometry as
+        // the public overload that builds one internally. The algorithm is parallel and
+        // may select different near-duplicate representatives, so compare geometry.
+        [Test]
+        public void PrebuiltSurfaceBVH_ProducesSameIntersectionsAsPublicOverload()
+        {
+            var curveCp = new ControlPoint[]
+            {
+                new ControlPoint(0.5, 0.5, -1),
+                new ControlPoint(0.5, 0.5, 1)
+            };
+            var curveKnots = new KnotVector([0, 0, 1, 1], 1);
+            var curve = new NurbsCurve(1, curveKnots, curveCp);
+
+            var surfaceCp = new ControlPoint[][]
+            {
+                [
+                    new ControlPoint(0, 0, 0),
+                    new ControlPoint(0, 1, 0)
+                ],
+                [
+                    new ControlPoint(1, 0, 0),
+                    new ControlPoint(1, 1, 0)
+                ]
+            };
+            var knotsU = new KnotVector([0, 0, 1, 1], 1);
+            var knotsV = new KnotVector([0, 0, 1, 1], 1);
+            var surface = new NurbsSurface(1, 1, knotsU, knotsV, surfaceCp);
+
+            var expected = CurveSurfaceIntersector.Intersect(curve, surface);
+            var prebuilt = SurfaceBVHBuilder.Build(surface);
+            var actual = CurveSurfaceIntersector.Intersect(curve, surface, prebuilt, CurveSurfaceIntersector.Tolerance);
+
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(actual, Has.Count.EqualTo(expected.Count));
+                foreach (var intersection in actual)
+                {
+                    Assert.That(intersection.Distance, Is.LessThan(CurveSurfaceIntersector.Tolerance));
+                    Assert.That(intersection.CurvePoint.X, Is.EqualTo(0.5).Within(1e-6));
+                    Assert.That(intersection.CurvePoint.Y, Is.EqualTo(0.5).Within(1e-6));
+                    Assert.That(intersection.CurvePoint.Z, Is.EqualTo(0.0).Within(1e-6));
+
+                    bool matchesExpected = expected.Any(e =>
+                        (e.CurvePoint - intersection.CurvePoint).magnitude < 1e-6 &&
+                        (e.SurfacePoint - intersection.SurfacePoint).magnitude < 1e-6);
+                    Assert.That(matchesExpected, Is.True,
+                        $"Prebuilt-BVH intersection does not match any public-overload result. point={intersection.CurvePoint}");
+                }
+            }
+        }
+
         // Marching method should handle simple line-plane intersections
         [Test]
         public void LineIntersectingPlane_FindsIntersection()

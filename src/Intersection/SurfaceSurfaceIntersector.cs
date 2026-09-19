@@ -134,7 +134,7 @@ namespace NurbsSharp.Intersection
                 if (!ShouldTestIsoCurve(iso, bvhB))
                     return;
 
-                var intersections = CurveSurfaceIntersector.Intersect(iso, surfaceB, tolerance);
+                var intersections = CurveSurfaceIntersector.Intersect(iso, surfaceB, bvhB, tolerance);
                 foreach (var inter in intersections)
                 {
                     var entry = new SurfaceSurfaceIntersection
@@ -168,7 +168,7 @@ namespace NurbsSharp.Intersection
                 if (!ShouldTestIsoCurve(iso, bvhB))
                     return;
 
-                var intersections = CurveSurfaceIntersector.Intersect(iso, surfaceB, tolerance);
+                var intersections = CurveSurfaceIntersector.Intersect(iso, surfaceB, bvhB, tolerance);
                 foreach (var inter in intersections)
                 {
                     var entry = new SurfaceSurfaceIntersection
@@ -202,7 +202,7 @@ namespace NurbsSharp.Intersection
                 if (!ShouldTestIsoCurve(iso, bvhA))
                     return;
 
-                var intersections = CurveSurfaceIntersector.Intersect(iso, surfaceA, tolerance);
+                var intersections = CurveSurfaceIntersector.Intersect(iso, surfaceA, bvhA, tolerance);
                 foreach (var inter in intersections)
                 {
                     var entry = new SurfaceSurfaceIntersection
@@ -235,7 +235,7 @@ namespace NurbsSharp.Intersection
                 if (!ShouldTestIsoCurve(iso, bvhA))
                     return;
 
-                var intersections = CurveSurfaceIntersector.Intersect(iso, surfaceA, tolerance);
+                var intersections = CurveSurfaceIntersector.Intersect(iso, surfaceA, bvhA, tolerance);
                 foreach (var inter in intersections)
                 {
                     var entry = new SurfaceSurfaceIntersection
