@@ -135,59 +135,59 @@ namespace NurbsSharp.Generation.Interpolation
             int n = size_u - 1;
             int m = size_v - 1;
 
-            // Compute parameters for each V-column in U direction and average
+            // Compute parameters for each V-column in U direction and average.
+            // Each column is parameterized once, then accumulated into the average.
             double[] uk = new double[size_u];
             uk[0] = 0.0;
             uk[n] = 1.0;
 
             if (n > 1)
             {
-                // For each interior uk value
+                Vector3Double[] uPoints = new Vector3Double[size_u];
+                for (int l = 0; l <= m; l++)
+                {
+                    // Extract points along U direction for this V column
+                    for (int i = 0; i < size_u; i++)
+                    {
+                        uPoints[i] = points[i][l];
+                    }
+                    double[] uParams = ComputeParameters(uPoints, paramType);
+                    for (int k = 1; k < n; k++)
+                    {
+                        uk[k] += uParams[k];
+                    }
+                }
                 for (int k = 1; k < n; k++)
                 {
-                    double sumParams = 0.0;
-                    // Average across all V columns
-                    for (int l = 0; l <= m; l++)
-                    {
-                        // Extract points along U direction for this V column
-                        Vector3Double[] uPoints = new Vector3Double[size_u];
-                        for (int i = 0; i < size_u; i++)
-                        {
-                            uPoints[i] = points[i][l];
-                        }
-                        // Compute parameters for this column
-                        double[] uParams = ComputeParameters(uPoints, paramType);
-                        sumParams += uParams[k];
-                    }
-                    uk[k] = sumParams / (m + 1);
+                    uk[k] /= (m + 1);
                 }
             }
 
-            // Compute parameters for each U-row in V direction and average
+            // Compute parameters for each U-row in V direction and average.
+            // Each row is parameterized once, then accumulated into the average.
             double[] vl = new double[size_v];
             vl[0] = 0.0;
             vl[m] = 1.0;
 
             if (m > 1)
             {
-                // For each interior vl value
+                Vector3Double[] vPoints = new Vector3Double[size_v];
+                for (int k = 0; k <= n; k++)
+                {
+                    // Extract points along V direction for this U row
+                    for (int j = 0; j < size_v; j++)
+                    {
+                        vPoints[j] = points[k][j];
+                    }
+                    double[] vParams = ComputeParameters(vPoints, paramType);
+                    for (int l = 1; l < m; l++)
+                    {
+                        vl[l] += vParams[l];
+                    }
+                }
                 for (int l = 1; l < m; l++)
                 {
-                    double sumParams = 0.0;
-                    // Average across all U rows
-                    for (int k = 0; k <= n; k++)
-                    {
-                        // Extract points along V direction for this U row
-                        Vector3Double[] vPoints = new Vector3Double[size_v];
-                        for (int j = 0; j < size_v; j++)
-                        {
-                            vPoints[j] = points[k][j];
-                        }
-                        // Compute parameters for this row
-                        double[] vParams = ComputeParameters(vPoints, paramType);
-                        sumParams += vParams[l];
-                    }
-                    vl[l] = sumParams / (n + 1);
+                    vl[l] /= (n + 1);
                 }
             }
 
