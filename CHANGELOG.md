@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Reduced allocations and improved performance for curve and surface position evaluation, with corresponding improvements to surface tessellation
 - Reduced allocations in surface derivative evaluation and surface-surface intersection workloads
+- Reduced allocations in least squares curve and surface approximation
 
 ### Fixed
 

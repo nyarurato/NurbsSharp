@@ -229,11 +229,14 @@ namespace NurbsSharp.Generation.Approximation
             double[] NTRy = new double[numInterior];
             double[] NTRz = new double[numInterior];
 
+            // Reuse one basis buffer across data points. The values are fully
+            // overwritten each iteration, so per-point allocation is unnecessary.
+            double[] N = new double[m + 1];
+
             // For each data point
             for (int k = 1; k < n; k++) // Skip first and last (they're fixed)
             {
                 // Compute basis functions at uk[k]
-                double[] N = new double[m + 1];
                 for (int i = 0; i <= m; i++)
                 {
                     N[i] = BasicEvaluator.BSplineBasisFunction(i, p, uk[k], U);
@@ -291,11 +294,14 @@ namespace NurbsSharp.Generation.Approximation
             double[] NTQy = new double[m + 1];
             double[] NTQz = new double[m + 1];
 
+            // Reuse one basis buffer across data points. The values are fully
+            // overwritten each iteration, so per-point allocation is unnecessary.
+            double[] N = new double[m + 1];
+
             // For each data point
             for (int k = 0; k <= n; k++)
             {
                 // Compute basis functions at uk[k]
-                double[] N = new double[m + 1];
                 for (int i = 0; i <= m; i++)
                 {
                     N[i] = BasicEvaluator.BSplineBasisFunction(i, p, uk[k], U);
