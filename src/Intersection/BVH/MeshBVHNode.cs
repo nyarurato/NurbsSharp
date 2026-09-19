@@ -104,6 +104,39 @@ namespace NurbsSharp.Intersection
         }
 
         /// <summary>
+        /// (en) Stateless centroid comparers per axis, reused across sorts
+        /// (ja) 軸ごとの重心comparer。sortごとのclosure確保を避けて再利用する
+        /// </summary>
+        private static readonly IComparer<TriangleInfo> CentroidComparerX =
+            Comparer<TriangleInfo>.Create((a, b) => a.Centroid.X.CompareTo(b.Centroid.X));
+        private static readonly IComparer<TriangleInfo> CentroidComparerY =
+            Comparer<TriangleInfo>.Create((a, b) => a.Centroid.Y.CompareTo(b.Centroid.Y));
+        private static readonly IComparer<TriangleInfo> CentroidComparerZ =
+            Comparer<TriangleInfo>.Create((a, b) => a.Centroid.Z.CompareTo(b.Centroid.Z));
+
+        private static IComparer<TriangleInfo> CentroidComparerFor(int axis)
+        {
+            return axis == 0 ? CentroidComparerX : axis == 1 ? CentroidComparerY : CentroidComparerZ;
+        }
+
+        /// <summary>
+        /// (en) Bounding box of a single triangle without intermediate collections
+        /// (ja) 中間コレクションなしで三角形の境界ボックスを計算する
+        /// </summary>
+        private static BoundingBox ComputeTriangleBounds(Vector3Double v0, Vector3Double v1, Vector3Double v2)
+        {
+            return new BoundingBox(
+                new Vector3Double(
+                    Math.Min(v0.X, Math.Min(v1.X, v2.X)),
+                    Math.Min(v0.Y, Math.Min(v1.Y, v2.Y)),
+                    Math.Min(v0.Z, Math.Min(v1.Z, v2.Z))),
+                new Vector3Double(
+                    Math.Max(v0.X, Math.Max(v1.X, v2.X)),
+                    Math.Max(v0.Y, Math.Max(v1.Y, v2.Y)),
+                    Math.Max(v0.Z, Math.Max(v1.Z, v2.Z))));
+        }
+
+        /// <summary>
         /// (en) Build a BVH tree from mesh triangles
         /// (ja) メッシュの三角形からBVHツリーを構築
         /// </summary>
@@ -131,7 +164,7 @@ namespace NurbsSharp.Intersection
                 Vector3Double v1 = mesh.Vertices[idx1];
                 Vector3Double v2 = mesh.Vertices[idx2];
 
-                BoundingBox bounds = BoundingBox.FromPoints(new[] { v0, v1, v2 });
+                BoundingBox bounds = ComputeTriangleBounds(v0, v1, v2);
                 Vector3Double centroid = new Vector3Double(
                     (v0.X + v1.X + v2.X) / 3.0,
                     (v0.Y + v1.Y + v2.Y) / 3.0,
@@ -206,12 +239,7 @@ namespace NurbsSharp.Intersection
                 if (extent < 1e-10) continue;
 
                 // Sort by centroid along this axis
-                Array.Sort(triangles, start, count, Comparer<TriangleInfo>.Create((a, b) =>
-                {
-                    double aVal = axis == 0 ? a.Centroid.X : axis == 1 ? a.Centroid.Y : a.Centroid.Z;
-                    double bVal = axis == 0 ? b.Centroid.X : axis == 1 ? b.Centroid.Y : b.Centroid.Z;
-                    return aVal.CompareTo(bVal);
-                }));
+                Array.Sort(triangles, start, count, CentroidComparerFor(axis));
 
                 // Try different split positions using SAH
                 const int numBuckets = 12;
@@ -247,12 +275,7 @@ namespace NurbsSharp.Intersection
             }
 
             // Sort by best axis
-            Array.Sort(triangles, start, count, Comparer<TriangleInfo>.Create((a, b) =>
-            {
-                double aVal = bestAxis == 0 ? a.Centroid.X : bestAxis == 1 ? a.Centroid.Y : a.Centroid.Z;
-                double bVal = bestAxis == 0 ? b.Centroid.X : bestAxis == 1 ? b.Centroid.Y : b.Centroid.Z;
-                return aVal.CompareTo(bVal);
-            }));
+            Array.Sort(triangles, start, count, CentroidComparerFor(bestAxis));
 
             // Build child nodes
             MeshBVHNode left = BuildRecursive(triangles, start, bestSplitIndex);

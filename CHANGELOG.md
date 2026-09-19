@@ -10,10 +10,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+
+### Fixed
+
+### Removed
+
+### Deprecated
+
+## [0.5.0] - 2026-09-20
+
+### Added
+
+### Changed
 - Reduced allocations and improved performance for curve and surface position evaluation, with corresponding improvements to surface tessellation
 - Reduced allocations in surface derivative evaluation and surface-surface intersection workloads
 - Reduced allocations in least squares curve and surface approximation
 - Reduced allocations and improved performance for surface grid interpolation
+- Reduced allocations in ray-mesh and ray-surface intersection workloads
 
 ### Fixed
 
